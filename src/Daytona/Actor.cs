@@ -92,8 +92,8 @@ namespace Daytona
         {
             subscriber = context.CreateSocket(SocketType.SUB);
             subscriber.Connect("tcp://localhost:5555");
-            //subscriber.Subscribe(InRoute, Encoding.Unicode);
-            subscriber.SubscribeAll();
+            subscriber.Subscribe(InRoute, Encoding.Unicode);
+           // subscriber.SubscribeAll();
         }
 
         private void SetUpReceivers(ZmqContext context, string route)

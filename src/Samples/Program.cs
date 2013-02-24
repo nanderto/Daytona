@@ -28,7 +28,7 @@ namespace Samples
                 RunPipe(context);
                 using (var actor = new Actor(context))
                 {
-                    actor.RegisterActor("Basic", "", (Message, InRoute) =>
+                    actor.RegisterActor("Basic", "85308", (Message, InRoute) =>
                         {
                             Console.WriteLine(Message);
                         });
