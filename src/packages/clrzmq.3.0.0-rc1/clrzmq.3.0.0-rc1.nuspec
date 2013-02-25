@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2011/10/nuspec.xsd">
+  <metadata>
+    <id>clrzmq</id>
+    <version>3.0.0-rc1</version>
+    <authors>zeromq</authors>
+    <owners>zeromq</owners>
+    <licenseUrl>http://www.zeromq.org/area:licensing</licenseUrl>
+    <projectUrl>http://www.zeromq.org/bindings:clr</projectUrl>
+    <iconUrl>http://gravatar.com/avatar/810f6c181bb9cf3dea392892bac793f0?s=32</iconUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>The clrzmq project contains .NET bindings for ØMQ (ZeroMQ), an open source, high performance transport layer. Targets Any CPU and includes compiled versions of the native libzmq library for x86 and x64.</description>
+    <summary>Official .NET bindings for ZeroMQ</summary>
+    <language>en-US</language>
+    <tags>zeromq zmq 0mq messaging transport distributed</tags>
+    <references>
+      <reference file="clrzmq.dll" />
+    </references>
+  </metadata>
+</package>

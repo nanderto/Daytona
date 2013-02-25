@@ -1,16 +1,16 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Daytona", "Daytona.csproj", "{626CB1E5-251F-4A23-8D7D-C3A7B35F67D2}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Daytona", "Daytona\Daytona.csproj", "{626CB1E5-251F-4A23-8D7D-C3A7B35F67D2}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{D1F18DDE-E70B-4CAC-AD0C-664D76FC25F6}"
 	ProjectSection(SolutionItems) = preProject
-		.nuget\NuGet.Config = .nuget\NuGet.Config
-		.nuget\NuGet.exe = .nuget\NuGet.exe
-		.nuget\NuGet.targets = .nuget\NuGet.targets
+		Daytona\.nuget\NuGet.Config = Daytona\.nuget\NuGet.Config
+		Daytona\.nuget\NuGet.exe = Daytona\.nuget\NuGet.exe
+		Daytona\.nuget\NuGet.targets = Daytona\.nuget\NuGet.targets
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Samples", "..\Samples\Samples.csproj", "{EA61CC4D-924C-4612-81BF-608FC6E49025}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Samples", "Samples\Samples.csproj", "{EA61CC4D-924C-4612-81BF-608FC6E49025}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MessageSender", "MessageSender\MessageSender.csproj", "{50909D8D-A409-45B1-91B8-BD21C95FDCD1}"
 EndProject
