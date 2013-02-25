@@ -27,7 +27,7 @@ namespace MessageSender
                 string Address = "11111 ";
                 string message = "Hi johnny was here";
                 RunWeatherWithFrames(context, Address, message);
-                RunWeatherDataPublisher(context);
+                //RunWeatherDataPublisher(context);
             }
         }
 
@@ -56,7 +56,7 @@ namespace MessageSender
                         int temperature = randomizer.Next(-80, 135);
                         int relativeHumidity = randomizer.Next(10, 60);
 
-                        string update = zipcode.ToString() + " " + temperature.ToString() + " " + relativeHumidity.ToString();
+                        string update = "xx " + temperature.ToString() + " " + relativeHumidity.ToString();
 
                         if (i > 1000000)
                         {

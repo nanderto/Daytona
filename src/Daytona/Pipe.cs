@@ -35,12 +35,16 @@ namespace Daytona
                 while (true)
                 {
                     bool hasMore = true;
+                    var zmqMessage = new ZmqMessage();
                     while (hasMore)
                     {
                         string message = frontend.Receive(Encoding.Unicode);
-                        hasMore = frontend.ReceiveMore;
-                        backend.Send(message, Encoding.Unicode);
+                        
+                        zmqMessage.Append(new Frame(Encoding.Unicode.GetBytes(message)));
+                        hasMore = frontend.ReceiveMore;       
                     }
+
+                    backend.SendMessage(zmqMessage);
                 }
             }
         }

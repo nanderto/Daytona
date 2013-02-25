@@ -93,7 +93,7 @@ namespace Daytona
             subscriber = context.CreateSocket(SocketType.SUB);
             subscriber.Connect("tcp://localhost:5555");
             subscriber.Subscribe(InRoute, Encoding.Unicode);
-           // subscriber.SubscribeAll();
+            //subscriber.SubscribeAll();
         }
 
         private void SetUpReceivers(ZmqContext context, string route)
@@ -116,39 +116,45 @@ namespace Daytona
         {
             while (true)
             {
-                string message = subscriber.Receive(Encoding.Unicode);
-                     //var zmqmessage=  subscriber.ReceiveMessage();
-                     //var message = zmqmessage.;
-
-                if (message != null)
+                //string message = subscriber.Receive(Encoding.Unicode);
+                var zmqmessage = subscriber.ReceiveMessage();
+                var frameContents = zmqmessage.Select(f => Encoding.Unicode.GetString(f.Buffer)).ToList();
+                                   //var message = zmqmessage.;
+                var Address = frameContents[0];
+                if (frameContents.Count > 1)
                 {
-                    if (string.IsNullOrEmpty(OutRoute))
+                    var message = frameContents[1];
+
+                    if (message != null)
                     {
-                        object[] Params = new object[2];
-                        Params[0] = message;
-                        Params[1] = InRoute;
-                        Workload.DynamicInvoke(Params);
-                    }
-                    else
-                    {
-                        if (PropertyBag != null)
+                        if (string.IsNullOrEmpty(OutRoute))
                         {
-                            object[] Params = new object[5];
+                            object[] Params = new object[2];
                             Params[0] = message;
                             Params[1] = InRoute;
-                            Params[2] = OutRoute;
-                            Params[3] = OutputChannel;
-                            Params[4] = this;
                             Workload.DynamicInvoke(Params);
                         }
                         else
                         {
-                            object[] Params = new object[4];
-                            Params[0] = message;
-                            Params[1] = InRoute;
-                            Params[2] = OutRoute;
-                            Params[3] = OutputChannel;
-                            Workload.DynamicInvoke(Params);
+                            if (PropertyBag != null)
+                            {
+                                object[] Params = new object[5];
+                                Params[0] = message;
+                                Params[1] = InRoute;
+                                Params[2] = OutRoute;
+                                Params[3] = OutputChannel;
+                                Params[4] = this;
+                                Workload.DynamicInvoke(Params);
+                            }
+                            else
+                            {
+                                object[] Params = new object[4];
+                                Params[0] = message;
+                                Params[1] = InRoute;
+                                Params[2] = OutRoute;
+                                Params[3] = OutputChannel;
+                                Workload.DynamicInvoke(Params);
+                            }
                         }
                     }
                 }
