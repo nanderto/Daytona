@@ -10,9 +10,11 @@ namespace Daytona
     public class Actor : IDisposable
     {
         private ZmqContext context;
+        private IPayload payload;
         private ZmqSocket subscriber;
         private ZmqSocket OutputChannel;
         private bool disposed;
+        private ISerializer serializer;
         public string InRoute { get; set; }
         public string OutRoute { get; set; }
         public Delegate Workload { get; set; }
@@ -66,6 +68,19 @@ namespace Daytona
         /// the Actor and data contained within the Actor</param>
         public Actor(ZmqContext context, string inRoute, string outRoute, Action<string, string, string, ZmqSocket, Actor> workload)
         {
+            this.context = context;
+            this.InRoute = inRoute;
+            this.OutRoute = outRoute;
+            this.Workload = workload;
+            this.PropertyBag = new Dictionary<string, string>();
+            SetUpReceivers(context, inRoute);
+            SetUpOutputChannel(this.context);
+        }
+
+        public Actor(ZmqContext context, string inRoute, string outRoute, IPayload payload, ISerializer serializer, Action<IPayload, string, string, ZmqSocket, Actor> workload)
+        {
+            this.serializer = serializer;
+            this.payload = payload;
             this.context = context;
             this.InRoute = inRoute;
             this.OutRoute = outRoute;
@@ -161,6 +176,52 @@ namespace Daytona
             }
         }
 
+        public void Start<T>() where T : IPayload
+        {
+            while (true)
+            {
+                string address = string.Empty;
+                ZmqMessage zmqmessage = null;
+                T message = this.ReceiveMessage<T>(subscriber, out zmqmessage, out address, this.serializer);
+
+                object[] Params = new object[5];
+                Params[0] = message;
+                Params[1] = address;
+                Params[2] = OutRoute;
+                Params[3] = OutputChannel;
+                Params[4] = this;
+                Workload.DynamicInvoke(Params);
+            }
+        }
+
+        private T ReceiveMessage<T>(ZmqSocket Subscriber, out ZmqMessage zmqMessage, out string address, ISerializer serializer)
+        {
+            T result = default(T);
+            ZmqMessage zmqOut = new ZmqMessage();
+            bool hasMore = true;
+            string message = "";
+            address = string.Empty;
+            int i = 0;
+            while (hasMore)
+            {
+                message = Subscriber.Receive(Encoding.Unicode);
+                if (i == 0)
+                {
+                    address = message;
+                }
+                if (i == 1)
+                {
+                    result = (T)serializer.Deserializer<T>(message);
+                }
+
+                i++;
+                zmqOut.Append(new Frame(Encoding.Unicode.GetBytes(message)));
+                hasMore = Subscriber.ReceiveMore;
+            }
+
+            zmqMessage = zmqOut;
+            return result;
+        }
         /// <summary>
         /// Create and start a new actor by invoking the Lambda registered with the name provided. THis new ctor is 
         /// created on its own thread
