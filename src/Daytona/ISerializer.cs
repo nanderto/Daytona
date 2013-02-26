@@ -7,7 +7,10 @@ namespace Daytona
 {
     public interface ISerializer
     {
-        byte[] GetBuffer<T>(Encoding encoding, T message);
-        T Deserializer<T>(string input);
+        byte[] GetBuffer<T>(T message);
+
+        T Deserializer<T>(byte[] input);
+
+        string GetString(byte[] buffer);
     }
 }

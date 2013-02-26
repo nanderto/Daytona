@@ -77,10 +77,9 @@ namespace Daytona
             SetUpOutputChannel(this.context);
         }
 
-        public Actor(ZmqContext context, string inRoute, string outRoute, IPayload payload, ISerializer serializer, Action<IPayload, string, string, ZmqSocket, Actor> workload)
+        public Actor(ZmqContext context, string inRoute, string outRoute, ISerializer serializer, Action<IPayload, string, string, ZmqSocket, Actor> workload)
         {
             this.serializer = serializer;
-            this.payload = payload;
             this.context = context;
             this.InRoute = inRoute;
             this.OutRoute = outRoute;
@@ -184,13 +183,16 @@ namespace Daytona
                 ZmqMessage zmqmessage = null;
                 T message = this.ReceiveMessage<T>(subscriber, out zmqmessage, out address, this.serializer);
 
-                object[] Params = new object[5];
-                Params[0] = message;
-                Params[1] = address;
-                Params[2] = OutRoute;
-                Params[3] = OutputChannel;
-                Params[4] = this;
-                Workload.DynamicInvoke(Params);
+                if (message != null)
+                {
+                    object[] Params = new object[5];
+                    Params[0] = message;
+                    Params[1] = address;
+                    Params[2] = OutRoute;
+                    Params[3] = OutputChannel;
+                    Params[4] = this;
+                    Workload.DynamicInvoke(Params);
+                }
             }
         }
 
@@ -202,16 +204,18 @@ namespace Daytona
             string message = "";
             address = string.Empty;
             int i = 0;
+            int size = 0;
+            byte[] buffer;
             while (hasMore)
             {
-                message = Subscriber.Receive(Encoding.Unicode);
+                Frame frame = Subscriber.ReceiveFrame();
                 if (i == 0)
                 {
-                    address = message;
+                    address = serializer.GetString(frame.Buffer);
                 }
                 if (i == 1)
                 {
-                    result = (T)serializer.Deserializer<T>(message);
+                    result = (T)serializer.Deserializer<T>(frame.Buffer);
                 }
 
                 i++;
@@ -269,6 +273,18 @@ namespace Daytona
                 using (var actor = new Actor(this.context, inRoute, outRoute, workload))
                 {
                     actor.Start();
+                }
+            });
+            return this;
+        }
+
+        public Actor RegisterActor<T>(string name, string inRoute, string outRoute, ISerializer serializer, Action<IPayload, string, string, ZmqSocket, Actor> workload) where T : IPayload
+        {
+            ActorTypes.Add(name, () =>
+            {
+                using (var actor = new Actor(this.context, inRoute, outRoute, serializer, workload))
+                {
+                    actor.Start<T>();
                 }
             });
             return this;

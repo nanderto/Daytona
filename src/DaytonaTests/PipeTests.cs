@@ -58,7 +58,7 @@ namespace DaytonaTests
                 {
                     using (var sub = GetConnectedSubscribeSocket(context))
                     {
-                        ISerializer serializer = new Serializer();
+                        ISerializer serializer = new Serializer(Encoding.Unicode);
                         Customer cust = new Customer();
                         cust.Firstname = "John";
                         cust.Lastname = "Wilson";
@@ -76,6 +76,44 @@ namespace DaytonaTests
             }
         }
 
+        [TestMethod]
+        public void SendOneMessageOfTypeConfigureActorToProcess()
+        {
+            string input = string.Empty;
+            string expectedAddress = "XXXXxxxx";
+            string message = string.Empty;
+
+            using (var context = ZmqContext.Create())
+            {
+                var pipe = new Pipe();
+                pipe.Start(context);
+                using (var pub = GetConnectedPublishSocket(context))
+                {
+                    using (var sub = GetConnectedSubscribeSocket(context))
+                    {
+                        ISerializer serializer = new Serializer(Encoding.Unicode);
+                        Customer cust = new Customer();
+                        cust.Firstname = "John";
+                        cust.Lastname = "Wilson";
+
+                        SendOneMessageOfType<Customer>(expectedAddress, cust, serializer, pub);
+
+                        using (var actor = new Actor(context))
+                        {
+                            actor.RegisterActor<Customer>("Basic", expectedAddress, "OutRoute", serializer, (Message, InRoute, OutRoute, Socket, Actor) =>
+                                {
+                                    var customer = (Customer)Message;
+                                    Assert.AreEqual(cust.Firstname, customer.Firstname);
+                                    Console.WriteLine(Message);
+                                });
+                            actor.StartAllActors();
+                        }
+
+                    }
+                }
+                pipe.Exit();
+            }
+        }
         private T ReceiveMessageofType<T>(ZmqSocket sub)
         {
             string address = string.Empty;
@@ -87,7 +125,7 @@ namespace DaytonaTests
         {
             ZmqMessage zmqMessage = new ZmqMessage();
             zmqMessage.Append(new Frame(Encoding.Unicode.GetBytes(Address)));
-            zmqMessage.Append(new Frame(serializer.GetBuffer(Encoding.Unicode, message)));
+            zmqMessage.Append(new Frame(serializer.GetBuffer(message)));
             publisher.SendMessage(zmqMessage);
         }
 
@@ -102,7 +140,7 @@ namespace DaytonaTests
             int i = 0;
             while (hasMore)
             {
-                message = Subscriber.Receive(Encoding.Unicode);
+                Frame frame = Subscriber.ReceiveFrame();
                 if (i == 0)
                 {
                     address = message;
