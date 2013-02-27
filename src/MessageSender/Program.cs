@@ -1,8 +1,10 @@
-﻿using System;
+﻿using Daytona;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using TestHelpers;
 using ZeroMQ;
 
 namespace MessageSender
@@ -24,9 +26,21 @@ namespace MessageSender
 
             using (var context = ZmqContext.Create())
             {
-                string Address = "11111 ";
-                string message = "Hi johnny was here";
-                RunWeatherWithFrames(context, Address, message);
+                //string Address = "11111 ";
+                //string message = "Hi johnny was here";
+                var customer = new Customer()
+                {
+                    Firstname = "Willie",
+                    Lastname = "Loman"
+                };
+
+                ISerializer serializer = new Serializer(Encoding.Unicode);
+                using (ZmqSocket publisher = context.CreateSocket(SocketType.PUB))
+                {
+                    publisher.Connect("tcp://localhost:5556");
+                    Helper.SendOneMessageOfType<Customer>("XXXX", customer, serializer, publisher);
+                }
+                //RunWeatherWithFrames(context, Address, message);
                 //RunWeatherDataPublisher(context);
             }
         }

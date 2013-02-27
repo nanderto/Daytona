@@ -58,6 +58,10 @@
       <Project>{626cb1e5-251f-4a23-8d7d-c3a7b35f67d2}</Project>
       <Name>Daytona</Name>
     </ProjectReference>
+    <ProjectReference Include="..\TestHelpers\TestHelpers.csproj">
+      <Project>{9e8d7d0c-488e-49c9-b441-7250fa62bff6}</Project>
+      <Name>TestHelpers</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="$(SolutionDir)\.nuget\nuget.targets" />

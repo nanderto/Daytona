@@ -28,12 +28,18 @@ namespace Samples
                 RunPipe(context);
                 using (var actor = new Actor(context))
                 {
-                    actor.RegisterActor("Basic", "85308", (Message, InRoute) =>
-                        {
-                            Console.WriteLine(Message);
-                        });
+                    //actor.RegisterActor("Basic", "85308", (Message, InRoute) =>
+                    //    {
+                    //        Console.WriteLine(Message);
+                    //    });
+                    //actor.StartAllActors();
+                    actor.RegisterActor<Customer>("Basic", expectedAddress, "OutRoute", serializer, (Message, InRoute, OutRoute, Socket, Actor) =>
+                    {
+                        var customer = (Customer)Message;
+                        Assert.AreEqual(cust.Firstname, customer.Firstname);
+                        Console.WriteLine(Message);
+                    });
                     actor.StartAllActors();
-                
 
                     while (input != "exit")
                     {
