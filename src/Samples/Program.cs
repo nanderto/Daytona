@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using TestHelpers;
 using ZeroMQ;
 
 namespace Samples
@@ -33,11 +34,12 @@ namespace Samples
                     //        Console.WriteLine(Message);
                     //    });
                     //actor.StartAllActors();
+                    var serializer = new Serializer(Encoding.Unicode);
+                    string expectedAddress = "XXXX";
                     actor.RegisterActor<Customer>("Basic", expectedAddress, "OutRoute", serializer, (Message, InRoute, OutRoute, Socket, Actor) =>
                     {
                         var customer = (Customer)Message;
-                        Assert.AreEqual(cust.Firstname, customer.Firstname);
-                        Console.WriteLine(Message);
+                        Console.WriteLine(customer.Firstname + " " + customer.Lastname);
                     });
                     actor.StartAllActors();
 

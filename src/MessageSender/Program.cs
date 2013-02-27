@@ -28,21 +28,29 @@ namespace MessageSender
             {
                 //string Address = "11111 ";
                 //string message = "Hi johnny was here";
-                var customer = new Customer()
-                {
-                    Firstname = "Willie",
-                    Lastname = "Loman"
-                };
+                
 
-                ISerializer serializer = new Serializer(Encoding.Unicode);
-                using (ZmqSocket publisher = context.CreateSocket(SocketType.PUB))
+                for (int i = 0; i < 10000000; i++)
                 {
-                    publisher.Connect("tcp://localhost:5556");
-                    Helper.SendOneMessageOfType<Customer>("XXXX", customer, serializer, publisher);
+                    var customer = new Customer()
+                    {
+                        Firstname = "Willie",
+                        Lastname = "Loman" + i.ToString()
+                    };
+
+                    ISerializer serializer = new Serializer(Encoding.Unicode);
+                    using (ZmqSocket publisher = context.CreateSocket(SocketType.PUB))
+                    {
+                        publisher.Connect("tcp://localhost:5556");
+                        Helper.SendOneMessageOfType<Customer>("XXXX", customer, serializer, publisher);
+                    }
                 }
                 //RunWeatherWithFrames(context, Address, message);
                 //RunWeatherDataPublisher(context);
             }
+
+            Console.WriteLine("=>");
+            input = Console.ReadLine();
         }
 
         private static void RunWeatherWithFrames(ZmqContext context, string Address, string message)

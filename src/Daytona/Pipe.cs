@@ -54,6 +54,7 @@ namespace Daytona
                 //var device = new ZeroMQ.Devices.ForwarderDevice(this.Context, "tcp://*:5556", "tcp://*:5555", DeviceMode.Blocking);
                 //device.Start();
                 //  Shunt messages out to our own subscribers
+                int i = 0;
                 try
                 {
                     while (true)
@@ -63,11 +64,12 @@ namespace Daytona
                         while (hasMore)
                         {
                             string message = frontend.Receive(Encoding.Unicode);
-
+                            message = message + i.ToString();
+                            Console.WriteLine(message);
                             zmqMessage.Append(new Frame(Encoding.Unicode.GetBytes(message)));
                             hasMore = frontend.ReceiveMore;
                         }
-
+                        i++;
                         backend.SendMessage(zmqMessage);
                         cancellationToken.ThrowIfCancellationRequested();
                     }
@@ -93,6 +95,7 @@ namespace Daytona
                 //var device = new ZeroMQ.Devices.ForwarderDevice(this.Context, "tcp://*:5556", "tcp://*:5555", DeviceMode.Blocking);
                 //device.Start();
                 //  Shunt messages out to our own subscribers
+                int i = 0;
                 while (true)
                 {
                     bool hasMore = true;
@@ -101,6 +104,7 @@ namespace Daytona
                     {
                         string message = frontend.Receive(Encoding.Unicode);
                         
+                        Console.WriteLine(i.ToString());
                         zmqMessage.Append(new Frame(Encoding.Unicode.GetBytes(message)));
                         hasMore = frontend.ReceiveMore;       
                     }
