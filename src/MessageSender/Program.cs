@@ -26,31 +26,39 @@ namespace MessageSender
 
             using (var context = ZmqContext.Create())
             {
-                //string Address = "11111 ";
-                //string message = "Hi johnny was here";
-                
-
-                for (int i = 0; i < 10000000; i++)
+                ISerializer serializer = new Serializer(Encoding.Unicode);
+                using (ZmqSocket publisher = context.CreateSocket(SocketType.PUB))
                 {
-                    var customer = new Customer()
-                    {
-                        Firstname = "Willie",
-                        Lastname = "Loman" + i.ToString()
-                    };
-
-                    ISerializer serializer = new Serializer(Encoding.Unicode);
-                    using (ZmqSocket publisher = context.CreateSocket(SocketType.PUB))
-                    {
-                        publisher.Connect("tcp://localhost:5556");
-                        Helper.SendOneMessageOfType<Customer>("XXXX", customer, serializer, publisher);
-                    }
+                    publisher.Connect("tcp://localhost:5556");
+                    Helper.SendOneSimpleMessage("XXXXxxxx", "stop", publisher);
                 }
+
+                //SendCustomers(context);
                 //RunWeatherWithFrames(context, Address, message);
                 //RunWeatherDataPublisher(context);
             }
 
             Console.WriteLine("=>");
             input = Console.ReadLine();
+        }
+
+        private static void SendCustomers(ZmqContext context)
+        {
+            for (int i = 0; i < 10000000; i++)
+            {
+                var customer = new Customer()
+                {
+                    Firstname = "Willie",
+                    Lastname = "Loman" + i.ToString()
+                };
+
+                ISerializer serializer = new Serializer(Encoding.Unicode);
+                using (ZmqSocket publisher = context.CreateSocket(SocketType.PUB))
+                {
+                    publisher.Connect("tcp://localhost:5556");
+                    Helper.SendOneMessageOfType<Customer>("XXXX", customer, serializer, publisher);
+                }
+            }
         }
 
         private static void RunWeatherWithFrames(ZmqContext context, string Address, string message)

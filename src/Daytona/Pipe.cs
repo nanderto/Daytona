@@ -64,8 +64,8 @@ namespace Daytona
                         while (hasMore)
                         {
                             string message = frontend.Receive(Encoding.Unicode);
-                            message = message + i.ToString();
-                            Console.WriteLine(message);
+                            //message = message + i.ToString();
+                            //Console.WriteLine(message);
                             zmqMessage.Append(new Frame(Encoding.Unicode.GetBytes(message)));
                             hasMore = frontend.ReceiveMore;
                         }

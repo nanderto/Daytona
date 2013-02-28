@@ -12,5 +12,9 @@ namespace Daytona
         T Deserializer<T>(byte[] input);
 
         string GetString(byte[] buffer);
+
+        //bool TryDeserializer<T>(byte[] inputBuffer, out T result);
+
+        T Deserializer<T>(string input);
     }
 }

@@ -134,9 +134,10 @@ namespace Daytona
                 var zmqmessage = subscriber.ReceiveMessage();
                 var frameContents = zmqmessage.Select(f => Encoding.Unicode.GetString(f.Buffer)).ToList();
                                    //var message = zmqmessage.;
-                var Address = frameContents[0];
+               
                 if (frameContents.Count > 1)
                 {
+                    var Address = frameContents[0];
                     var message = frameContents[1];
 
                     if (message != null)
@@ -177,14 +178,16 @@ namespace Daytona
 
         public void Start<T>() where T : IPayload
         {
-            while (true)
+            bool Stop = false;
+            while (Stop == false)
             {
                 string address = string.Empty;
                 ZmqMessage zmqmessage = null;
-                T message = this.ReceiveMessage<T>(subscriber, out zmqmessage, out address, this.serializer);
+                T message = this.ReceiveMessage<T>(subscriber, out zmqmessage, out address, out Stop, this.serializer);
 
                 if (message != null)
                 {
+
                     object[] Params = new object[5];
                     Params[0] = message;
                     Params[1] = address;
@@ -196,16 +199,14 @@ namespace Daytona
             }
         }
 
-        private T ReceiveMessage<T>(ZmqSocket Subscriber, out ZmqMessage zmqMessage, out string address, ISerializer serializer)
+        private T ReceiveMessage<T>(ZmqSocket Subscriber, out ZmqMessage zmqMessage, out string address, out bool Stop, ISerializer serializer)
         {
+            Stop = false;
             T result = default(T);
             ZmqMessage zmqOut = new ZmqMessage();
             bool hasMore = true;
-            string message = "";
             address = string.Empty;
             int i = 0;
-            int size = 0;
-            byte[] buffer;
             while (hasMore)
             {
                 Frame frame = Subscriber.ReceiveFrame();
@@ -214,12 +215,21 @@ namespace Daytona
                     address = serializer.GetString(frame.Buffer);
                 }
                 if (i == 1)
-                {
-                    result = (T)serializer.Deserializer<T>(frame.Buffer);
+                {                  
+                    string stop = serializer.GetString(frame.Buffer);
+                    if (stop.ToLower() == "stop")
+                    {
+                        Console.WriteLine("received stop");
+                        Stop = true;
+                    }
+                    else 
+                    {
+                        result = serializer.Deserializer<T>(stop);
+                    }                                                  
                 }
 
                 i++;
-                zmqOut.Append(new Frame(Encoding.Unicode.GetBytes(message)));
+                zmqOut.Append(new Frame(frame.Buffer));
                 hasMore = Subscriber.ReceiveMore;
             }
 

@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Daytona;
 using Newtonsoft.Json;
+using TestHelpers;
 
 namespace DaytonaTests
 {
@@ -114,6 +115,63 @@ namespace DaytonaTests
                 pipe.Exit();
             }
         }
+
+        [TestMethod]
+        public void SendFiveMessageOfTypeConfigureActorToProcess()
+        {
+            string input = string.Empty;
+            string expectedAddress = "XXXXxxxx";
+            string message = string.Empty;
+
+            using (var context = ZmqContext.Create())
+            {
+                var pipe = new Pipe();
+                pipe.Start(context);
+                using (var pub = GetConnectedPublishSocket(context))
+                {
+                    using (var sub = GetConnectedSubscribeSocket(context))
+                    {
+                        using (var actor = new Actor(context))
+                        {
+                            ISerializer serializer = new Serializer(Encoding.Unicode);
+                            actor.RegisterActor<Customer>("Basic", expectedAddress, "OutRoute", serializer, (Message, InRoute, OutRoute, Socket, Actor) =>
+                            {
+                                var customer = (Customer)Message;
+                                if (!Actor.PropertyBag.ContainsKey("Count"))
+                                {
+                                    Actor.PropertyBag.Add("Count", "0");
+                                }
+                                var count = int.Parse(Actor.PropertyBag["Count"]);
+                                count++;
+                                Actor.PropertyBag["Count"] = count.ToString();
+                                    
+                                //Assert.AreEqual(cust.Firstname, customer.Firstname);
+                                Helper.SendOneSimpleMessage("log", customer.Firstname + " " + customer.Lastname + " " + " Count " + Actor.PropertyBag["Count"], Socket);
+                            }).RegisterActor("Logger", "log", (Message, InRoute) =>
+                                {
+                                    Helper.Writeline(Message);
+                                });
+                            actor.StartAllActors();
+                        }
+                        Task.Delay(5000);
+
+                        for (int i = 0; i < 5; i++)
+                        {
+                            ISerializer serializer = new Serializer(Encoding.Unicode);
+                            Customer cust = new Customer();
+                            cust.Firstname = "John" + i.ToString();
+                            cust.Lastname = "Wilson" + i.ToString();
+
+                            SendOneMessageOfType<Customer>(expectedAddress, cust, serializer, pub);
+                        }
+
+                        SendOneSimpleMessage(expectedAddress, "Stop", pub);
+                        Task.Delay(5000);
+                    }
+                }
+                pipe.Exit();
+            }
+        }
         private T ReceiveMessageofType<T>(ZmqSocket sub)
         {
             string address = string.Empty;
@@ -143,11 +201,11 @@ namespace DaytonaTests
                 Frame frame = Subscriber.ReceiveFrame();
                 if (i == 0)
                 {
-                    address = message;
+                    address = Encoding.Unicode.GetString(frame.Buffer);
                 }
                 if (i == 1)
                 {
-                    result = (T)JsonConvert.DeserializeObject<T>(message);
+                    result = (T)JsonConvert.DeserializeObject<T>(Encoding.Unicode.GetString(frame.Buffer));
                 }
 
                 i++;
@@ -162,7 +220,6 @@ namespace DaytonaTests
         private static ZmqMessage ReceiveMessage(ZmqSocket Subscriber)
         {
             var zmqMessage = new ZmqMessage();
-
             bool hasMore = true;
             string message = "";
              

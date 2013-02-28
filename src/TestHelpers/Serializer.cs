@@ -35,5 +35,24 @@ namespace TestHelpers
         {
             return encoding.GetString(buffer);
         }
+
+        public T Deserializer<T>(string input)
+        {
+            return JsonConvert.DeserializeObject<T>(input);
+        }
+
+        //public bool TryDeserializer<T>(byte[] inputBuffer, out T result)
+        //{
+        //    try
+        //    {
+        //        result = Deserializer<T>(inputBuffer);
+        //    }
+        //    catch
+        //    {
+        //        result = default(T);
+        //        return false;
+        //    }
+        //    return false;
+        //}
     }
 }
