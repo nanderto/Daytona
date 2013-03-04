@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Daytona;
 using Newtonsoft.Json;
 using TestHelpers;
+using System.Threading;
 
 namespace DaytonaTests
 {
@@ -44,7 +45,7 @@ namespace DaytonaTests
             }
         }
 
-        [TestMethod]
+        [TestMethod, TestCategory("IntegrationZMQ")]
         public void SendOneMessageOfType()
         {
             string input = string.Empty;
@@ -77,46 +78,67 @@ namespace DaytonaTests
             }
         }
 
-        [TestMethod]
+        [TestMethod, TestCategory("IntegrationZMQ")]
         public void SendOneMessageOfTypeConfigureActorToProcess()
         {
-            string input = string.Empty;
-            string expectedAddress = "XXXXxxxx";
-            string message = string.Empty;
-
-            using (var context = ZmqContext.Create())
+            using (var pipeContext = ZmqContext.Create())
             {
                 var pipe = new Pipe();
-                pipe.Start(context);
-                using (var pub = GetConnectedPublishSocket(context))
-                {
-                    using (var sub = GetConnectedSubscribeSocket(context))
+                var task2 = Task.Run(() =>
                     {
-                        ISerializer serializer = new Serializer(Encoding.Unicode);
-                        Customer cust = new Customer();
-                        cust.Firstname = "John";
-                        cust.Lastname = "Wilson";
+                        pipe.Start(pipeContext);
+                    });
 
-                        SendOneMessageOfType<Customer>(expectedAddress, cust, serializer, pub);
+                var task = Task.Run(() =>
+                    {
+                        string input = string.Empty;
+                        string expectedAddress = "XXXXxxxx";
+                        string message = string.Empty;
 
-                        using (var actor = new Actor(context))
+                        using (var context = ZmqContext.Create())
                         {
-                            actor.RegisterActor<Customer>("Basic", expectedAddress, "OutRoute", serializer, (Message, InRoute, OutRoute, Socket, Actor) =>
-                                {
-                                    var customer = (Customer)Message;
-                                    Assert.AreEqual(cust.Firstname, customer.Firstname);
-                                    Console.WriteLine(Message);
-                                });
-                            actor.StartAllActors();
-                        }
 
-                    }
-                }
+                            using (var pub = GetConnectedPublishSocket(context))
+                            {
+                                //using (var sub = GetConnectedSubscribeSocket(context))
+                                //{
+                                ISerializer serializer = new Serializer(Encoding.Unicode);
+                                Customer cust = new Customer();
+                                cust.Firstname = "Johnx";
+                                cust.Lastname = "Wilson";
+
+                                using (var actor = new Actor(context))
+                                {
+                                    actor.RegisterActor<Customer>("Basic", expectedAddress, "OutRoute", serializer, (Message, InRoute, OutRoute, Socket, Actor) =>
+                                        {
+                                            var customer = (Customer)Message;
+                                            Assert.AreEqual(cust.Firstname, customer.Firstname);
+                                            Helper.Writeline(customer.Firstname, @"c:\dev\xx.log");
+                                        });
+                                    actor.StartAllActors();
+
+                                    Thread.Sleep(0);
+                                }
+
+                                for (int i = 0; i < 10; i++)
+                                {
+                                    cust.Firstname = i.ToString();
+                                    SendOneMessageOfType<Customer>(expectedAddress, cust, serializer, pub);
+                                    Thread.Sleep(0);
+                                }
+                                SendOneSimpleMessage(expectedAddress, "stop", pub);
+                                Thread.Sleep(0);
+                            }
+                            //pipe.Exit();
+                            //Thread.Sleep(0);
+                        }
+                    });
+                Task.WaitAll(task, task2);
                 pipe.Exit();
             }
         }
 
-        [TestMethod]
+        [TestMethod, TestCategory("IntegrationZMQ")]
         public void SendFiveMessageOfTypeConfigureActorToProcess()
         {
             string input = string.Empty;

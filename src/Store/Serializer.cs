@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace TestHelpers
+namespace Daytona.Store
 {
     public class Serializer : ISerializer
     {
@@ -40,20 +40,6 @@ namespace TestHelpers
         {
             return JsonConvert.DeserializeObject<T>(input);
         }
-
-        //public bool TryDeserializer<T>(byte[] inputBuffer, out T result)
-        //{
-        //    try
-        //    {
-        //        result = Deserializer<T>(inputBuffer);
-        //    }
-        //    catch
-        //    {
-        //        result = default(T);
-        //        return false;
-        //    }
-        //    return false;
-        //}
 
         public Encoding Encoding
         {

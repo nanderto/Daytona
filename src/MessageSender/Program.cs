@@ -24,40 +24,56 @@ namespace MessageSender
             var input = string.Empty;
             Console.CancelKeyPress += new ConsoleCancelEventHandler(ConsoleCancelHandler);
 
-            using (var context = ZmqContext.Create())
+            var pipe = new Pipe();
+            using (var pipeContext = ZmqContext.Create())
             {
-                ISerializer serializer = new Serializer(Encoding.Unicode);
-                using (ZmqSocket publisher = context.CreateSocket(SocketType.PUB))
-                {
-                    publisher.Connect("tcp://localhost:5556");
-                    Helper.SendOneSimpleMessage("XXXXxxxx", "stop", publisher);
-                }
-
-                //SendCustomers(context);
-                //RunWeatherWithFrames(context, Address, message);
-                //RunWeatherDataPublisher(context);
+               // pipe = new Pipe();
+                pipe.Start(pipeContext);
+                
+                Console.WriteLine("=>");
+                input = Console.ReadLine();
+                pipe.Exit();
             }
+            //using (var context = ZmqContext.Create())
+            //{
+            //    SendCustomers(context);
 
-            Console.WriteLine("=>");
-            input = Console.ReadLine();
+            //    //Console.WriteLine("=>");
+            //    //input = Console.ReadLine();
+
+                
+            //    //ISerializer serializer = new Serializer(Encoding.Unicode);
+            //    //using (ZmqSocket publisher = context.CreateSocket(SocketType.PUB))
+            //    //{
+            //    //    publisher.Connect("tcp://localhost:5556");
+            //    //    Helper.SendOneSimpleMessage("XXXX", "stop", publisher);
+            //    //}
+
+            //    //SendCustomers(context);
+            //    //RunWeatherWithFrames(context, Address, message);
+            //    //RunWeatherDataPublisher(context);
+            //}
+
+            
         }
 
         private static void SendCustomers(ZmqContext context)
         {
-            for (int i = 0; i < 10000000; i++)
+            ISerializer serializer = new Serializer(Encoding.Unicode);
+            using (ZmqSocket publisher = context.CreateSocket(SocketType.PUB))
             {
-                var customer = new Customer()
+                publisher.Connect("tcp://localhost:5556");
+                for (int i = 0; i < 10000; i++)
                 {
-                    Firstname = "Willie",
-                    Lastname = "Loman" + i.ToString()
-                };
-
-                ISerializer serializer = new Serializer(Encoding.Unicode);
-                using (ZmqSocket publisher = context.CreateSocket(SocketType.PUB))
-                {
-                    publisher.Connect("tcp://localhost:5556");
+                    var customer = new Customer()
+                    {
+                        Firstname = "Willie",
+                        Lastname = "Loman" + i.ToString()
+                    };
                     Helper.SendOneMessageOfType<Customer>("XXXX", customer, serializer, publisher);
+                    Helper.Writeline("sent:" + i.ToString(), @"c:\dev\sender.log");
                 }
+                Helper.SendOneSimpleMessage("XXXX", "stop", publisher);
             }
         }
 

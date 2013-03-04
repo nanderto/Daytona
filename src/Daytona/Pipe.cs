@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -19,11 +20,11 @@ namespace Daytona
 
         }
 
-        public Pipe(ZmqContext context)
-        {
-            this.Context = context;
-            Setup();
-        }
+        //public Pipe(ZmqContext context)
+        //{
+        //    this.Context = context;
+        //    Setup();
+        //}
 
         public void Start(ZmqContext context)
         {
@@ -63,55 +64,67 @@ namespace Daytona
                         var zmqMessage = new ZmqMessage();
                         while (hasMore)
                         {
-                            string message = frontend.Receive(Encoding.Unicode);
+                            Frame frame = frontend.ReceiveFrame();
+                            //string message = frontend.Receive(Encoding.Unicode);
                             //message = message + i.ToString();
                             //Console.WriteLine(message);
-                            zmqMessage.Append(new Frame(Encoding.Unicode.GetBytes(message)));
+
+                            zmqMessage.Append(new Frame(frame.Buffer));
                             hasMore = frontend.ReceiveMore;
                         }
                         i++;
+                        Writeline(i.ToString());
                         backend.SendMessage(zmqMessage);
                         cancellationToken.ThrowIfCancellationRequested();
                     }
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
-                    //cancelled gracefully exit
+                    Writeline("cancelled gracefully exit " + ex.Message);
                 }
             }
         }
 
-        void Setup()
-        {
+        //void Setup()
+        //{
 
-            using (ZmqSocket frontend = this.Context.CreateSocket(SocketType.SUB), backend = this.Context.CreateSocket(SocketType.PUB))
-            {
-                frontend.Bind("tcp://*:5556");
-                frontend.SubscribeAll();
+        //    using (ZmqSocket frontend = this.Context.CreateSocket(SocketType.SUB), backend = this.Context.CreateSocket(SocketType.PUB))
+        //    {
+        //        frontend.Bind("tcp://*:5556");
+        //        frontend.SubscribeAll();
 
-                //  This is our public endpoint for subscribers
-                backend.Bind("tcp://*:5555"); // i use local to be able to run the example, this could be the public ip instead eg. tcp://10.1.1.0:8100
+        //        //  This is our public endpoint for subscribers
+        //        backend.Bind("tcp://*:5555"); // i use local to be able to run the example, this could be the public ip instead eg. tcp://10.1.1.0:8100
 
-                //var device = new ZeroMQ.Devices.ForwarderDevice(this.Context, "tcp://*:5556", "tcp://*:5555", DeviceMode.Blocking);
-                //device.Start();
-                //  Shunt messages out to our own subscribers
-                int i = 0;
-                while (true)
-                {
-                    bool hasMore = true;
-                    var zmqMessage = new ZmqMessage();
-                    while (hasMore)
-                    {
-                        string message = frontend.Receive(Encoding.Unicode);
+        //        //var device = new ZeroMQ.Devices.ForwarderDevice(this.Context, "tcp://*:5556", "tcp://*:5555", DeviceMode.Blocking);
+        //        //device.Start();
+        //        //  Shunt messages out to our own subscribers
+        //        int i = 0;
+        //        while (true)
+        //        {
+        //            bool hasMore = true;
+        //            var zmqMessage = new ZmqMessage();
+        //            while (hasMore)
+        //            {
+        //                string message = frontend.Receive(Encoding.Unicode);
                         
-                        Console.WriteLine(i.ToString());
-                        zmqMessage.Append(new Frame(Encoding.Unicode.GetBytes(message)));
-                        hasMore = frontend.ReceiveMore;       
-                    }
+        //                Writeline(i.ToString());
+        //                zmqMessage.Append(new Frame(Encoding.Unicode.GetBytes(message)));
+        //                hasMore = frontend.ReceiveMore;       
+        //            }
 
-                    backend.SendMessage(zmqMessage);
-                }
-            }
+        //            backend.SendMessage(zmqMessage);
+        //        }
+        //    }
+        //}
+
+        public static void Writeline(string line)
+        {
+            FileInfo fi = new FileInfo(@"c:\dev\Pipe.log");
+            var stream = fi.AppendText();
+            stream.WriteLine(line);
+            stream.Flush();
+            stream.Close();
         }
     }
 }

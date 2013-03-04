@@ -39,7 +39,12 @@ namespace TestHelpers
 
         public static void Writeline(string line)
         {
-            FileInfo fi = new FileInfo(@"c:\dev\log.log");
+            Writeline(line, @"c:\dev\log.log");
+        }
+
+        public static void Writeline(string line, string path)
+        {
+            FileInfo fi = new FileInfo(path);
             var stream = fi.AppendText();
             stream.WriteLine(line);
             stream.Flush();

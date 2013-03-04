@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -12,12 +13,14 @@ namespace Daytona
         private ZmqContext context;
         private IPayload payload;
         private ZmqSocket subscriber;
-        private ZmqSocket OutputChannel;
+        public ZmqSocket OutputChannel;
         private bool disposed;
         private ISerializer serializer;
         public string InRoute { get; set; }
         public string OutRoute { get; set; }
         public Delegate Workload { get; set; }
+        public Delegate Callback { get; set; }
+        public Action<IPayload, string, ZmqSocket, Actor> ExecuteAction { get; set; }
         private Dictionary<string, Action> ActorTypes = new Dictionary<string, Action>();
 
         public Dictionary<string, string> PropertyBag { get; set; }
@@ -79,6 +82,19 @@ namespace Daytona
 
         public Actor(ZmqContext context, string inRoute, string outRoute, ISerializer serializer, Action<IPayload, string, string, ZmqSocket, Actor> workload)
         {
+            this.serializer = serializer;
+            this.context = context;
+            this.InRoute = inRoute;
+            this.OutRoute = outRoute;
+            this.Workload = workload;
+            this.PropertyBag = new Dictionary<string, string>();
+            SetUpReceivers(context, inRoute);
+            SetUpOutputChannel(this.context);
+        }
+
+        public Actor(ZmqContext context, string inRoute, string outRoute, ISerializer serializer, Action<IPayload, string, string, ZmqSocket, Actor> workload, Action<IPayload, string, ZmqSocket, Actor> executeAction, Func<IPayload, )
+        {
+            this.ExecuteAction = executeAction;
             this.serializer = serializer;
             this.context = context;
             this.InRoute = inRoute;
@@ -217,9 +233,10 @@ namespace Daytona
                 if (i == 1)
                 {                  
                     string stop = serializer.GetString(frame.Buffer);
+                    Writeline("Massage: " + stop);
                     if (stop.ToLower() == "stop")
                     {
-                        Console.WriteLine("received stop");
+                        Writeline("received stop");
                         Stop = true;
                     }
                     else 
@@ -227,7 +244,6 @@ namespace Daytona
                         result = serializer.Deserializer<T>(stop);
                     }                                                  
                 }
-
                 i++;
                 zmqOut.Append(new Frame(frame.Buffer));
                 hasMore = Subscriber.ReceiveMore;
@@ -300,6 +316,20 @@ namespace Daytona
             return this;
         }
 
+        public Actor RegisterActorAndReturnHandle<T>(string name, string inRoute, string outRoute, ISerializer serializer, Action<IPayload, string, string, ZmqSocket, Actor> workload, Action<IPayload, string, ZmqSocket, Actor> executeAction) where T : IPayload
+        {
+            Actor returnActor = null;
+            ActorTypes.Add(name, () =>
+            {
+                using (var actor = new Actor(this.context, inRoute, outRoute, serializer, workload, executeAction))
+                {
+                    returnActor = actor;
+                    //actor.Start<T>();
+                }
+            });
+            return returnActor;
+        }
+
         public Actor RegisterActor(string name, String route, Action<string, string> workload)
         {
             ActorTypes.Add(name, () =>
@@ -310,6 +340,28 @@ namespace Daytona
                 }
             });
             return this;
+        }
+
+        public void Execute<T>(T input)
+        {
+            this.ExecuteAction.DynamicInvoke(input);           
+        }
+
+        public static void SendOneMessageOfType<T>(string address, T message, ISerializer serializer, ZmqSocket socket) where T : IPayload
+        {
+            ZmqMessage zmqMessage = new ZmqMessage();
+            zmqMessage.Append(new Frame(serializer.Encoding.GetBytes(address)));
+            zmqMessage.Append(new Frame(serializer.GetBuffer(message)));
+            socket.SendMessage(zmqMessage);
+        }
+
+        public static void Writeline(string line)
+        {
+            FileInfo fi = new FileInfo(@"c:\dev\Actor.log");
+            var stream = fi.AppendText();
+            stream.WriteLine(line);
+            stream.Flush();
+            stream.Close();
         }
 
         public void Dispose()
@@ -338,7 +390,8 @@ namespace Daytona
                 // if we add them, they need to be released here.
             }
             disposed = true;
-        }        
+        }
+
     }
 
 
