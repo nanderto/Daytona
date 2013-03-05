@@ -15,7 +15,7 @@ namespace Daytona
         private ZmqSocket subscriber;
         public ZmqSocket OutputChannel;
         private bool disposed;
-        private ISerializer serializer;
+        public ISerializer serializer;
         public string InRoute { get; set; }
         public string OutRoute { get; set; }
         public Delegate Workload { get; set; }
@@ -92,7 +92,7 @@ namespace Daytona
             SetUpOutputChannel(this.context);
         }
 
-        public Actor(ZmqContext context, string inRoute, string outRoute, ISerializer serializer, Action<IPayload, string, string, ZmqSocket, Actor> workload, Action<IPayload, string, ZmqSocket, Actor> executeAction, Func<IPayload, )
+        public Actor(ZmqContext context, string inRoute, string outRoute, ISerializer serializer, Action<IPayload, string, string, ZmqSocket, Actor> workload, Action<IPayload, string, ZmqSocket, Actor> executeAction)
         {
             this.ExecuteAction = executeAction;
             this.serializer = serializer;
@@ -105,6 +105,14 @@ namespace Daytona
             SetUpOutputChannel(this.context);
         }
 
+        public Actor(ZmqContext context, string outRoute, ISerializer serializer)
+        {
+            this.serializer = serializer;
+            this.context = context;
+            this.OutRoute = outRoute;
+            this.PropertyBag = new Dictionary<string, string>();
+            SetUpOutputChannel(this.context);
+        }
         public Actor(ZmqContext context, string inRoute, Action<Actor> workload)
         {
             this.context = context;
@@ -264,7 +272,7 @@ namespace Daytona
 
             Task.Run(() =>
             {
-                Del.DynamicInvoke();
+                var r = Del.DynamicInvoke();
             });
         }
 
@@ -347,12 +355,17 @@ namespace Daytona
             this.ExecuteAction.DynamicInvoke(input);           
         }
 
-        public static void SendOneMessageOfType<T>(string address, T message, ISerializer serializer, ZmqSocket socket) where T : IPayload
+        public void SendOneMessageOfType<T>(string address, T message, ISerializer serializer, ZmqSocket socket) where T : IPayload
         {
             ZmqMessage zmqMessage = new ZmqMessage();
             zmqMessage.Append(new Frame(serializer.Encoding.GetBytes(address)));
             zmqMessage.Append(new Frame(serializer.GetBuffer(message)));
             socket.SendMessage(zmqMessage);
+        }
+
+        public int CallBack(IAsyncResult result)
+        {
+            return Id;
         }
 
         public static void Writeline(string line)
@@ -392,6 +405,8 @@ namespace Daytona
             disposed = true;
         }
 
+
+        public int Id { get; set; }
     }
 
 

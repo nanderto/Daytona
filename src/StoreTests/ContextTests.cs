@@ -50,7 +50,8 @@ namespace StoreTests
                     Firstname = "John",
                     Lastname = "Lemon"
                 };
-                int Id = connection.Save(customer);
+                var task = connection.Save(customer);
+                int Id = task.Result;
                 Assert.AreEqual(1, Id);
             }
         }

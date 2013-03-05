@@ -13,14 +13,14 @@ namespace Daytona.Store
 
         internal void AddScope<T>(Scope<T> scope)
         {
-            this.scopes.Add(scope.GetType().Name, (IScope)scope);
+            this.scopes.Add(typeof(T).Name, (IScope)scope);
         }
 
-        public int Save<T>(T input)
+        public async Task<int> Save<T>(T input) where T : IPayload
         {
             IScope scope = null;
-            this.scopes.TryGetValue(input.GetType().Name, out scope);
-            return scope.Save<T>(input);
+            this.scopes.TryGetValue(typeof(T).Name, out scope);
+            return await scope.SaveAsync<T>(input);
         }
 
         public void Dispose()

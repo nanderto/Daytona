@@ -37,30 +37,30 @@ namespace Daytona.Store
 
         public async Task<int> SaveAsync<T>(T input) where T : IPayload
         {
-            return await Task<int>.Factory.FromAsync(SaveAsynchonosly<T>(input), OnUpdateCompleted);
+            return await Task<int>.Factory.FromAsync(SaveAsynchonosly<T>(input), this.actor.CallBack);
         }
 
-        public int SaveA<T>(T input) where T : IPayload
+        public IAsyncResult SaveAsynchonosly<T>(T input) where T : IPayload
         {
             var dbPayload = new DBPayload<T>();
             dbPayload.AddPayload(input);
-            this.actor.Execute<T>(input);
+            this.actor.SendOneMessageOfType<DBPayload<T>>(this.actor.OutRoute, dbPayload, this.actor.serializer, this.actor.OutputChannel);       
             this.actor.Start<DBPayload<T>>();
-            return 1;
+            return null;
         }
-        //public static int CallBackWithIDDelegate(IPayload payload)
-        //{
-        //    DBPayload<T> pl = payload as DBPayload<T>;
-        //    return pl.Id;
-        //}
-         
-        public IAsyncResult SaveAsynchonosly<T>(T input) where T : IPayload
+     
+        public static void CallBack(IAsyncResult result)
         {
-            AsyncMethodCaller<T> caller = new AsyncMethodCaller<T>(this.Save<T>);
-            //IAsyncResult result = caller.BeginInvoke(input, this.OnUpdateCompleted, null);
-            IAsyncResult result = caller.BeginInvoke(input, new AsyncCallback(this.OnUpdateCompleted), null);
-            return result;
+            string s = "";
         }
+
+        //public IAsyncResult SaveAsynchonosly<T>(T input) where T : IPayload
+        //{
+        //    AsyncMethodCaller<T> caller = new AsyncMethodCaller<T>(this.Save<T>);
+        //    //IAsyncResult result = caller.BeginInvoke(input, this.OnUpdateCompleted, null);
+        //    IAsyncResult result = caller.BeginInvoke(input, new AsyncCallback(this.OnUpdateCompleted), null);
+        //    return result;
+        //}
 
         public int OnUpdateCompleted(IAsyncResult result)
         {

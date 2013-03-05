@@ -39,15 +39,15 @@ namespace Daytona.Store
             });
 
             ISerializer serializer2 = new Serializer(Encoding.UTF8);
-            Actor actor = actorFactory.RegisterActorAndReturnHandle<DBPayload<T>>("Sender", "Sender", "Writer", serializer2, (Message, InRoute, OutRoute, Socket, Actor) =>
+            actorFactory.RegisterActor<DBPayload<T>>("Sender", "Sender", "Writer", serializer2, (Message, InRoute, OutRoute, Socket, Actor) =>
             {
-                //should fire call back dellegate on actor 
-            }, (Message, OutRoute, Socket, Actor) =>
-            {
-                Actor.SendOneMessageOfType<DBPayload<T>>(OutRoute, (DBPayload<T>)Message, serializer, Socket);
+                Actor.Id = ((DBPayload<T>)Message).Id;
+                Actor.CallBack(null);
             });
-
-            connection.AddScope<T>(new Scope<T>(actor));
+            actorFactory.CreateNewActor("Sender");
+            actorFactory.CreateNewActor("Writer");
+            ISerializer serializer3 = new Serializer(Encoding.UTF8);
+            connection.AddScope<T>(new Scope<T>(new Actor(_Context, "Sender", serializer3)));
             return connection;
         }
     }
