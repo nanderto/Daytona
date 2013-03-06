@@ -7,6 +7,7 @@ using Daytona;
 using Newtonsoft.Json;
 using TestHelpers;
 using System.Threading;
+using ZeroMQ.Devices;
 
 namespace DaytonaTests
 {
@@ -23,8 +24,8 @@ namespace DaytonaTests
 
             using (var context = ZmqContext.Create())
             {
-                //var pipe = new Pipe();
-                //pipe.Start(context);
+                var pipe = new Pipe();
+                pipe.Start(context);
                 using (var pub = Helper.GetConnectedPublishSocket(context))
                 {
                     using (var sub = Helper.GetConnectedSubscribeSocket(context))
@@ -41,39 +42,98 @@ namespace DaytonaTests
                     }
                 }
 
-                //pipe.Exit();
+                pipe.Exit();
             }
         }
 
         [TestMethod]
+        public void InProcOnlyWithForwarder ()
+        {
+            string expectedAddress = "XXXX";
+            string message = "hello its me";
+            int count = 0;
+            using (var context = ZmqContext.Create())
+            {
+                using (var forwarderDevice = new ForwarderDevice(context, "inproc://front", "inproc://back", DeviceMode.Threaded))
+                {
+                    forwarderDevice.Start();
+
+                    using (var pub = Helper.GetConnectedPublishSocket(context, "inproc://front"))
+                    {
+                        using (var sub = Helper.GetConnectedSubscribeSocket(context, "inproc://back")) 
+                        {
+                            Task<ZmqMessage> task = Task.Run(() =>
+                                {
+                                    var zmqMessage = Helper.ReceiveMessage(sub);
+                                    return zmqMessage;
+                                });
+
+                            Helper.SendOneSimpleMessage(expectedAddress, message, pub);
+                            task.Wait();
+
+                            var result = task.Result;
+
+                            Assert.AreEqual(count, result.FrameCount);
+                            Frame frame = result[0];
+                            var address = Encoding.Unicode.GetString(frame.Buffer);
+                            Assert.AreEqual(expectedAddress, address);
+                        }
+                    }
+                    forwarderDevice.Stop();
+                }
+            }
+        }
+
+        static bool interupt = false;
+        [TestMethod]
         public void SendOneMessageInProc()
         {
-            string input = string.Empty;
-            string expectedAddress = "XXXXxxxx";
-            string message = string.Empty;
-            var count = 2;
+            string expectedAddress = "XXXX";
+            string message = "hello its me";
+            int count = 0;
 
             using (var context = ZmqContext.Create())
             {
-                //var pipe = new Pipe();
-                //pipe.Start(context);
-                using (var pub = Helper.GetBoundSubscribeSocket(context, "inproc://somename"))
+                using (var forwarderDevice = new ForwarderDevice(context, "tcp://*:5555", "inproc://back", DeviceMode.Threaded))
                 {
-                    using (var sub = Helper.GetConnectedPublishSocket(context, "inproc://somename"))
+                    forwarderDevice.Start();
+
+                    using (var pub = Helper.GetConnectedPublishSocket(context, "tcp://localhost:5555"))
                     {
+                        using (var sub = Helper.GetConnectedSubscribeSocket(context, "inproc://back")) 
+                        {
 
-                        Helper.SendOneSimpleMessage(expectedAddress, message, pub);
+                            ZmqMessage zmqMessage = null;
+                            var task = Task.Run(() =>
+                                {
+                                    if (sub != null)
+                                    {
+                                        //while (interupt != true)
+                                        //{
+                                            zmqMessage = Helper.ReceiveMessage(sub);
+                                            //if (zmqMessage.FrameCount > 0)
+                                            //{
+                                            //    interupt = true;
+                                            //}
+                                        //}
+                                    }
+                                    return zmqMessage;
+                                });
 
-                        var zmqMessage = Helper.ReceiveMessage(sub);
+                            if (pub != null)
+                            {
+                                Helper.SendOneSimpleMessage(expectedAddress, message, pub);
+                            }
 
-                        Assert.AreEqual(count, zmqMessage.FrameCount);
-                        Frame frame = zmqMessage[0];
-                        var address = Encoding.Unicode.GetString(frame.Buffer);
-                        Assert.AreEqual(expectedAddress, address);
+
+                            Assert.AreEqual(count, zmqMessage.FrameCount);
+                            Frame frame = zmqMessage[0];
+                            var address = Encoding.Unicode.GetString(frame.Buffer);
+                            Assert.AreEqual(expectedAddress, address);
+                        }
                     }
+                    forwarderDevice.Stop();
                 }
-
-                //pipe.Exit();
             }
         }
 

@@ -35,6 +35,7 @@ namespace TestHelpers
                 zmqMessage.Append(new Frame(Encoding.Unicode.GetBytes(address)));
                 zmqMessage.Append(new Frame(Encoding.Unicode.GetBytes(message)));
                 publisher.SendMessage(zmqMessage);
+                //publisher.Send("hello", Encoding.Unicode);
             }
         }
 
@@ -88,13 +89,28 @@ namespace TestHelpers
             var zmqMessage = new ZmqMessage();
             bool hasMore = true;
             string message = "";
+            int i =0;
+            string address = string.Empty;
 
             while (hasMore)
             {
-                message = Subscriber.Receive(Encoding.Unicode);
-
-                zmqMessage.Append(new Frame(Encoding.Unicode.GetBytes(message)));
+                Frame frame = Subscriber.ReceiveFrame();
+                if (i == 0)
+                {
+                    address = Encoding.Unicode.GetString(frame.Buffer);
+                }
+                if (i == 1)
+                {                  
+                    string stop = Encoding.Unicode.GetString(frame.Buffer);
+                    //result = serializer.Deserializer<T>(stop);    
+                }
+                i++;
+                zmqMessage.Append(new Frame(frame.Buffer));
                 hasMore = Subscriber.ReceiveMore;
+                //message = Subscriber.Receive(Encoding.Unicode,);
+
+                //zmqMessage.Append(new Frame(Encoding.Unicode.GetBytes(message)));
+                //hasMore = Subscriber.ReceiveMore;
             }
 
             return zmqMessage;
@@ -108,7 +124,17 @@ namespace TestHelpers
         public static ZmqSocket GetConnectedPublishSocket(ZmqContext context, string address)
         {
             ZmqSocket publisher = context.CreateSocket(SocketType.PUB);
-            publisher.Connect(address);
+
+            try
+            {
+                publisher.Connect(address);
+            }
+            catch (Exception)
+            {
+                publisher.Close();
+                publisher.Dispose();
+                publisher = null;
+            }
             return publisher;
         }
 
@@ -120,20 +146,34 @@ namespace TestHelpers
 
         public static ZmqSocket GetConnectedSubscribeSocket(ZmqContext context, string address)
         {
-            ZmqSocket Subscriber = context.CreateSocket(SocketType.SUB);
-            Subscriber.Connect(address);
-            Subscriber.SubscribeAll();
-            return Subscriber;
+            ZmqSocket subscriber = context.CreateSocket(SocketType.SUB);
+            try
+            {
+                subscriber.Connect(address);
+                subscriber.SubscribeAll();
+            }
+            catch
+            {
+                subscriber.Close();
+                subscriber.Dispose();
+                subscriber = null;
+            }
+            return subscriber;
         }
 
         public static ZmqSocket GetBoundSubscribeSocket(ZmqContext context, string address)
         {
-            ZmqSocket Subscriber = context.CreateSocket(SocketType.SUB);
-            Subscriber.Bind(address);
-            Subscriber.SubscribeAll();
-            return Subscriber;
+            ZmqSocket subscriber = context.CreateSocket(SocketType.SUB);
+            subscriber.Bind(address);
+            subscriber.SubscribeAll();
+            return subscriber;
         }
 
+        public static ZmqSocket GetBoundSubscribeSocket(ZmqContext context)
+        {
+            string address = "tcp://*:5555";
+            return GetBoundSubscribeSocket(context, address);
+        }
         //public static void SendOneSimpleMessage(string address, string message, ZmqSocket publisher)
         //{
         //    {
