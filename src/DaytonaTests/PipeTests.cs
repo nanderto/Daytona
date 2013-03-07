@@ -54,37 +54,69 @@ namespace DaytonaTests
             int count = 0;
             using (var context = ZmqContext.Create())
             {
-                using (var forwarderDevice = new ForwarderDevice(context, "inproc://front", "inproc://back", DeviceMode.Threaded))
+                Pipe pipe = new Pipe();
+                pipe.Start(context);
+
+                Task.Run(() =>
                 {
-                    forwarderDevice.Start();
+                    return RunSubscriber(context);
+                });
 
-                    using (var pub = Helper.GetConnectedPublishSocket(context, "inproc://front"))
+                using (ZmqSocket pub = Helper.GetConnectedPublishSocket(context, Pipe.PublishAddressClient), 
+                   syncService = context.CreateSocket(SocketType.REP))
+                {
+                    syncService.Connect(Pipe.PubSubControlFrontAddressClient);
+                    for (int i = 0; i < 1; i++)
                     {
-                        using (var sub = Helper.GetConnectedSubscribeSocket(context, "inproc://back")) 
-                        {
-                            Task<ZmqMessage> task = Task.Run(() =>
-                                {
-                                    var zmqMessage = Helper.ReceiveMessage(sub);
-                                    return zmqMessage;
-                                });
-
-                            Helper.SendOneSimpleMessage(expectedAddress, message, pub);
-                            task.Wait();
-
-                            var result = task.Result;
-
-                            Assert.AreEqual(count, result.FrameCount);
-                            Frame frame = result[0];
-                            var address = Encoding.Unicode.GetString(frame.Buffer);
-                            Assert.AreEqual(expectedAddress, address);
-                        }
+                        syncService.Receive(Encoding.Unicode);
+                        syncService.Send("", Encoding.Unicode);
                     }
-                    forwarderDevice.Stop();
+    
+                    Helper.SendOneSimpleMessage(expectedAddress, message, pub);
+                           
+
                 }
+                pipe.Exit();
+            }          
+        }
+
+        private Task RunSubscriber(ZmqContext context)
+        {
+            using (ZmqSocket sub = Helper.GetConnectedSubscribeSocket(context, Pipe.SubscribeAddressClient),
+                syncClient = context.CreateSocket(SocketType.REQ))
+            {
+                syncClient.Connect(Pipe.PubSubControlBackAddressClient);
+                syncClient.Send("", Encoding.Unicode);
+                syncClient.Receive(Encoding.Unicode);
+                ZmqMessage zmqMessage = null;
+                while (zmqMessage == null)
+                {
+                     zmqMessage = Helper.ReceiveMessage(sub);
+                }
+
+                Assert.AreEqual(2, zmqMessage.FrameCount);
+                Frame frame = zmqMessage[0];
+                var address = Encoding.Unicode.GetString(frame.Buffer);
+                Assert.AreEqual("XXXX", address);
             }
+            return null;
+        }
+    
+
+
+        private static async Task<ZmqMessage> LoopReceiver(ZmqSocket sub)
+        {
+            ZmqMessage zmqMessage = null;
+            while (zmqMessage == null)
+            {
+                zmqMessage = Helper.ReceiveMessage(sub);
+                //isReady = true;
+            }
+            return zmqMessage;
         }
 
         static bool interupt = false;
+        
         [TestMethod]
         public void SendOneMessageInProc()
         {

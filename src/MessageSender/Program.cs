@@ -24,16 +24,43 @@ namespace MessageSender
             var input = string.Empty;
             Console.CancelKeyPress += new ConsoleCancelEventHandler(ConsoleCancelHandler);
 
-            var pipe = new Pipe();
-            using (var pipeContext = ZmqContext.Create())
+            //var pipe = new Pipe();
+            //using (var pipeContext = ZmqContext.Create())
+            //{
+            //   // pipe = new Pipe();
+            //    pipe.Start(pipeContext);
+
+            //    Task.Run(() =>
+            //    {
+            //        return RunSubscriber();
+            //    });
+
+            //    Console.WriteLine("=>");
+            //    input = Console.ReadLine();
+            //    pipe.Exit();
+            //}
+
+            using (var context = ZmqContext.Create())
             {
-               // pipe = new Pipe();
-                pipe.Start(pipeContext);
-                
-                Console.WriteLine("=>");
-                input = Console.ReadLine();
-                pipe.Exit();
+                using (ZmqSocket pub = Helper.GetConnectedPublishSocket(context, Pipe.PublishAddressClient),
+                      syncService = context.CreateSocket(SocketType.REP))
+                {
+                    syncService.Connect(Pipe.PubSubControlFrontAddressClient);
+                    for (int i = 0; i < 1; i++)
+                    {
+                        syncService.Receive(Encoding.Unicode);
+                        syncService.Send("", Encoding.Unicode);
+                    }
+
+                    Helper.SendOneSimpleMessage("XXXX", "Hello its me", pub);
+
+                    Console.WriteLine("=>");
+                    input = Console.ReadLine();
+                }
             }
+        }
+            
+       
             //using (var context = ZmqContext.Create())
             //{
             //    SendCustomers(context);
@@ -55,7 +82,7 @@ namespace MessageSender
             //}
 
             
-        }
+        
 
         private static void SendCustomers(ZmqContext context)
         {

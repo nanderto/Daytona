@@ -91,26 +91,33 @@ namespace TestHelpers
             string message = "";
             int i =0;
             string address = string.Empty;
-
+            
             while (hasMore)
             {
                 Frame frame = Subscriber.ReceiveFrame();
-                if (i == 0)
+                if (frame.Buffer.Count() > 0)
                 {
-                    address = Encoding.Unicode.GetString(frame.Buffer);
-                }
-                if (i == 1)
-                {                  
-                    string stop = Encoding.Unicode.GetString(frame.Buffer);
-                    //result = serializer.Deserializer<T>(stop);    
-                }
-                i++;
-                zmqMessage.Append(new Frame(frame.Buffer));
-                hasMore = Subscriber.ReceiveMore;
-                //message = Subscriber.Receive(Encoding.Unicode,);
+                    if (i == 0)
+                    {
+                        address = Encoding.Unicode.GetString(frame.Buffer);
+                    }
+                    if (i == 1)
+                    {
+                        string stop = Encoding.Unicode.GetString(frame.Buffer);
+                        //result = serializer.Deserializer<T>(stop);    
+                    }
+                    i++;
+                    zmqMessage.Append(new Frame(frame.Buffer));
+                    hasMore = Subscriber.ReceiveMore;
+                    //message = Subscriber.Receive(Encoding.Unicode,);
 
-                //zmqMessage.Append(new Frame(Encoding.Unicode.GetBytes(message)));
-                //hasMore = Subscriber.ReceiveMore;
+                    //zmqMessage.Append(new Frame(Encoding.Unicode.GetBytes(message)));
+                    //hasMore = Subscriber.ReceiveMore;
+                }
+                else
+                {
+                    zmqMessage = null;
+                }
             }
 
             return zmqMessage;

@@ -104,7 +104,25 @@ namespace Samples
         {
             var input = string.Empty;
             Console.CancelKeyPress += new ConsoleCancelEventHandler(ConsoleCancelHandler);
-            test1();
+
+            var pipe = new Pipe();
+            using (var pipeContext = ZmqContext.Create())
+            {
+                // pipe = new Pipe();
+                pipe.Start(pipeContext);
+
+                Task.Run(() =>
+                {
+                    return RunSubscriber();
+                });
+
+                Console.WriteLine("=>");
+                input = Console.ReadLine();
+                pipe.Exit();
+            }
+
+           
+            //test1();
             //using (var context = ZmqContext.Create())
             //{
             //    Pipe pipe = new Pipe();
@@ -143,6 +161,32 @@ namespace Samples
 
             //    pipe.Exit();
             //}
+        }
+
+        private static Task RunSubscriber()
+        {
+            using (var context = ZmqContext.Create())
+            {
+                using (ZmqSocket sub = Helper.GetConnectedSubscribeSocket(context, Pipe.SubscribeAddressClient),
+                    syncClient = context.CreateSocket(SocketType.REQ))
+                {
+                    syncClient.Connect(Pipe.PubSubControlBackAddressClient);
+                    syncClient.Send("", Encoding.Unicode);
+                    syncClient.Receive(Encoding.Unicode);
+                    ZmqMessage zmqMessage = null;
+                    while (zmqMessage == null)
+                    {
+                        zmqMessage = Helper.ReceiveMessage(sub);
+                    }
+
+                    //Assert.AreEqual(2, zmqMessage.FrameCount);
+                    Frame frame = zmqMessage[0];
+                    var address = Encoding.Unicode.GetString(frame.Buffer);
+                    Console.WriteLine(address);
+                    //Assert.AreEqual("XXXX", address);
+                }
+                return null;
+            }
         }
     }
 }
