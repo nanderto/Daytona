@@ -109,7 +109,7 @@ namespace Samples
             using (var pipeContext = ZmqContext.Create())
             {
                 // pipe = new Pipe();
-                pipe.Start(pipeContext);
+                //pipe.Start(pipeContext);
 
                 //var t = Task.Run(() =>
                 //{
