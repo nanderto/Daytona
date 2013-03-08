@@ -51,10 +51,15 @@ namespace MessageSender
                         syncService.Receive(Encoding.Unicode);
                         syncService.Send("", Encoding.Unicode);
                     }
+                    Console.WriteLine("Enter to send message=>"); 
+                    input = Console.ReadLine();
 
-                    Helper.SendOneSimpleMessage("XXXX", "Hello its me", pub);
+                    for (int i = 0; i < 100000; i++)
+                    {
+                        Helper.SendOneSimpleMessage("XXXX", "Hello its me", pub); 
+                    }
 
-                    Console.WriteLine("=>");
+                    Console.WriteLine("message sent enter to exit=>");
                     input = Console.ReadLine();
                 }
             }

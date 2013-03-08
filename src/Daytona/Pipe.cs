@@ -14,7 +14,7 @@ namespace Daytona
     {
         public ZmqContext Context { get; set; }
         private CancellationTokenSource cancellationTokenSource;
-        public static ForwarderDevice forwarderDevice = null;
+        public static DebuggingForwarder forwarderDevice = null;
         public static QueueDevice queueDevce = null;
         private bool disposed;
         public static string PublishAddressClient = "tcp://localhost:5550";
@@ -40,7 +40,7 @@ namespace Daytona
 
         public void Start(ZmqContext context)
         {
-            forwarderDevice = new ForwarderDevice(context, PublishAddressServer, SubscribeAddressServer, DeviceMode.Threaded);
+            forwarderDevice = new DebuggingForwarder(context, PublishAddressServer, SubscribeAddressServer, DeviceMode.Threaded);
             forwarderDevice.Start();
             while (!forwarderDevice.IsRunning)
             { }

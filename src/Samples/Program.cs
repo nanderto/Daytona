@@ -111,12 +111,13 @@ namespace Samples
                 // pipe = new Pipe();
                 pipe.Start(pipeContext);
 
-                Task.Run(() =>
-                {
-                    return RunSubscriber();
-                });
+                //var t = Task.Run(() =>
+                //{
+                     RunSubscriber();
+                //});
 
-                Console.WriteLine("=>");
+                //t.Wait();
+                Console.WriteLine("enter to exit=>");
                 input = Console.ReadLine();
                 pipe.Exit();
             }
@@ -171,14 +172,25 @@ namespace Samples
                     syncClient = context.CreateSocket(SocketType.REQ))
                 {
                     syncClient.Connect(Pipe.PubSubControlBackAddressClient);
+
+                    Console.WriteLine("Send message that you are connected=>");
+                    Console.ReadLine();
+
                     syncClient.Send("", Encoding.Unicode);
                     syncClient.Receive(Encoding.Unicode);
+
+
+                    Console.WriteLine("Received acknowledgement=>");
+                   // Console.ReadLine();
+
                     ZmqMessage zmqMessage = null;
                     while (zmqMessage == null)
                     {
                         zmqMessage = Helper.ReceiveMessage(sub);
                     }
 
+                    Console.WriteLine("Received message=>");
+                    Console.ReadLine();
                     //Assert.AreEqual(2, zmqMessage.FrameCount);
                     Frame frame = zmqMessage[0];
                     var address = Encoding.Unicode.GetString(frame.Buffer);
