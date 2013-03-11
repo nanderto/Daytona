@@ -4,14 +4,14 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{EA61CC4D-924C-4612-81BF-608FC6E49025}</ProjectGuid>
+    <ProjectGuid>{BC8AE784-A3B3-4762-BF62-FCE36F7F2D96}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Samples</RootNamespace>
-    <AssemblyName>Samples</AssemblyName>
+    <RootNamespace>Monitor</RootNamespace>
+    <AssemblyName>Monitor</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\Daytona\</SolutionDir>
+    <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
     <RestorePackages>true</RestorePackages>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -23,7 +23,6 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <UseVSHostingProcess>false</UseVSHostingProcess>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -58,10 +57,6 @@
     <ProjectReference Include="..\Daytona\Daytona.csproj">
       <Project>{626cb1e5-251f-4a23-8d7d-c3a7b35f67d2}</Project>
       <Name>Daytona</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Store\Store.csproj">
-      <Project>{ba4e4940-1cb8-4dd5-8a56-45d63ae1e0fd}</Project>
-      <Name>Store</Name>
     </ProjectReference>
     <ProjectReference Include="..\TestHelpers\TestHelpers.csproj">
       <Project>{9e8d7d0c-488e-49c9-b441-7250fa62bff6}</Project>

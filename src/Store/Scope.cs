@@ -13,7 +13,7 @@ namespace Daytona.Store
 
     public class Scope<T> : IScope, IDisposable
     {
-        private bool Disposed;
+        private bool disposed;
         private Actor actor;
 
         public Scope()
@@ -29,7 +29,7 @@ namespace Daytona.Store
         public int Save<T>(T input)
         {
             var dbPayload = new DBPayload<T>();
-            dbPayload.AddPayload(input);
+            dbPayload.Payload = input;
             this.actor.Execute<T>(input);
             this.actor.Start<DBPayload<T>>();
             return 1;
@@ -43,8 +43,8 @@ namespace Daytona.Store
         public IAsyncResult SaveAsynchonosly<T>(T input) where T : IPayload
         {
             var dbPayload = new DBPayload<T>();
-            dbPayload.AddPayload(input);
-            this.actor.SendOneMessageOfType<DBPayload<T>>(this.actor.OutRoute, dbPayload, this.actor.serializer, this.actor.OutputChannel);       
+            dbPayload.Payload = input;
+            this.actor.SendOneMessageOfType<DBPayload<T>>(this.actor.OutRoute, dbPayload, this.actor.Serializer, this.actor.OutputChannel);       
             this.actor.Start<DBPayload<T>>();
             return null;
         }
@@ -79,8 +79,8 @@ namespace Daytona.Store
 
         private void Dispose(bool disposing)
         {
-            Disposed = false;
-            if (!Disposed)
+            disposed = false;
+            if (!disposed)
             {
                 if (disposing)
                 {
@@ -97,7 +97,7 @@ namespace Daytona.Store
                 // There are no unmanaged resources to release, but
                 // if we add them, they need to be released here.
             }
-            Disposed = true;
+            disposed = true;
         }
     }
 }

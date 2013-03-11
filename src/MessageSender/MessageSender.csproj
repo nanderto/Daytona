@@ -59,6 +59,10 @@
       <Project>{626cb1e5-251f-4a23-8d7d-c3a7b35f67d2}</Project>
       <Name>Daytona</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Store\Store.csproj">
+      <Project>{ba4e4940-1cb8-4dd5-8a56-45d63ae1e0fd}</Project>
+      <Name>Store</Name>
+    </ProjectReference>
     <ProjectReference Include="..\TestHelpers\TestHelpers.csproj">
       <Project>{9e8d7d0c-488e-49c9-b441-7250fa62bff6}</Project>
       <Name>TestHelpers</Name>

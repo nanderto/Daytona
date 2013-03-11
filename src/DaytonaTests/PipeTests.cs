@@ -129,10 +129,13 @@ namespace DaytonaTests
                 using (var forwarderDevice = new ForwarderDevice(context, "tcp://*:5555", "inproc://back", DeviceMode.Threaded))
                 {
                     forwarderDevice.Start();
-
-                    using (var pub = Helper.GetConnectedPublishSocket(context, "tcp://localhost:5555"))
+                    while (!forwarderDevice.IsRunning)
                     {
-                        using (var sub = Helper.GetConnectedSubscribeSocket(context, "inproc://back")) 
+                        
+                    }
+                    using (var sub = Helper.GetConnectedSubscribeSocket(context, "inproc://back"))
+                    {
+                        using (var pub = Helper.GetConnectedPublishSocket(context, "tcp://localhost:5555"))
                         {
 
                             ZmqMessage zmqMessage = null;
@@ -157,7 +160,7 @@ namespace DaytonaTests
                                 Helper.SendOneSimpleMessage(expectedAddress, message, pub);
                             }
 
-
+                            task.Wait();
                             Assert.AreEqual(count, zmqMessage.FrameCount);
                             Frame frame = zmqMessage[0];
                             var address = Encoding.Unicode.GetString(frame.Buffer);

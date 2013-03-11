@@ -54,6 +54,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Connection.cs" />
+    <Compile Include="DBPayloadConverter.cs" />
     <Compile Include="IScope.cs" />
     <Compile Include="Scope.cs" />
     <Compile Include="Context.cs" />

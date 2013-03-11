@@ -14,6 +14,8 @@ namespace Samples
     {
         static bool interrupted = false;
 
+        
+
         static void ConsoleCancelHandler(object sender, ConsoleCancelEventArgs e)
         {
             e.Cancel = true;
@@ -105,22 +107,30 @@ namespace Samples
             var input = string.Empty;
             Console.CancelKeyPress += new ConsoleCancelEventHandler(ConsoleCancelHandler);
 
-            var pipe = new Pipe();
-            using (var pipeContext = ZmqContext.Create())
-            {
-                // pipe = new Pipe();
-                //pipe.Start(pipeContext);
 
-                //var t = Task.Run(() =>
-                //{
-                     RunSubscriber();
-                //});
+            //RunStoreTest();
+            RunSubscriber();
 
-                //t.Wait();
-                Console.WriteLine("enter to exit=>");
-                input = Console.ReadLine();
-                pipe.Exit();
-            }
+            Console.WriteLine("enter to exit=>");
+            input = Console.ReadLine();
+
+
+            //var pipe = new Pipe();
+            //using (var pipeContext = ZmqContext.Create())
+            //{
+            //    // pipe = new Pipe();
+            //    //pipe.Start(pipeContext);
+
+            //    //var t = Task.Run(() =>
+            //    //{
+            //         RunSubscriber();
+            //    //});
+
+            //    //t.Wait();
+            //    Console.WriteLine("enter to exit=>");
+            //    input = Console.ReadLine();
+            //    pipe.Exit();
+            //}
 
            
             //test1();
@@ -135,7 +145,7 @@ namespace Samples
             //        //        Console.WriteLine(Message);
             //        //    });
             //        //actor.StartAllActors();
-            //        var serializer = new Serializer(Encoding.Unicode);
+            //        var Serializer = new Serializer(Encoding.Unicode);
             //        string expectedAddress = "XXXX";
             //        actor.RegisterActor<Customer>("Basic", expectedAddress, "OutRoute", serializer, (Message, InRoute, OutRoute, Socket, Actor) =>
             //        {
@@ -164,6 +174,23 @@ namespace Samples
             //}
         }
 
+        private static void RunStoreTest()
+        {
+            Daytona.Store.Context context = new Daytona.Store.Context();
+            using (var connection = context.GetConnection<Customer>())
+            {
+                var customer = new Customer
+                {
+                    Firstname = "John",
+                    Lastname = "Lemon"
+                };
+                //var task = connection.Save(customer);
+                //int id = task.Result;
+                Console.WriteLine("Pausing=>");
+                Console.ReadLine();
+            }
+        }
+
         private static Task RunSubscriber()
         {
             using (var context = ZmqContext.Create())
@@ -182,20 +209,28 @@ namespace Samples
 
                     Console.WriteLine("Received acknowledgement=>");
                    // Console.ReadLine();
-
-                    ZmqMessage zmqMessage = null;
-                    while (zmqMessage == null)
+                    bool run = true;
+                    string input;
+                    while (run)
                     {
-                        zmqMessage = Helper.ReceiveMessage(sub);
-                    }
+                        ZmqMessage zmqMessage = null;
+                        while (zmqMessage == null)
+                        {
+                            zmqMessage = Helper.ReceiveMessage(sub);
+                        }
 
-                    Console.WriteLine("Received message=>");
-                    Console.ReadLine();
-                    //Assert.AreEqual(2, zmqMessage.FrameCount);
-                    Frame frame = zmqMessage[0];
-                    var address = Encoding.Unicode.GetString(frame.Buffer);
-                    Console.WriteLine(address);
-                    //Assert.AreEqual("XXXX", address);
+                        //Assert.AreEqual(2, zmqMessage.FrameCount);
+                        Frame frame = zmqMessage[0];
+                        var address = Encoding.Unicode.GetString(frame.Buffer);
+                        Console.WriteLine(address);
+                        frame = zmqMessage[1];
+                        var message = Encoding.Unicode.GetString(frame.Buffer);
+                        Console.Write(" " + message);
+                        Console.WriteLine();
+                        Console.WriteLine("Received message Exit to Exit=>");
+                        input = Console.ReadLine();
+                        if (input == "exit") break;
+                    }
                 }
                 return null;
             }

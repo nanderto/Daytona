@@ -8,8 +8,8 @@ namespace Daytona.Store
 {
     public class Connection : IDisposable
     {
-        private bool Disposed;
-        private Dictionary<string, IScope> scopes = new Dictionary<string, IScope>();
+        private bool disposed;
+        private readonly Dictionary<string, IScope> scopes = new Dictionary<string, IScope>();
 
         internal void AddScope<T>(Scope<T> scope)
         {
@@ -20,6 +20,7 @@ namespace Daytona.Store
         {
             IScope scope = null;
             this.scopes.TryGetValue(typeof(T).Name, out scope);
+            //Scope<T> s = (Scope<T>)scope;
             return await scope.SaveAsync<T>(input);
         }
 
@@ -31,8 +32,8 @@ namespace Daytona.Store
 
         private void Dispose(bool disposing)
         {
-            Disposed = false;
-            if (!Disposed)
+            disposed = false;
+            if (!disposed)
             {
                 if (disposing)
                 {
@@ -49,7 +50,7 @@ namespace Daytona.Store
                 // There are no unmanaged resources to release, but
                 // if we add them, they need to be released here.
             }
-            Disposed = true;
+            disposed = true;
         }
 
 

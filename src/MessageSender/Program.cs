@@ -1,4 +1,5 @@
 ﻿using Daytona;
+using Daytona.Store;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,21 +25,21 @@ namespace MessageSender
             var input = string.Empty;
             Console.CancelKeyPress += new ConsoleCancelEventHandler(ConsoleCancelHandler);
 
-            //var pipe = new Pipe();
-            //using (var pipeContext = ZmqContext.Create())
-            //{
-            //   // pipe = new Pipe();
-            //    pipe.Start(pipeContext);
+            ////var pipe = new Pipe();
+            ////using (var pipeContext = ZmqContext.Create())
+            ////{
+            ////    // pipe = new Pipe();
+            ////    pipe.Start(pipeContext);
 
-            //    Task.Run(() =>
-            //    {
-            //        return RunSubscriber();
-            //    });
+            ////    //Task.Run(() =>
+            ////    //{
+            ////    //    return RunSubscriber();
+            ////    //});
 
-            //    Console.WriteLine("=>");
-            //    input = Console.ReadLine();
-            //    pipe.Exit();
-            //}
+            ////    Console.WriteLine("=>");
+            ////    input = Console.ReadLine();
+            ////    pipe.Exit();
+            ////}
 
             using (var context = ZmqContext.Create())
             {
@@ -51,12 +52,24 @@ namespace MessageSender
                         syncService.Receive(Encoding.Unicode);
                         syncService.Send("", Encoding.Unicode);
                     }
-                    Console.WriteLine("Enter to send message=>"); 
-                    input = Console.ReadLine();
-
+                    
                     for (int i = 0; i < 100000; i++)
                     {
-                        Helper.SendOneSimpleMessage("XXXX", "Hello its me", pub); 
+                        Console.WriteLine("Enter to send message=>");
+                        input = Console.ReadLine();
+                        if (input == "Exit") break;
+
+                        var cust = new Customer
+                        { 
+                            Firstname = "John",
+                            Lastname = "Lemon"
+                        };
+                        var pl = new Daytona.Store.DBPayload<Customer>();
+                        pl.Payload = cust;
+                        ISerializer serializer = new Daytona.Store.Serializer(Encoding.Unicode);
+                        Helper.SendOneMessageOfType<DBPayload<Customer>>("Writer", pl, serializer, pub);
+                       // Helper.SendOneSimpleMessage("Writer", "Hello its me", pub);
+                        Console.WriteLine("message sent");
                     }
 
                     Console.WriteLine("message sent enter to exit=>");
@@ -74,7 +87,7 @@ namespace MessageSender
             //    //input = Console.ReadLine();
 
                 
-            //    //ISerializer serializer = new Serializer(Encoding.Unicode);
+            //    //ISerializer Serializer = new Serializer(Encoding.Unicode);
             //    //using (ZmqSocket publisher = context.CreateSocket(SocketType.PUB))
             //    //{
             //    //    publisher.Connect("tcp://localhost:5556");
@@ -91,7 +104,7 @@ namespace MessageSender
 
         private static void SendCustomers(ZmqContext context)
         {
-            ISerializer serializer = new Serializer(Encoding.Unicode);
+            ISerializer serializer = new Daytona.Store.Serializer(Encoding.Unicode);
             using (ZmqSocket publisher = context.CreateSocket(SocketType.PUB))
             {
                 publisher.Connect("tcp://localhost:5556");

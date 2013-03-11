@@ -14,8 +14,8 @@ namespace Daytona
     {
         public ZmqContext Context { get; set; }
         private CancellationTokenSource cancellationTokenSource;
-        public static DebuggingForwarder forwarderDevice = null;
-        public static QueueDevice queueDevce = null;
+        public static ForwarderDevice ForwarderDevice = null;
+        public static QueueDevice QueueDevce = null;
         private bool disposed;
         public static string PublishAddressClient = "tcp://localhost:5550";
         public static string PublishAddressServer = "tcp://*:5550";
@@ -24,12 +24,18 @@ namespace Daytona
 
         public static string PubSubControlFrontAddress = "tcp://*:5551";
         public static string PubSubControlFrontAddressClient = "tcp://localhost:5551";
-        public static string PubSubControlBackAddressServer = "tcp://*:5552";//"inproc://pubsubcontrol";
-        public static string PubSubControlBackAddressClient = "tcp://localhost:5552";
+        public static string PubSubControlBackAddressServer = "tcp://*:5552";//"inproc://pubsubcontrol";//
+        public static string PubSubControlBackAddressClient = "tcp://localhost:5552";//"inproc://pubsubcontrol";//
 
         public Pipe()
         {
 
+        }
+
+        public Pipe(ZmqContext context)
+        {
+            this.Context = context;
+            Start(context);
         }
 
         //public Pipe(ZmqContext context)
@@ -40,23 +46,23 @@ namespace Daytona
 
         public void Start(ZmqContext context)
         {
-            forwarderDevice = new DebuggingForwarder(context, PublishAddressServer, SubscribeAddressServer, DeviceMode.Threaded);
-            forwarderDevice.Start();
-            while (!forwarderDevice.IsRunning)
-            { }
+            //ForwarderDevice = new ForwarderDevice(context, PublishAddressServer, SubscribeAddressServer, DeviceMode.Threaded);
+            //ForwarderDevice.Start();
+            //while (!ForwarderDevice.IsRunning)
+            //{ }
 
-            queueDevce = new QueueDevice(context, PubSubControlBackAddressServer, PubSubControlFrontAddress, DeviceMode.Threaded);
-            queueDevce.Start();
-            while (!queueDevce.IsRunning)
+            QueueDevce = new QueueDevice(context, PubSubControlBackAddressServer, PubSubControlFrontAddress, DeviceMode.Threaded);
+            QueueDevce.Start();
+            while (!QueueDevce.IsRunning)
             { }
 
             this.Context = context;
             cancellationTokenSource = new CancellationTokenSource();
 
-            //Task.Run(() =>
-            //{
-            //    Setup(this.cancellationTokenSource.Token); 
-            //});
+            Task.Run(() =>
+            {
+                Setup(this.cancellationTokenSource.Token);
+            });
         }
 
         public void Exit()
@@ -68,102 +74,65 @@ namespace Daytona
 
         private void CleanUpDevices()
         {
-            if (queueDevce != null)
+            if (QueueDevce != null)
             {
-                if (queueDevce.IsRunning)
+                if (QueueDevce.IsRunning)
                 {
-                    queueDevce.Stop();
-                    queueDevce.Close();
+                    QueueDevce.Stop();
+                    QueueDevce.Close();
                 }
-                queueDevce.Dispose();
+                QueueDevce.Dispose();
             }
 
-            if (forwarderDevice != null)
+            if (ForwarderDevice != null)
             {
-                if (forwarderDevice.IsRunning)
+                if (ForwarderDevice.IsRunning)
                 {
-                    forwarderDevice.Stop();
-                    forwarderDevice.Close();
+                    ForwarderDevice.Stop();
+                    ForwarderDevice.Close();
                 }
-                forwarderDevice.Dispose();
+                ForwarderDevice.Dispose();
             }
         }
 
-        //private void Setup(CancellationToken cancellationToken)
-        //{
-        //    using (ZmqSocket frontend = this.Context.CreateSocket(SocketType.SUB), backend = this.Context.CreateSocket(SocketType.PUB))
-        //    {
-        //        frontend.Bind("tcp://*:5556");
-        //        frontend.SubscribeAll();
+        private void Setup(CancellationToken cancellationToken)
+        {
+            using (ZmqSocket frontend = this.Context.CreateSocket(SocketType.SUB), backend = this.Context.CreateSocket(SocketType.PUB))
+            {
+                frontend.Bind(PublishAddressServer);
+                frontend.SubscribeAll();
 
-        //        //  This is our public endpoint for subscribers
-        //        backend.Bind("tcp://*:5555"); // i use local to be able to run the example, this could be the public ip instead eg. tcp://10.1.1.0:8100
+                //  This is our public endpoint for subscribers
+                backend.Bind(SubscribeAddressServer); 
 
-        //        //var device = new ZeroMQ.Devices.ForwarderDevice(this.Context, "tcp://*:5556", "tcp://*:5555", DeviceMode.Blocking);
-        //        //device.Start();
-        //        //  Shunt messages out to our own subscribers
-        //        int i = 0;
-        //        try
-        //        {
-        //            while (true)
-        //            {
-        //                bool hasMore = true;
-        //                var zmqMessage = new ZmqMessage();
-        //                while (hasMore)
-        //                {
-        //                    Frame frame = frontend.ReceiveFrame();
-        //                    //string message = frontend.Receive(Encoding.Unicode);
-        //                    //message = message + i.ToString();
-        //                    //Console.WriteLine(message);
-
-        //                    zmqMessage.Append(new Frame(frame.Buffer));
-        //                    hasMore = frontend.ReceiveMore;
-        //                }
-        //                i++;
-        //                Writeline(i.ToString());
-        //                backend.SendMessage(zmqMessage);
-        //                cancellationToken.ThrowIfCancellationRequested();
-        //            }
-        //        }
-        //        catch (Exception ex)
-        //        {
-        //            Writeline("cancelled gracefully exit " + ex.Message);
-        //        }
-        //    }
-        //}
-
-        //void Setup()
-        //{
-
-        //    using (ZmqSocket frontend = this.Context.CreateSocket(SocketType.SUB), backend = this.Context.CreateSocket(SocketType.PUB))
-        //    {
-        //        frontend.Bind("tcp://*:5556");
-        //        frontend.SubscribeAll();
-
-        //        //  This is our public endpoint for subscribers
-        //        backend.Bind("tcp://*:5555"); // i use local to be able to run the example, this could be the public ip instead eg. tcp://10.1.1.0:8100
-
-        //        //var device = new ZeroMQ.Devices.ForwarderDevice(this.Context, "tcp://*:5556", "tcp://*:5555", DeviceMode.Blocking);
-        //        //device.Start();
-        //        //  Shunt messages out to our own subscribers
-        //        int i = 0;
-        //        while (true)
-        //        {
-        //            bool hasMore = true;
-        //            var zmqMessage = new ZmqMessage();
-        //            while (hasMore)
-        //            {
-        //                string message = frontend.Receive(Encoding.Unicode);
-                        
-        //                Writeline(i.ToString());
-        //                zmqMessage.Append(new Frame(Encoding.Unicode.GetBytes(message)));
-        //                hasMore = frontend.ReceiveMore;       
-        //            }
-
-        //            backend.SendMessage(zmqMessage);
-        //        }
-        //    }
-        //}
+                //  Shunt messages out to our own subscribers
+                int i = 0;
+                try
+                {
+                    while (true)
+                    {
+                        bool hasMore = true;
+                        var zmqMessage = new ZmqMessage();
+                        while (hasMore)
+                        {
+                            Writeline("waiting on receive frame");
+                            Frame frame = frontend.ReceiveFrame();
+ 
+                            zmqMessage.Append(new Frame(frame.Buffer));
+                            hasMore = frontend.ReceiveMore;
+                        }
+                        i++;
+                        Writeline(i.ToString());
+                        backend.SendMessage(zmqMessage);
+                        cancellationToken.ThrowIfCancellationRequested();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Writeline("cancelled gracefully exit " + ex.Message);
+                }
+            }
+        }
 
         public static void Writeline(string line)
         {

@@ -5,14 +5,11 @@ using System.Text;
 
 namespace Daytona.Store
 {
-    public class DBPayload<T> : IPayload
+    [Serializable]
+    public class DBPayload<T> : IPayload, IPayload<T>
     {
-        T payload = default(T);
         public int Id { get; set; }
-        public void AddPayload(T payload) 
-        {
-            this.payload = payload;
-        }
-
+        
+        public T Payload { get; set; }
     }
 }

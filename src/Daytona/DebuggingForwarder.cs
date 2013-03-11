@@ -10,13 +10,14 @@ namespace Daytona
 {
     public class DebuggingForwarder : ForwarderDevice
     {
-        public DebuggingForwarder(ZmqContext context, string PublishAddressServer, string SubscribeAddressServer, DeviceMode mode)
-            : base(context, PublishAddressServer, SubscribeAddressServer, mode)
+        public DebuggingForwarder(ZmqContext context, string publishAddressServer, string subscribeAddressServer, DeviceMode mode)
+            : base(context, publishAddressServer, subscribeAddressServer, mode)
         {
 
         }
         protected override void FrontendHandler(SocketEventArgs args)
         {
+            Console.WriteLine("In forwarder" + args.ToString());
             this.FrontendSocket.Forward(this.BackendSocket);
         }
     }

@@ -7,21 +7,21 @@ namespace StoreTests
     [TestClass]
     public class ContextTests
     {
-        [TestMethod]
+        [TestMethod, TestCategory("Unit")]
         public void IsAContext()
         {
             Daytona.Store.Context context = new Daytona.Store.Context();
             Assert.IsInstanceOfType(context, typeof(Daytona.Store.Context));
         }
 
-        [TestMethod]
+        [TestMethod, TestCategory("Unit")]
         public void IsAScope()
         {
             Daytona.Store.Scope<Customer> connection = new Daytona.Store.Scope<Customer>();
             Assert.IsInstanceOfType(connection, typeof(Daytona.Store.Scope<Customer>));
         }
 
-        [TestMethod]
+        [TestMethod, TestCategory("Unit")]
         public void IsAConnection()
         {
             Daytona.Store.Connection connection = new Daytona.Store.Connection();
@@ -51,8 +51,8 @@ namespace StoreTests
                     Lastname = "Lemon"
                 };
                 var task = connection.Save(customer);
-                int Id = task.Result;
-                Assert.AreEqual(1, Id);
+                 int id = task.Result;
+                Assert.AreEqual(1, id);
             }
         }
     }
