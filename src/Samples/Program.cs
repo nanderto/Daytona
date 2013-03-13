@@ -111,25 +111,38 @@ namespace Samples
 
             using (var context = ZmqContext.Create())
             {
-                var ForwarderDevice = new ForwarderDevice(context, Pipe.PublishAddressServer, Pipe.SubscribeAddressServer, DeviceMode.Threaded);
-                ForwarderDevice.Start();
-                while (!ForwarderDevice.IsRunning)
-                { }
+                //var ForwarderDevice = new ForwarderDevice(context, "tcp://127.0.0.1:5550", "tcp://127.0.0.1:5553", DeviceMode.Threaded);
+                //ForwarderDevice.Start();
+                //while (!ForwarderDevice.IsRunning)
+                //{ }
 
-                using (ZmqSocket sub = context.CreateSocket(SocketType.SUB), pub = context.CreateSocket(SocketType .PUB))
+                using (ZmqSocket sub = context.CreateSocket(SocketType.SUB), pub = context.CreateSocket(SocketType.PUB))
                 {
-                    sub.Connect(Pipe.SubscribeAddressClient);
+                    sub.Connect("tcp://127.0.0.1:5550");
                     sub.SubscribeAll();
-                   
 
-                    pub.Connect(Pipe.PublishAddressClient);
+                    pub.Connect("tcp://127.0.0.1:5550");
 
-                    while (true)
+                    Task.Run(() =>
                     {
-                        pub.Send("XXX HELO", Encoding.Unicode);
-                        var message = sub.ReceiveMessage();
-                        Console.WriteLine("here" + message);
-                    }
+                        while (true)
+                        {
+                            var message = sub.ReceiveMessage();
+                            Console.WriteLine("here" + message);
+                        }
+                    });
+
+                    Task.Run(() =>
+                    {
+                        while (true)
+                        {
+                            pub.Send("XXX HELO", Encoding.Unicode);
+                            var message = sub.ReceiveMessage();
+                            Console.WriteLine("just sent");
+                        }
+                    });
+
+                    Console.ReadLine();
                 }
             }
             //RunStoreTest();

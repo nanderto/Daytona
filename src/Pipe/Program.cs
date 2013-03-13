@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using ZeroMQ;
+using ZeroMQ.Devices;
 
 namespace PipeRunner
 {
@@ -25,12 +26,19 @@ namespace PipeRunner
 
             using (var context = ZmqContext.Create())
             {
-                var pipe = new Pipe();
-                pipe.Start(context);
+
+                var ForwarderDevice = new ForwarderDevice(context, Pipe.PublishAddressServer, Pipe.SubscribeAddressServer, DeviceMode.Threaded);
+                ForwarderDevice.Start();
+                while (!ForwarderDevice.IsRunning)
+                { }
+
+
+                //var pipe = new Pipe();
+                //pipe.Start(context);
 
                 Console.WriteLine("enter to exit=>");
                 input = Console.ReadLine();
-                pipe.Exit();
+                //pipe.Exit();
 
             }
         }

@@ -4,11 +4,11 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{BE4502CF-5ED6-4F61-9D2A-37672D6AB537}</ProjectGuid>
+    <ProjectGuid>{1058A2AC-521A-4230-ABC3-F8E07947150F}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Pipe</RootNamespace>
-    <AssemblyName>Pipe</AssemblyName>
+    <RootNamespace>WeatherClient</RootNamespace>
+    <AssemblyName>WeatherClient</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
@@ -23,7 +23,6 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <UseVSHostingProcess>false</UseVSHostingProcess>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -53,16 +52,6 @@
   <ItemGroup>
     <None Include="App.config" />
     <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Daytona\Daytona.csproj">
-      <Project>{626cb1e5-251f-4a23-8d7d-c3a7b35f67d2}</Project>
-      <Name>Daytona</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\TestHelpers\TestHelpers.csproj">
-      <Project>{9e8d7d0c-488e-49c9-b441-7250fa62bff6}</Project>
-      <Name>TestHelpers</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="$(SolutionDir)\.nuget\nuget.targets" />

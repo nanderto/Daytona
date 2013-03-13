@@ -46,10 +46,10 @@ namespace Daytona
 
         public void Start(ZmqContext context)
         {
-            //ForwarderDevice = new ForwarderDevice(context, PublishAddressServer, SubscribeAddressServer, DeviceMode.Threaded);
-            //ForwarderDevice.Start();
-            //while (!ForwarderDevice.IsRunning)
-            //{ }
+            ForwarderDevice = new ForwarderDevice(context, PublishAddressServer, SubscribeAddressServer, DeviceMode.Threaded);
+            ForwarderDevice.Start();
+            while (!ForwarderDevice.IsRunning)
+            { }
 
             QueueDevce = new QueueDevice(context, PubSubControlBackAddressServer, PubSubControlFrontAddress, DeviceMode.Threaded);
             QueueDevce.Start();
@@ -59,10 +59,10 @@ namespace Daytona
             this.Context = context;
             cancellationTokenSource = new CancellationTokenSource();
 
-            Task.Run(() =>
-            {
-                Setup(this.cancellationTokenSource.Token);
-            });
+            //Task.Run(() =>
+            //{
+            //    Setup(this.cancellationTokenSource.Token);
+            //});
         }
 
         public void Exit()
