@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using TestHelpers;
 using ZeroMQ;
+using ZeroMQ.Devices;
 
 namespace Samples
 {
@@ -108,8 +109,31 @@ namespace Samples
             Console.CancelKeyPress += new ConsoleCancelEventHandler(ConsoleCancelHandler);
 
 
+            using (var context = ZmqContext.Create())
+            {
+                var ForwarderDevice = new ForwarderDevice(context, Pipe.PublishAddressServer, Pipe.SubscribeAddressServer, DeviceMode.Threaded);
+                ForwarderDevice.Start();
+                while (!ForwarderDevice.IsRunning)
+                { }
+
+                using (ZmqSocket sub = context.CreateSocket(SocketType.SUB), pub = context.CreateSocket(SocketType .PUB))
+                {
+                    sub.Connect(Pipe.SubscribeAddressClient);
+                    sub.SubscribeAll();
+                   
+
+                    pub.Connect(Pipe.PublishAddressClient);
+
+                    while (true)
+                    {
+                        pub.Send("XXX HELO", Encoding.Unicode);
+                        var message = sub.ReceiveMessage();
+                        Console.WriteLine("here" + message);
+                    }
+                }
+            }
             //RunStoreTest();
-            RunSubscriber();
+           // RunSubscriber();
 
             Console.WriteLine("enter to exit=>");
             input = Console.ReadLine();
