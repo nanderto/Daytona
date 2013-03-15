@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using TestHelpers;
 using ZeroMQ;
@@ -13,6 +14,10 @@ namespace MessageSender
     class Program
     {
         static bool interrupted = false;
+        static uint nbSubscribersConnected = 0;
+        static Options options;
+        static long msgCptr = 0;
+        static int msgIndex = 0;
 
         static void ConsoleCancelHandler(object sender, ConsoleCancelEventArgs e)
         {
@@ -25,6 +30,26 @@ namespace MessageSender
             var input = string.Empty;
             Console.CancelKeyPress += new ConsoleCancelEventHandler(ConsoleCancelHandler);
 
+            using (var ctx = ZmqContext.Create())
+            {
+                var pubSocket = ctx.CreateSocket(SocketType.PUB);
+                pubSocket.Bind(Pipe.PublishAddressClient);
+                pubSocket.SendReady += new EventHandler<SocketEventArgs>(pubSocket_SendReady);
+                var repSocket = ctx.CreateSocket(SocketType.REP);
+                repSocket.Bind(Pipe.PubSubControlFrontAddressClient);
+                repSocket.SendReady += new EventHandler<SocketEventArgs>(repSocket_SendReady);
+                repSocket.ReceiveReady += new EventHandler<SocketEventArgs>(repSocket_ReceiveReady);
+                
+                Poller poller = new Poller(new ZmqSocket[] { pubSocket, repSocket });
+                while (true)
+                {
+                    poller.Poll();
+                    if (options.maxMessage >= 0)
+                        if (msgCptr > options.maxMessage)
+                            Environment.Exit(0);
+                }
+
+            }
             ////var pipe = new Pipe();
             ////using (var pipeContext = ZmqContext.Create())
             ////{
@@ -40,6 +65,49 @@ namespace MessageSender
             ////    input = Console.ReadLine();
             ////    pipe.Exit();
             ////}
+            //input = SynchronizedSender(input);
+        }
+
+        static void repSocket_ReceiveReady(object sender, SocketEventArgs e)
+        {
+            var reqMsg = e.Socket.Receive(Encoding.UTF8);
+            Console.WriteLine("REP, received: " + reqMsg);
+        }
+
+        static void repSocket_SendReady(object sender, SocketEventArgs e)
+        {
+            Console.WriteLine("REP, sending: Sync OK");
+            e.Socket.Send(Encoding.UTF8.GetBytes("Sync OK"));
+            nbSubscribersConnected++;
+        }
+
+        static void pubSocket_SendReady(object sender, SocketEventArgs e)
+        {
+            var zmqMessage = new ZmqMessage();
+            if (nbSubscribersConnected < options.nbExpectedSubscribers)
+            {
+                zmqMessage.Append(Encoding.UTF8.GetBytes("Sync"));
+                zmqMessage.Append(Encoding.UTF8
+                                          .GetBytes(options.repEndpoint));
+                Thread.Sleep(options.delay);
+                Console.WriteLine("Publishing: Sync");
+            }
+            else
+            {
+                zmqMessage.Append(Encoding.UTF8.GetBytes("Data"));
+                var data = "MYDATA"; //BuildDataToPublish();
+                if (!string.IsNullOrEmpty(data))
+                {
+                    zmqMessage.Append(Encoding.UTF8.GetBytes(data));
+                    Thread.Sleep(options.delay);
+                    Console.WriteLine("Publishing (Data): " + data);
+                }
+            }
+            e.Socket.SendMessage(zmqMessage);
+        }
+
+        private static string SynchronizedSender(string input)
+        {
 
             using (var context = ZmqContext.Create())
             {
@@ -52,7 +120,7 @@ namespace MessageSender
                         syncService.Receive(Encoding.Unicode);
                         syncService.Send("", Encoding.Unicode);
                     }
-                    
+
                     for (int i = 0; i < 100000; i++)
                     {
                         Console.WriteLine("Enter to send message=>");
@@ -60,7 +128,7 @@ namespace MessageSender
                         if (input == "Exit") break;
 
                         var cust = new Customer
-                        { 
+                        {
                             Firstname = "John",
                             Lastname = "Lemon"
                         };
@@ -68,7 +136,7 @@ namespace MessageSender
                         pl.Payload = cust;
                         ISerializer serializer = new Daytona.Store.Serializer(Encoding.Unicode);
                         Helper.SendOneMessageOfType<DBPayload<Customer>>("Writer", pl, serializer, pub);
-                       // Helper.SendOneSimpleMessage("Writer", "Hello its me", pub);
+                        // Helper.SendOneSimpleMessage("Writer", "Hello its me", pub);
                         Console.WriteLine("message sent");
                     }
 
@@ -76,28 +144,10 @@ namespace MessageSender
                     input = Console.ReadLine();
                 }
             }
+            return input;
         }
             
-       
-            //using (var context = ZmqContext.Create())
-            //{
-            //    SendCustomers(context);
 
-            //    //Console.WriteLine("=>");
-            //    //input = Console.ReadLine();
-
-                
-            //    //ISerializer Serializer = new Serializer(Encoding.Unicode);
-            //    //using (ZmqSocket publisher = context.CreateSocket(SocketType.PUB))
-            //    //{
-            //    //    publisher.Connect("tcp://localhost:5556");
-            //    //    Helper.SendOneSimpleMessage("XXXX", "stop", publisher);
-            //    //}
-
-            //    //SendCustomers(context);
-            //    //RunWeatherWithFrames(context, Address, message);
-            //    //RunWeatherDataPublisher(context);
-            //}
 
             
         

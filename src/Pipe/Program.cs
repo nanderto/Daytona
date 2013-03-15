@@ -13,6 +13,7 @@ namespace PipeRunner
     class Program
     {
         static bool interrupted = false;
+        private static object nbSubscribersConnected;
 
         static void ConsoleCancelHandler(object sender, ConsoleCancelEventArgs e)
         {
@@ -33,15 +34,17 @@ namespace PipeRunner
                 //while (!ForwarderDevice.IsRunning)
                 //{ }
 
-                using (ZmqSocket frontend = context.CreateSocket(SocketType.XPUB), backend = context.CreateSocket(SocketType.XSUB))
+                using (ZmqSocket frontend = context.CreateSocket(SocketType.XSUB), backend = context.CreateSocket(SocketType.XPUB))
                 {
                     frontend.Bind(Pipe.PublishAddressServer); //"tcp://*:5559");
                     backend.Bind(Pipe.SubscribeAddressServer); //"tcp://*:5560");
 
-                    frontend.ReceiveReady += RelayMessage(frontend, backend);
-                    var poller = new Poller();
+
+                    frontend.ReceiveReady += new EventHandler<SocketEventArgs>(subSocket_ReceiveReady);
+                    
+                    var poller = new Poller(new ZmqSocket[] {frontend});
+
                     poller.AddSocket(frontend);
-                    //poller.AddSocket(backend);
                     while (true)
                     {
                         poller.Poll();
@@ -66,6 +69,24 @@ namespace PipeRunner
 
             }
         }
+
+        static void pubSocket_ReceiveReady(object sender, SocketEventArgs e)
+        {
+            
+            var reqMsg = e.Socket.Receive(Encoding.UTF8);
+            Console.WriteLine("REP, received: " + reqMsg);
+
+                   
+        } 
+
+
+        static void repSocket_SendReady(object sender, SocketEventArgs e)
+        {
+            Console.WriteLine("REP, sending: Sync OK");
+            e.Socket.Send(Encoding.UTF8.GetBytes("Sync OK"));
+            //nbSubscribersConnected++;
+        } 
+
 
         private static void FrontendPollInHandler(ZmqSocket frontend, ZmqSocket backend)
         {
