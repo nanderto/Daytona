@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using ZeroMQ;
 using ZeroMQ.Devices;
@@ -12,8 +13,11 @@ namespace PipeRunner
 {
     class Program
     {
+        static long msgCptr = 0;
+        static int msgIndex = 0;
         static bool interrupted = false;
-        private static object nbSubscribersConnected;
+        private static int nbSubscribersConnected;
+        static ZmqSocket frontend, backend;
 
         static void ConsoleCancelHandler(object sender, ConsoleCancelEventArgs e)
         {
@@ -34,35 +38,24 @@ namespace PipeRunner
                 //while (!ForwarderDevice.IsRunning)
                 //{ }
 
-                using (ZmqSocket frontend = context.CreateSocket(SocketType.XSUB), backend = context.CreateSocket(SocketType.XPUB))
-                {
-                    frontend.Bind(Pipe.PublishAddressServer); //"tcp://*:5559");
-                    backend.Bind(Pipe.SubscribeAddressServer); //"tcp://*:5560");
-
-
-                    frontend.ReceiveReady += new EventHandler<SocketEventArgs>(subSocket_ReceiveReady);
+                //frontend = context.CreateSocket(SocketType.XSUB);
+                //backend = context.CreateSocket(SocketType.XPUB);
                     
-                    var poller = new Poller(new ZmqSocket[] {frontend});
+                //frontend.Bind(Pipe.SubscribeAddressServer); //"tcp://*:5559");
+                ////frontend.SubscribeAll();
+                //backend.Bind(Pipe.PublishAddressServer); //"tcp://*:5560");
+                //frontend.ReceiveReady += new EventHandler<SocketEventArgs>(frontend_ReceiveReady);
+                //backend.ReceiveReady += new EventHandler<SocketEventArgs>(backend_ReceiveReady);
+                //Poller poller = new Poller(new ZmqSocket[] { frontend, backend });
+                //while (true)
+                //{
+                //    poller.Poll();
+                //}
 
-                    poller.AddSocket(frontend);
-                    while (true)
-                    {
-                        poller.Poll();
-                    }
-                    //var pollItems = new PollItem[2];
-                    //pollItems[0] = frontend.CreatePollItem(IOMultiPlex.POLLIN);
-                    //pollItems[0].PollInHandler += (socket, revents) => FrontendPollInHandler(socket, backend);
-                    //pollItems[1] = backend.CreatePollItem(IOMultiPlex.POLLIN);
-                    //pollItems[1].PollInHandler += (socket, revents) => BackendPollInHandler(socket, frontend);
 
-                    //while (true)
-                    //{
-                    //    context.Poll(pollItems, -1);
-                    //}
-                }
 
-                //var pipe = new Pipe();
-                //pipe.Start(context);
+                var pipe = new Pipe();
+                pipe.Start(context);
                 Console.WriteLine("enter to exit=>");
                 input = Console.ReadLine();
                 //pipe.Exit();
@@ -70,33 +63,47 @@ namespace PipeRunner
             }
         }
 
-        static void pubSocket_ReceiveReady(object sender, SocketEventArgs e)
+        static void backend_ReceiveReady(object sender, SocketEventArgs e)
         {
-            
-            var reqMsg = e.Socket.Receive(Encoding.UTF8);
-            Console.WriteLine("REP, received: " + reqMsg);
-
-                   
-        } 
-
-
-        static void repSocket_SendReady(object sender, SocketEventArgs e)
-        {
-            Console.WriteLine("REP, sending: Sync OK");
-            e.Socket.Send(Encoding.UTF8.GetBytes("Sync OK"));
-            //nbSubscribersConnected++;
-        } 
-
-
-        private static void FrontendPollInHandler(ZmqSocket frontend, ZmqSocket backend)
-        {
-            RelayMessage(frontend, backend);
+            e.Socket.Forward(frontend);
         }
 
-        //private static void BackendPollInHandler(ZmqSocket backend, ZmqSocket frontend)
-        //{
-        //    RelayMessage(backend, frontend);
-        //}
+        static void frontend_ReceiveReady(object sender, SocketEventArgs e)
+        {
+            e.Socket.Forward(backend);
+        }
+
+        static string BuildDataToPublish()
+        {
+            if (msgCptr == long.MaxValue)
+                msgCptr = 0;
+            msgCptr++;
+            if (12 >= 0)
+                if (msgCptr > 12)
+                    return "";
+            if (msgIndex == altMessages.Count())
+                msgIndex = 0;
+            return altMessages[msgIndex++].Replace("#nb#", msgCptr.ToString("d2"));
+        } 
+        
+        static string[] altMessages = "Orange #nb#;Apple  #nb#".Split(';');
+        
+        static void DisplayRepMsg(string msg)
+        {
+            var oldColor = Console.ForegroundColor;
+            Console.ForegroundColor = ConsoleColor.White;
+            Console.WriteLine(msg);
+            Console.ForegroundColor = oldColor;
+        }
+
+        static void DisplayReqMsg(string msg)
+        {
+            var oldColor = Console.ForegroundColor;
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.WriteLine(msg);
+            Console.ForegroundColor = oldColor;
+        }
+    
 
         private static void RelayMessagex(ZmqSocket source, ZmqSocket destination)
         {

@@ -109,44 +109,44 @@ namespace Samples
             Console.CancelKeyPress += new ConsoleCancelEventHandler(ConsoleCancelHandler);
 
 
-            using (var context = ZmqContext.Create())
-            {
-                //var ForwarderDevice = new ForwarderDevice(context, "tcp://127.0.0.1:5550", "tcp://127.0.0.1:5553", DeviceMode.Threaded);
-                //ForwarderDevice.Start();
-                //while (!ForwarderDevice.IsRunning)
-                //{ }
+            //using (var context = ZmqContext.Create())
+            //{
+            //    //var ForwarderDevice = new ForwarderDevice(context, "tcp://127.0.0.1:5550", "tcp://127.0.0.1:5553", DeviceMode.Threaded);
+            //    //ForwarderDevice.Start();
+            //    //while (!ForwarderDevice.IsRunning)
+            //    //{ }
 
-                using (ZmqSocket sub = context.CreateSocket(SocketType.SUB), pub = context.CreateSocket(SocketType.PUB))
-                {
-                    sub.Connect("tcp://127.0.0.1:5550");
-                    sub.SubscribeAll();
+            //    using (ZmqSocket sub = context.CreateSocket(SocketType.SUB), pub = context.CreateSocket(SocketType.PUB))
+            //    {
+            //        sub.Connect("tcp://127.0.0.1:5550");
+            //        sub.SubscribeAll();
 
-                    pub.Connect("tcp://127.0.0.1:5550");
+            //        pub.Connect("tcp://127.0.0.1:5550");
 
-                    Task.Run(() =>
-                    {
-                        while (true)
-                        {
-                            var message = sub.ReceiveMessage();
-                            Console.WriteLine("here" + message);
-                        }
-                    });
+            //        Task.Run(() =>
+            //        {
+            //            while (true)
+            //            {
+            //                var message = sub.ReceiveMessage();
+            //                Console.WriteLine("here" + message);
+            //            }
+            //        });
 
-                    Task.Run(() =>
-                    {
-                        while (true)
-                        {
-                            pub.Send("XXX HELO", Encoding.Unicode);
-                            var message = sub.ReceiveMessage();
-                            Console.WriteLine("just sent");
-                        }
-                    });
+            //        Task.Run(() =>
+            //        {
+            //            while (true)
+            //            {
+            //                pub.Send("XXX HELO", Encoding.Unicode);
+            //                var message = sub.ReceiveMessage();
+            //                Console.WriteLine("just sent");
+            //            }
+            //        });
 
-                    Console.ReadLine();
-                }
-            }
+            //         Console.ReadLine();
+            //    }
+            //}
             //RunStoreTest();
-           // RunSubscriber();
+            RunSubscriber();
 
             Console.WriteLine("enter to exit=>");
             input = Console.ReadLine();

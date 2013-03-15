@@ -18,7 +18,7 @@ namespace Daytona
         public static QueueDevice QueueDevce = null;
         private bool disposed;
         public static string PublishAddressClient = "tcp://localhost:5550";
-        public static string PublishAddressServer = "tcp://*:5550";
+        public static string  PublishAddressServer = "tcp://*:5550";
         public static string SubscribeAddressServer =  "tcp://*:5553";//"inproc://back";
         public static string SubscribeAddressClient = "tcp://localhost:5553";
 
@@ -26,6 +26,7 @@ namespace Daytona
         public static string PubSubControlFrontAddressClient = "tcp://localhost:5551";
         public static string PubSubControlBackAddressServer = "tcp://*:5552";//"inproc://pubsubcontrol";//
         public static string PubSubControlBackAddressClient = "tcp://localhost:5552";//"inproc://pubsubcontrol";//
+        static ZmqSocket frontend, backend;
 
         public Pipe()
         {
@@ -46,10 +47,10 @@ namespace Daytona
 
         public void Start(ZmqContext context)
         {
-            ForwarderDevice = new ForwarderDevice(context, PublishAddressServer, SubscribeAddressServer, DeviceMode.Threaded);
-            ForwarderDevice.Start();
-            while (!ForwarderDevice.IsRunning)
-            { }
+            //ForwarderDevice = new ForwarderDevice(context, PublishAddressServer, SubscribeAddressServer, DeviceMode.Threaded);
+            //ForwarderDevice.Start();
+            //while (!ForwarderDevice.IsRunning)
+            //{ }
 
             QueueDevce = new QueueDevice(context, PubSubControlBackAddressServer, PubSubControlFrontAddress, DeviceMode.Threaded);
             QueueDevce.Start();
@@ -63,6 +64,22 @@ namespace Daytona
             //{
             //    Setup(this.cancellationTokenSource.Token);
             //});
+
+            using (frontend = context.CreateSocket(SocketType.XSUB))
+            {
+                using (backend = context.CreateSocket(SocketType.XPUB))
+                {
+                    frontend.Bind(Pipe.SubscribeAddressServer); //"tcp://*:5559");
+                    backend.Bind(Pipe.PublishAddressServer); //"tcp://*:5560");
+                    frontend.ReceiveReady += new EventHandler<SocketEventArgs>(frontend_ReceiveReady);
+                    backend.ReceiveReady += new EventHandler<SocketEventArgs>(backend_ReceiveReady);
+                    Poller poller = new Poller(new ZmqSocket[] { frontend, backend });
+                    while (true)
+                    {
+                        poller.Poll();
+                    }
+                }
+            }
         }
 
         public void Exit()
@@ -71,6 +88,17 @@ namespace Daytona
 
             cancellationTokenSource.Cancel();
         }
+
+        static void backend_ReceiveReady(object sender, SocketEventArgs e)
+        {
+            e.Socket.Forward(frontend);
+        }
+
+        static void frontend_ReceiveReady(object sender, SocketEventArgs e)
+        {
+            e.Socket.Forward(backend);
+        }
+
 
         private void CleanUpDevices()
         {

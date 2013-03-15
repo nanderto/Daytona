@@ -15,7 +15,7 @@ namespace MessageSender
     {
         static bool interrupted = false;
         static uint nbSubscribersConnected = 0;
-        static Options options;
+        //static Options options;
         static long msgCptr = 0;
         static int msgIndex = 0;
 
@@ -30,26 +30,25 @@ namespace MessageSender
             var input = string.Empty;
             Console.CancelKeyPress += new ConsoleCancelEventHandler(ConsoleCancelHandler);
 
-            using (var ctx = ZmqContext.Create())
-            {
-                var pubSocket = ctx.CreateSocket(SocketType.PUB);
-                pubSocket.Bind(Pipe.PublishAddressClient);
-                pubSocket.SendReady += new EventHandler<SocketEventArgs>(pubSocket_SendReady);
-                var repSocket = ctx.CreateSocket(SocketType.REP);
-                repSocket.Bind(Pipe.PubSubControlFrontAddressClient);
-                repSocket.SendReady += new EventHandler<SocketEventArgs>(repSocket_SendReady);
-                repSocket.ReceiveReady += new EventHandler<SocketEventArgs>(repSocket_ReceiveReady);
+            //using (var ctx = ZmqContext.Create())
+            //{
+            //    var pubSocket = ctx.CreateSocket(SocketType.PUB);
+            //    pubSocket.Bind(Pipe.PublishAddressClient);
+            //    pubSocket.SendReady += new EventHandler<SocketEventArgs>(pubSocket_SendReady);
+            //    var repSocket = ctx.CreateSocket(SocketType.REP);
+            //    repSocket.Bind(Pipe.PubSubControlFrontAddressClient);
+            //    repSocket.SendReady += new EventHandler<SocketEventArgs>(repSocket_SendReady);
+            //    repSocket.ReceiveReady += new EventHandler<SocketEventArgs>(repSocket_ReceiveReady);
                 
-                Poller poller = new Poller(new ZmqSocket[] { pubSocket, repSocket });
-                while (true)
-                {
-                    poller.Poll();
-                    if (options.maxMessage >= 0)
-                        if (msgCptr > options.maxMessage)
-                            Environment.Exit(0);
-                }
+            //    Poller poller = new Poller(new ZmqSocket[] { pubSocket, repSocket });
+            //    while (true)
+            //    {
+            //        poller.Poll();
+            //        Console.WriteLine("=>");
+            //        input = Console.ReadLine();
+            //    }
 
-            }
+            //}
             ////var pipe = new Pipe();
             ////using (var pipeContext = ZmqContext.Create())
             ////{
@@ -65,7 +64,7 @@ namespace MessageSender
             ////    input = Console.ReadLine();
             ////    pipe.Exit();
             ////}
-            //input = SynchronizedSender(input);
+            input = SynchronizedSender(input);
         }
 
         static void repSocket_ReceiveReady(object sender, SocketEventArgs e)
@@ -84,12 +83,11 @@ namespace MessageSender
         static void pubSocket_SendReady(object sender, SocketEventArgs e)
         {
             var zmqMessage = new ZmqMessage();
-            if (nbSubscribersConnected < options.nbExpectedSubscribers)
+            if (nbSubscribersConnected < 2)
             {
                 zmqMessage.Append(Encoding.UTF8.GetBytes("Sync"));
-                zmqMessage.Append(Encoding.UTF8
-                                          .GetBytes(options.repEndpoint));
-                Thread.Sleep(options.delay);
+                zmqMessage.Append(Encoding.UTF8.GetBytes(Pipe.PubSubControlFrontAddressClient));
+                Thread.Sleep(200);
                 Console.WriteLine("Publishing: Sync");
             }
             else
@@ -99,7 +97,7 @@ namespace MessageSender
                 if (!string.IsNullOrEmpty(data))
                 {
                     zmqMessage.Append(Encoding.UTF8.GetBytes(data));
-                    Thread.Sleep(options.delay);
+                    Thread.Sleep(200);
                     Console.WriteLine("Publishing (Data): " + data);
                 }
             }
