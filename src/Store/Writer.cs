@@ -8,7 +8,7 @@ namespace Daytona.Store
 {
     public class Writer
     {
-        internal int Save<T>(DBPayload<T> dBPayload)
+        public int Save<T>(DBPayload<T> dBPayload)
         {
             Writeline(dBPayload.ToString());
             return 1;

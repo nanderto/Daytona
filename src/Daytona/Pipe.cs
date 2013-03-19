@@ -26,6 +26,10 @@ namespace Daytona
         public static string PubSubControlFrontAddressClient = "tcp://localhost:5551";
         public static string PubSubControlBackAddressServer = "tcp://*:5552";//"inproc://pubsubcontrol";//
         public static string PubSubControlBackAddressClient = "tcp://localhost:5552";//"inproc://pubsubcontrol";//
+
+        public static string MonitorAddressClient = "tcp://localhost:5560";//"inproc://pubsubcontrol";//
+        public static string MonitorAddressServer = "tcp://*:5560";
+
         static ZmqSocket frontend, backend;
 
         public Pipe()
@@ -60,26 +64,26 @@ namespace Daytona
             this.Context = context;
             cancellationTokenSource = new CancellationTokenSource();
 
-            //Task.Run(() =>
-            //{
-            //    Setup(this.cancellationTokenSource.Token);
-            //});
-
-            using (frontend = context.CreateSocket(SocketType.XSUB))
+            Task.Run(() =>
             {
-                using (backend = context.CreateSocket(SocketType.XPUB))
+                //Setup(this.cancellationTokenSource.Token);
+           
+                using (frontend = context.CreateSocket(SocketType.XSUB))
                 {
-                    frontend.Bind(Pipe.SubscribeAddressServer); //"tcp://*:5559");
-                    backend.Bind(Pipe.PublishAddressServer); //"tcp://*:5560");
-                    frontend.ReceiveReady += new EventHandler<SocketEventArgs>(frontend_ReceiveReady);
-                    backend.ReceiveReady += new EventHandler<SocketEventArgs>(backend_ReceiveReady);
-                    Poller poller = new Poller(new ZmqSocket[] { frontend, backend });
-                    while (true)
+                    using (backend = context.CreateSocket(SocketType.XPUB))
                     {
-                        poller.Poll();
+                        frontend.Bind(Pipe.SubscribeAddressServer); //"tcp://*:5559");
+                        backend.Bind(Pipe.PublishAddressServer); //"tcp://*:5560");
+                        frontend.ReceiveReady += new EventHandler<SocketEventArgs>(frontend_ReceiveReady);
+                        backend.ReceiveReady += new EventHandler<SocketEventArgs>(backend_ReceiveReady);
+                        Poller poller = new Poller(new ZmqSocket[] { frontend, backend });
+                        while (true)
+                        {
+                            poller.Poll();
+                        }
                     }
                 }
-            }
+            });
         }
 
         public void Exit()

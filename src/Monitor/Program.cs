@@ -16,15 +16,15 @@ namespace Monitor
             Console.CancelKeyPress += new ConsoleCancelEventHandler(ConsoleCancelHandler);
             using (var context = ZmqContext.Create())
             {
-                using (var syncService = context.CreateSocket(SocketType.REP))
+                using (var monitorService = context.CreateSocket(SocketType.REP))
                 {
-                    syncService.Connect(Pipe.PubSubControlFrontAddressClient);
+                    monitorService.Bind(Pipe.MonitorAddressServer);
 
                     while (!interrupted)
                     {
-                        var signal = syncService.Receive(Encoding.Unicode);
+                        var signal = monitorService.Receive(Encoding.Unicode);
                         Console.WriteLine("Signal Recieved: " + signal);
-                        syncService.Send("", Encoding.Unicode);
+                        monitorService.Send("", Encoding.Unicode);
 
                        
                     }

@@ -14,6 +14,7 @@ namespace Daytona
         private IPayload payload;
         private ZmqSocket subscriber;
         public ZmqSocket OutputChannel;
+        public ZmqSocket MonitorChannel;
         private bool disposed;
         public ISerializer Serializer;
         private ZmqSocket sendControlChannel;
@@ -45,6 +46,7 @@ namespace Daytona
             this.context = context;
             this.InRoute = route;
             this.Workload = workload;
+            SetUpMonitorChannel(context);
             SetUpReceivers(context, route);
         }
 
@@ -61,6 +63,7 @@ namespace Daytona
             this.context = context;
             this.InRoute = inRoute;
             this.Workload = workload;
+            SetUpMonitorChannel(context);
             SetUpReceivers(context, inRoute);
             SetUpOutputChannel(context);
         }
@@ -80,6 +83,7 @@ namespace Daytona
             this.OutRoute = outRoute;
             this.Workload = workload;
             this.PropertyBag = new Dictionary<string, string>();
+            SetUpMonitorChannel(context);
             SetUpReceivers(context, inRoute);
             SetUpOutputChannel(this.context);
         }
@@ -92,6 +96,7 @@ namespace Daytona
             this.OutRoute = outRoute;
             this.Workload = workload;
             this.PropertyBag = new Dictionary<string, string>();
+            SetUpMonitorChannel(context);
             SetUpReceivers(context, inRoute);
             SetUpOutputChannel(this.context);
         }
@@ -105,6 +110,7 @@ namespace Daytona
             this.OutRoute = outRoute;
             this.Workload = workload;
             this.PropertyBag = new Dictionary<string, string>();
+            SetUpMonitorChannel(context);
             SetUpReceivers(context, inRoute);
             SetUpOutputChannel(this.context);
         }
@@ -116,6 +122,7 @@ namespace Daytona
             this.InRoute = inRoute;
             this.OutRoute = outRoute;
             this.PropertyBag = new Dictionary<string, string>();
+            SetUpMonitorChannel(context);
             SetUpReceivers(context, inRoute);
             SetUpOutputChannel(this.context);
         }
@@ -126,6 +133,7 @@ namespace Daytona
             this.context = context;
             this.OutRoute = outRoute;
             this.PropertyBag = new Dictionary<string, string>();
+            SetUpMonitorChannel(context);
             SetUpOutputChannel(this.context);
         }
         public Actor(ZmqContext context, string inRoute, Action<Actor> workload)
@@ -134,6 +142,7 @@ namespace Daytona
             this.InRoute = inRoute;
             this.Workload = workload;
             this.PropertyBag = new Dictionary<string, string>();
+            SetUpMonitorChannel(context);
             SetUpReceivers(context, inRoute);
             SetUpOutputChannel(this.context);
         }
@@ -145,14 +154,17 @@ namespace Daytona
         {
             subscriber = context.CreateSocket(SocketType.SUB);
             subscriber.Connect(Pipe.SubscribeAddressClient);
+
             subscriber.Subscribe(InRoute, Encoding.Unicode);
-            if(this.sendControlChannel == null)
-            {
-                this.sendControlChannel = context.CreateSocket(SocketType.REQ);
-                this.sendControlChannel.Connect(Pipe.PubSubControlBackAddressClient);
-            }
-            this.sendControlChannel.Send("Actor ReceiverChannel connected, Listening on " + Pipe.SubscribeAddressClient + " for " + InRoute, Encoding.Unicode);
-            var replySignal = this.sendControlChannel.Receive(Encoding.Unicode);
+            MonitorChannel.Send("Set up Receive channel on " + Pipe.SubscribeAddressClient + " listening on: " + InRoute, Encoding.Unicode);
+            var signal = MonitorChannel.Receive(Encoding.Unicode);
+            //if(this.sendControlChannel == null)
+            //{
+            //    this.sendControlChannel = context.CreateSocket(SocketType.REQ);
+            //    this.sendControlChannel.Connect(Pipe.PubSubControlBackAddressClient);
+            //}
+            //this.sendControlChannel.Send("Actor ReceiverChannel connected, Listening on " + Pipe.SubscribeAddressClient + " for " + InRoute, Encoding.Unicode);
+            //var replySignal = this.sendControlChannel.Receive(Encoding.Unicode);
             //Actor.Writeline(replySignal);
 
         }
@@ -167,14 +179,24 @@ namespace Daytona
         {
             OutputChannel = context.CreateSocket(SocketType.PUB);
             OutputChannel.Connect(Pipe.PublishAddressClient);
-            if(this.sendControlChannel == null)
-            {
-                this.sendControlChannel = context.CreateSocket(SocketType.REQ);
-                this.sendControlChannel.Connect(Pipe.PubSubControlBackAddressClient);
-            }
-            this.sendControlChannel.Send("Actor OutputChannel connected, Sending on " + Pipe.PublishAddressClient, Encoding.Unicode);
-            var replySignal = this.sendControlChannel.Receive(Encoding.Unicode);
+
+            MonitorChannel.Send("Set up output channel on " + Pipe.PublishAddressClient + " Default sending on: " + this.OutRoute, Encoding.Unicode);
+            var signal = MonitorChannel.Receive(Encoding.Unicode);
+                
+            //if(this.sendControlChannel == null)
+            //{
+            //    this.sendControlChannel = context.CreateSocket(SocketType.REQ);
+            //    this.sendControlChannel.Connect(Pipe.PubSubControlBackAddressClient);
+            //}
+            //this.sendControlChannel.Send("Actor OutputChannel connected, Sending on " + Pipe.PublishAddressClient, Encoding.Unicode);
+            //var replySignal = this.sendControlChannel.Receive(Encoding.Unicode);
             //Actor.Writeline(replySignal);
+        }
+
+        void SetUpMonitorChannel(ZmqContext context)
+        {
+            MonitorChannel = context.CreateSocket(SocketType.REQ);
+            MonitorChannel.Connect(Pipe.MonitorAddressClient);
         }
 
         /// <summary>
@@ -382,11 +404,11 @@ namespace Daytona
             ZmqMessage zmqMessage = new ZmqMessage();
             zmqMessage.Append(new Frame(serializer.Encoding.GetBytes(address)));
             zmqMessage.Append(new Frame(serializer.GetBuffer(message)));
-            var replySignal = this.sendControlChannel.Receive(Encoding.Unicode);
+            //var replySignal = this.sendControlChannel.Receive(Encoding.Unicode);
             socket.SendMessage(zmqMessage);
-            this.sendControlChannel.Send("Just sent message to " + address + " Message is: " + message, Encoding.Unicode);
-            replySignal = this.sendControlChannel.Receive(Encoding.Unicode);
-            Actor.Writeline(replySignal);
+            //this.sendControlChannel.Send("Just sent message to " + address + " Message is: " + message, Encoding.Unicode);
+            //replySignal = this.sendControlChannel.Receive(Encoding.Unicode);
+            //Actor.Writeline(replySignal);
         }
 
         public int CallBack(IAsyncResult result)
@@ -427,6 +449,10 @@ namespace Daytona
                     if (OutputChannel != null)
                     {
                         OutputChannel.Dispose();
+                    }
+                    if (MonitorChannel != null)
+                    {
+                        MonitorChannel.Dispose();
                     }
                 }
 

@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using TestHelpers;
 using ZeroMQ;
 using ZeroMQ.Devices;
+using Daytona.Store;
 
 namespace Samples
 {
@@ -32,13 +33,6 @@ namespace Samples
 
         public static void test1()
         {
-            //using (var pipeContext = ZmqContext.Create())
-            //{
-            //    var pipe = new Pipe();
-            //    pipe.Start(pipeContext);
-                
-
-
                     string input = string.Empty;
                     string expectedAddress = "XXXXxxxx";
                     string message = string.Empty;
@@ -50,7 +44,7 @@ namespace Samples
                         {
                             //using (var sub = GetConnectedSubscribeSocket(context))
                             //{
-                            ISerializer serializer = new Serializer(Encoding.Unicode);
+                            ISerializer serializer = new TestHelpers.Serializer(Encoding.Unicode);
                             Customer cust = new Customer();
                             cust.Firstname = "Johnx";
                             cust.Lastname = "Wilson";
@@ -108,7 +102,26 @@ namespace Samples
             var input = string.Empty;
             Console.CancelKeyPress += new ConsoleCancelEventHandler(ConsoleCancelHandler);
 
+            using (var context = ZmqContext.Create())
+            {
+                ISerializer serializer = new Daytona.Store.Serializer(Encoding.UTF8);
+                var actorFactory = new Actor(context);
 
+                actorFactory.RegisterActor<DBPayload<Customer>>("Writer", "Writer", "Sender", serializer, (message, inRoute, outRoute, socket, actor) =>
+                {
+                    Actor.Writeline("Got here in the writer");
+                    var writer = new Writer();
+                    int Id = writer.Save((DBPayload<Customer>)message);
+                    var dBPayload = new DBPayload<Customer>();
+                    dBPayload.Id = Id;
+                    actor.SendOneMessageOfType<DBPayload<Customer>>(outRoute, dBPayload, serializer, socket);
+                });
+
+                actorFactory.StartAllActors();
+
+                Console.WriteLine("enter to exit=>");
+                input = Console.ReadLine();
+            }
             //using (var context = ZmqContext.Create())
             //{
             //    //var ForwarderDevice = new ForwarderDevice(context, "tcp://127.0.0.1:5550", "tcp://127.0.0.1:5553", DeviceMode.Threaded);
@@ -146,10 +159,10 @@ namespace Samples
             //    }
             //}
             //RunStoreTest();
-            RunSubscriber();
+            ////RunSubscriber();
 
-            Console.WriteLine("enter to exit=>");
-            input = Console.ReadLine();
+            //Console.WriteLine("enter to exit=>");
+            //input = Console.ReadLine();
 
 
             //var pipe = new Pipe();

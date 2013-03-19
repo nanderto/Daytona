@@ -112,12 +112,12 @@ namespace MessageSender
                 using (ZmqSocket pub = Helper.GetConnectedPublishSocket(context, Pipe.PublishAddressClient),
                       syncService = context.CreateSocket(SocketType.REP))
                 {
-                    syncService.Connect(Pipe.PubSubControlFrontAddressClient);
-                    for (int i = 0; i < 1; i++)
-                    {
-                        syncService.Receive(Encoding.Unicode);
-                        syncService.Send("", Encoding.Unicode);
-                    }
+                    //syncService.Connect(Pipe.PubSubControlFrontAddressClient);
+                    //for (int i = 0; i < 1; i++)
+                    //{
+                    //    syncService.Receive(Encoding.Unicode);
+                    //    syncService.Send("", Encoding.Unicode);
+                    //}
 
                     for (int i = 0; i < 100000; i++)
                     {
@@ -133,7 +133,7 @@ namespace MessageSender
                         var pl = new Daytona.Store.DBPayload<Customer>();
                         pl.Payload = cust;
                         ISerializer serializer = new Daytona.Store.Serializer(Encoding.Unicode);
-                        Helper.SendOneMessageOfType<DBPayload<Customer>>("Writer", pl, serializer, pub);
+                        Helper.SendOneMessageOfType<Daytona.Store.DBPayload<Customer>>("Writer", pl, serializer, pub);
                         // Helper.SendOneSimpleMessage("Writer", "Hello its me", pub);
                         Console.WriteLine("message sent");
                     }
