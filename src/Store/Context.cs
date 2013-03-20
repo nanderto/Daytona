@@ -32,13 +32,16 @@ namespace Daytona.Store
             ISerializer serializer = new Serializer(Encoding.UTF8);
             var actorFactory = new Actor(context);
 
-            actorFactory.RegisterActor<DBPayload<T>>("Writer", "Writer", "Sender", serializer, (message, inRoute, outRoute, socket, actor) =>
+            actorFactory.RegisterActor<DBPayload<T>>("Writer", "Writer", "Sender", serializer, (IPayload message, byte[] messageAsBytes, string inRoute, string outRoute, ZmqSocket socket, Actor actor) =>
             {
                 Actor.Writeline("Got here in the writer");
                 var writer = new Writer();
-                int Id = writer.Save((DBPayload<T>)message);
-                var dBPayload = new DBPayload<T>();
+                var dBPayload = (DBPayload<T>)message;
+                int Id = writer.Save(dBPayload);
                 dBPayload.Id = Id;
+
+                Id = writer.Save(messageAsBytes);
+                
                 actor.SendOneMessageOfType<DBPayload<T>>(outRoute, dBPayload, serializer, socket);
             });
 
@@ -51,7 +54,7 @@ namespace Daytona.Store
             //actorFactory.CreateNewActor("Sender");
             actorFactory.CreateNewActor("Writer");
             ISerializer serializer3 = new Serializer(Encoding.UTF8);
-            connection.AddScope<T>(new Scope<T>(new Actor(context, "Sender", "Writer", serializer3,(message, inRoute, outRoute, socket, actor) =>
+            connection.AddScope<T>(new Scope<T>(new Actor(context, "Sender", "Writer", serializer3,(IPayload message, byte[] messageAsBytes, string inRoute, string outRoute, ZmqSocket socket, Actor actor) =>
                 {
                     actor.CallBack(null);
                 })));
