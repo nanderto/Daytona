@@ -81,6 +81,8 @@ namespace Daytona
                         while (true)
                         {
                             poller.Poll();
+
+                            Writeline("polling");
                             if (token.IsCancellationRequested)
                                 break;
                         }
@@ -117,11 +119,13 @@ namespace Daytona
 
         static void backend_ReceiveReady(object sender, SocketEventArgs e)
         {
+            WritelineToLogFile("frontend_ReceiveReady");
             e.Socket.Forward(frontend);
         }
 
         static void frontend_ReceiveReady(object sender, SocketEventArgs e)
         {
+            WritelineToLogFile("frontend_ReceiveReady");
             e.Socket.Forward(backend);
         }
 

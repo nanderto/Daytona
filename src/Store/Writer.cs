@@ -14,9 +14,16 @@ namespace Daytona.Store
             return 1;
         }
 
+        public int Save(byte[] messageAsBytes)
+        {
+            Writeline("Got message as bytes: " + messageAsBytes.ToString());
+            return 1;
+        }
+
         public static void Writeline(string line)
         {
             FileInfo fi = new FileInfo(@"c:\dev\Store.log");
+         
             var stream = fi.AppendText();
             stream.WriteLine(line);
             stream.Flush();
