@@ -23,7 +23,7 @@ namespace TestHelpers
         public static void SendOneMessageOfType<T>(string Address, T message, ISerializer serializer, ZmqSocket publisher)
         {
             ZmqMessage zmqMessage = new ZmqMessage();
-            zmqMessage.Append(new Frame(Encoding.Unicode.GetBytes(Address)));
+            zmqMessage.Append(new Frame(serializer.GetBuffer(Address)));
             zmqMessage.Append(new Frame(serializer.GetBuffer(message)));
             publisher.SendMessage(zmqMessage);
         }

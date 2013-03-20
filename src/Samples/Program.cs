@@ -23,62 +23,7 @@ namespace Samples
             e.Cancel = true;
             interrupted = true;
         }
-
-        private static ZmqSocket GetConnectedPublishSocket(ZmqContext context)
-        {
-            ZmqSocket publisher = context.CreateSocket(SocketType.PUB);
-            publisher.Connect("tcp://localhost:5556");
-            return publisher;
-        }
-
-        public static void test1()
-        {
-                    string input = string.Empty;
-                    string expectedAddress = "XXXXxxxx";
-                    string message = string.Empty;
-
-                    using (var context = ZmqContext.Create())
-                    {
-
-                        using (var pub = GetConnectedPublishSocket(context))
-                        {
-                            //using (var sub = GetConnectedSubscribeSocket(context))
-                            //{
-                            ISerializer serializer = new TestHelpers.Serializer(Encoding.Unicode);
-                            Customer cust = new Customer();
-                            cust.Firstname = "Johnx";
-                            cust.Lastname = "Wilson";
-
-                            using (var actor = new Actor(context))
-                            {
-                                actor.RegisterActor<Customer>("Basic", expectedAddress, "OutRoute", serializer, (Message, InRoute, OutRoute, Socket, Actor) =>
-                                {
-                                    var customer = (Customer)Message;
-                                    //Assert.AreEqual(cust.Firstname, customer.Firstname);
-                                    Helper.Writeline(customer.Firstname, @"c:\dev\xx.log");
-                                });
-                                actor.StartAllActors();
-
-                                Thread.Sleep(0);
-                            }
-
-                            for (int i = 0; i < 10; i++)
-                            {
-                                cust.Firstname = i.ToString();
-                                SendOneMessageOfType<Customer>(expectedAddress, cust, serializer, pub);
-                                Thread.Sleep(0);
-                            }
-                            SendOneSimpleMessage(expectedAddress, "stop", pub);
-                            Thread.Sleep(0);
-                        }
-                        //pipe.Exit();
-                        //Thread.Sleep(0);
-                    }
-
-                //pipe.Exit();
-            //}
-        }
-
+        
         private static void SendOneSimpleMessage(string address, string message, ZmqSocket publisher)
         {
             {
@@ -102,19 +47,37 @@ namespace Samples
             var input = string.Empty;
             Console.CancelKeyPress += new ConsoleCancelEventHandler(ConsoleCancelHandler);
 
+            //input = RunSenderWriterTest(input);
+
+            RunStoreTest();
+            ////RunSubscriber();
+            //test1();
+            //input = RunPropertyBagTest(input);
+        }
+
+        private static string RunSenderWriterTest(string input)
+        {
             using (var context = ZmqContext.Create())
             {
-                ISerializer serializer = new Daytona.Store.Serializer(Encoding.UTF8);
+                ISerializer serializer = new Daytona.Store.Serializer(Encoding.Unicode);
                 var actorFactory = new Actor(context);
 
-                actorFactory.RegisterActor<DBPayload<Customer>>("Writer", "Writer", "Sender", serializer, (message, inRoute, outRoute, socket, actor) =>
+                actorFactory.RegisterActor<DBPayload<Customer>>("Writer", "Writer", "Sender", serializer, (IPayload message, byte[] messageAsBytes, string inRoute, string outRoute, ZmqSocket socket, Actor actor) =>
                 {
                     Actor.Writeline("Got here in the writer");
                     var writer = new Writer();
-                    int Id = writer.Save((DBPayload<Customer>)message);
+                    int Id = writer.Save(messageAsBytes);
                     var dBPayload = new DBPayload<Customer>();
                     dBPayload.Id = Id;
                     actor.SendOneMessageOfType<DBPayload<Customer>>(outRoute, dBPayload, serializer, socket);
+                });
+
+                actorFactory.RegisterActor<DBPayload<Customer>>("Sender", "Sender", "NO OUT ROUTE", serializer, (IPayload message, byte[] messageAsBytes, string inRoute, string outRoute, ZmqSocket socket, Actor actor) =>
+                {
+                    Actor.Writeline("Got here in the Sender");
+                    actor.CallBack(null);
+                    var dBPayload = new DBPayload<Customer>();
+                    //dBPayload.Id = Id;
                 });
 
                 actorFactory.StartAllActors();
@@ -122,123 +85,71 @@ namespace Samples
                 Console.WriteLine("enter to exit=>");
                 input = Console.ReadLine();
             }
-            //using (var context = ZmqContext.Create())
-            //{
-            //    //var ForwarderDevice = new ForwarderDevice(context, "tcp://127.0.0.1:5550", "tcp://127.0.0.1:5553", DeviceMode.Threaded);
-            //    //ForwarderDevice.Start();
-            //    //while (!ForwarderDevice.IsRunning)
-            //    //{ }
+            return input;
+        }
 
-            //    using (ZmqSocket sub = context.CreateSocket(SocketType.SUB), pub = context.CreateSocket(SocketType.PUB))
-            //    {
-            //        sub.Connect("tcp://127.0.0.1:5550");
-            //        sub.SubscribeAll();
+        private static string RunPropertyBagTest(string input)
+        {
+            using (var context = ZmqContext.Create())
+            {
+                Pipe pipe = new Pipe();
+                pipe.Start(context);
+                using (var actor = new Actor(context))
+                {
+                    //actor.RegisterActor("Basic", "85308", (Message, InRoute) =>
+                    //    {
+                    //        Console.WriteLine(Message);
+                    //    });
+                    //actor.StartAllActors();
+                    var serializer = new TestHelpers.Serializer(Encoding.Unicode);
+                    string expectedAddress = "XXXX";
+                    actor.RegisterActor<Customer>("Basic", expectedAddress, "OutRoute", serializer, (Message, InRoute, OutRoute, Socket, Actor) =>
+                    {
+                        var customer = (Customer)Message;
+                        //Console.WriteLine(customer.Firstname + " " + customer.Lastname);
 
-            //        pub.Connect("tcp://127.0.0.1:5550");
+                        if (!Actor.PropertyBag.ContainsKey("Count"))
+                        {
+                            Actor.PropertyBag.Add("Count", "0");
+                        }
+                        var count = int.Parse(Actor.PropertyBag["Count"]);
+                        count++;
+                        Actor.PropertyBag["Count"] = count.ToString();
 
-            //        Task.Run(() =>
-            //        {
-            //            while (true)
-            //            {
-            //                var message = sub.ReceiveMessage();
-            //                Console.WriteLine("here" + message);
-            //            }
-            //        });
+                        Helper.Writeline(customer.Firstname + " " + customer.Lastname + " Count:" + count.ToString());
+                    });
+                    actor.StartAllActors();
 
-            //        Task.Run(() =>
-            //        {
-            //            while (true)
-            //            {
-            //                pub.Send("XXX HELO", Encoding.Unicode);
-            //                var message = sub.ReceiveMessage();
-            //                Console.WriteLine("just sent");
-            //            }
-            //        });
+                    while (input != "exit")
+                    {
+                        input = Console.ReadLine();
+                    }
+                }
 
-            //         Console.ReadLine();
-            //    }
-            //}
-            //RunStoreTest();
-            ////RunSubscriber();
-
-            //Console.WriteLine("enter to exit=>");
-            //input = Console.ReadLine();
-
-
-            //var pipe = new Pipe();
-            //using (var pipeContext = ZmqContext.Create())
-            //{
-            //    // pipe = new Pipe();
-            //    //pipe.Start(pipeContext);
-
-            //    //var t = Task.Run(() =>
-            //    //{
-            //         RunSubscriber();
-            //    //});
-
-            //    //t.Wait();
-            //    Console.WriteLine("enter to exit=>");
-            //    input = Console.ReadLine();
-            //    pipe.Exit();
-            //}
-
-           
-            //test1();
-            //using (var context = ZmqContext.Create())
-            //{
-            //    Pipe pipe = new Pipe();
-            //    pipe.Start(context);
-            //    using (var actor = new Actor(context))
-            //    {
-            //        //actor.RegisterActor("Basic", "85308", (Message, InRoute) =>
-            //        //    {
-            //        //        Console.WriteLine(Message);
-            //        //    });
-            //        //actor.StartAllActors();
-            //        var Serializer = new Serializer(Encoding.Unicode);
-            //        string expectedAddress = "XXXX";
-            //        actor.RegisterActor<Customer>("Basic", expectedAddress, "OutRoute", serializer, (Message, InRoute, OutRoute, Socket, Actor) =>
-            //        {
-            //            var customer = (Customer)Message;
-            //            //Console.WriteLine(customer.Firstname + " " + customer.Lastname);
-
-            //            if (!Actor.PropertyBag.ContainsKey("Count"))
-            //            {
-            //                Actor.PropertyBag.Add("Count", "0");
-            //            }
-            //            var count = int.Parse(Actor.PropertyBag["Count"]);
-            //            count++;
-            //            Actor.PropertyBag["Count"] = count.ToString();
-
-            //            Helper.Writeline(customer.Firstname + " " + customer.Lastname + " Count:" + count.ToString());
-            //        });
-            //        actor.StartAllActors();
-
-            //        while (input != "exit")
-            //        {
-            //             input = Console.ReadLine();
-            //        }
-            //    }
-
-            //    pipe.Exit();
-            //}
+                pipe.Exit();
+            }
+            return input;
         }
 
         private static void RunStoreTest()
         {
-            Daytona.Store.Context context = new Daytona.Store.Context();
-            using (var connection = context.GetConnection<Customer>())
+            var task = Task.Run(() =>
             {
-                var customer = new Customer
+                Daytona.Store.Context context = new Daytona.Store.Context();
+                using (var connection = context.GetConnection<Customer>())
                 {
-                    Firstname = "John",
-                    Lastname = "Lemon"
-                };
-                //var task = connection.Save(customer);
-                //int id = task.Result;
-                Console.WriteLine("Pausing=>");
-                Console.ReadLine();
-            }
+                    var customer = new Customer
+                    {
+                        Firstname = "John",
+                        Lastname = "Lemon"
+                    };
+                    var task1 = connection.Save(customer);
+                    int id = task1.Result;
+                    Console.WriteLine("Pausing=>");
+                    Console.ReadLine();
+                }
+            });
+            task.Wait();
         }
 
         private static Task RunSubscriber()
@@ -284,6 +195,65 @@ namespace Samples
                 }
                 return null;
             }
+
+
+
         }
+
+        public static void test1()
+        {
+            string input = string.Empty;
+            string expectedAddress = "XXXXxxxx";
+            string message = string.Empty;
+
+            using (var context = ZmqContext.Create())
+            {
+
+                using (var pub = GetConnectedPublishSocket(context))
+                {
+                    //using (var sub = GetConnectedSubscribeSocket(context))
+                    //{
+                    ISerializer serializer = new TestHelpers.Serializer(Encoding.Unicode);
+                    Customer cust = new Customer();
+                    cust.Firstname = "Johnx";
+                    cust.Lastname = "Wilson";
+
+                    using (var actor = new Actor(context))
+                    {
+                        actor.RegisterActor<Customer>("Basic", expectedAddress, "OutRoute", serializer, (Message, InRoute, OutRoute, Socket, Actor) =>
+                        {
+                            var customer = (Customer)Message;
+                            //Assert.AreEqual(cust.Firstname, customer.Firstname);
+                            Helper.Writeline(customer.Firstname, @"c:\dev\xx.log");
+                        });
+                        actor.StartAllActors();
+
+                        Thread.Sleep(0);
+                    }
+
+                    for (int i = 0; i < 10; i++)
+                    {
+                        cust.Firstname = i.ToString();
+                        SendOneMessageOfType<Customer>(expectedAddress, cust, serializer, pub);
+                        Thread.Sleep(0);
+                    }
+                    SendOneSimpleMessage(expectedAddress, "stop", pub);
+                    Thread.Sleep(0);
+                }
+                //pipe.Exit();
+                //Thread.Sleep(0);
+            }
+
+            //pipe.Exit();
+            //}
+        }
+
+        private static ZmqSocket GetConnectedPublishSocket(ZmqContext context)
+        {
+            ZmqSocket publisher = context.CreateSocket(SocketType.PUB);
+            publisher.Connect("tcp://localhost:5556");
+            return publisher;
+        }
+
     }
 }

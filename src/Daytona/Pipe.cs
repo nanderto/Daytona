@@ -16,11 +16,12 @@ namespace Daytona
         private CancellationTokenSource cancellationTokenSource;
         public static ForwarderDevice ForwarderDevice = null;
         public static QueueDevice QueueDevce = null;
+        public ZmqSocket MonitorChannel = null;
         private bool disposed;
         public static string PublishAddressClient = "tcp://localhost:5550";
-        public static string  PublishAddressServer = "tcp://*:5550";
+        public static string PublishAddressServer = "tcp://*:5550";
         public static string SubscribeAddressServer =  "tcp://*:5553";//"inproc://back";
-        public static string SubscribeAddressClient = "tcp://localhost:5553";
+        public static string SubscribeAddressClient = "tcp://localhost:5553"; //"inproc://back";
 
         public static string PubSubControlFrontAddress = "tcp://*:5551";
         public static string PubSubControlFrontAddressClient = "tcp://localhost:5551";
@@ -43,63 +44,88 @@ namespace Daytona
             Start(context);
         }
 
-        //public Pipe(ZmqContext context)
-        //{
-        //    this.Context = context;
-        //    Setup();
-        //}
-
         public void Start(ZmqContext context)
         {
-            //ForwarderDevice = new ForwarderDevice(context, PublishAddressServer, SubscribeAddressServer, DeviceMode.Threaded);
-            //ForwarderDevice.Start();
-            //while (!ForwarderDevice.IsRunning)
-            //{ }
+            SetUpMonitorChannel(context);
+
+            ////this should work but the forwarder device appears to be broken - it does not use XSUP and XPUB sockets
+            ////ForwarderDevice = new ForwarderDevice(context, PublishAddressServer, SubscribeAddressServer, DeviceMode.Threaded);
+            ////ForwarderDevice.Start();
+            ////while (!ForwarderDevice.IsRunning)
+            ////{ }
 
             QueueDevce = new QueueDevice(context, PubSubControlBackAddressServer, PubSubControlFrontAddress, DeviceMode.Threaded);
             QueueDevce.Start();
             while (!QueueDevce.IsRunning)
             { }
 
+            Writeline("Control channel started");
+
             this.Context = context;
             cancellationTokenSource = new CancellationTokenSource();
-
+            var token = cancellationTokenSource.Token;
             Task.Run(() =>
             {
-                //Setup(this.cancellationTokenSource.Token);
-           
                 using (frontend = context.CreateSocket(SocketType.XSUB))
                 {
                     using (backend = context.CreateSocket(SocketType.XPUB))
                     {
-                        frontend.Bind(Pipe.SubscribeAddressServer); //"tcp://*:5559");
-                        backend.Bind(Pipe.PublishAddressServer); //"tcp://*:5560");
+                        frontend.Bind(Pipe.PublishAddressServer); //"tcp://*:5550");
+                        backend.Bind(Pipe.SubscribeAddressServer); //"tcp://*:5553");
                         frontend.ReceiveReady += new EventHandler<SocketEventArgs>(frontend_ReceiveReady);
                         backend.ReceiveReady += new EventHandler<SocketEventArgs>(backend_ReceiveReady);
                         Poller poller = new Poller(new ZmqSocket[] { frontend, backend });
+                        
+                        Writeline("About to start polling");
+                        
                         while (true)
                         {
                             poller.Poll();
+
+                            Writeline("polling");
+                            if (token.IsCancellationRequested)
+                                break;
                         }
                     }
                 }
-            });
+            }, token);
+        }
+
+        private bool Writeline(string line)
+        {
+            MonitorChannel.Send(line, Encoding.Unicode);
+            var signal = MonitorChannel.Receive(Encoding.Unicode, new TimeSpan(0,0,5));
+            if(string.IsNullOrEmpty(signal))
+            {
+                return false;
+            }
+            else
+            {
+                return true;
+            }
+        }
+
+        void SetUpMonitorChannel(ZmqContext context)
+        {
+            MonitorChannel = context.CreateSocket(SocketType.REQ);
+            MonitorChannel.Connect(Pipe.MonitorAddressClient);
         }
 
         public void Exit()
         {
             CleanUpDevices();
-
             cancellationTokenSource.Cancel();
         }
 
         static void backend_ReceiveReady(object sender, SocketEventArgs e)
         {
+            WritelineToLogFile("frontend_ReceiveReady");
             e.Socket.Forward(frontend);
         }
 
         static void frontend_ReceiveReady(object sender, SocketEventArgs e)
         {
+            WritelineToLogFile("frontend_ReceiveReady");
             e.Socket.Forward(backend);
         }
 
@@ -127,46 +153,7 @@ namespace Daytona
             }
         }
 
-        private void Setup(CancellationToken cancellationToken)
-        {
-            using (ZmqSocket frontend = this.Context.CreateSocket(SocketType.SUB), backend = this.Context.CreateSocket(SocketType.PUB))
-            {
-                frontend.Bind(PublishAddressServer);
-                frontend.SubscribeAll();
-
-                //  This is our public endpoint for subscribers
-                backend.Bind(SubscribeAddressServer); 
-
-                //  Shunt messages out to our own subscribers
-                int i = 0;
-                try
-                {
-                    while (true)
-                    {
-                        bool hasMore = true;
-                        var zmqMessage = new ZmqMessage();
-                        while (hasMore)
-                        {
-                            Writeline("waiting on receive frame");
-                            Frame frame = frontend.ReceiveFrame();
- 
-                            zmqMessage.Append(new Frame(frame.Buffer));
-                            hasMore = frontend.ReceiveMore;
-                        }
-                        i++;
-                        Writeline(i.ToString());
-                        backend.SendMessage(zmqMessage);
-                        cancellationToken.ThrowIfCancellationRequested();
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Writeline("cancelled gracefully exit " + ex.Message);
-                }
-            }
-        }
-
-        public static void Writeline(string line)
+        public static void WritelineToLogFile(string line)
         {
             FileInfo fi = new FileInfo(@"c:\dev\Pipe.log");
             var stream = fi.AppendText();
