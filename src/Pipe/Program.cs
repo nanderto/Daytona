@@ -7,7 +7,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using ZeroMQ;
 using ZeroMQ.Devices;
-using ZeroMQ.Interop;
 
 namespace PipeRunner
 {
@@ -32,34 +31,10 @@ namespace PipeRunner
 
             using (var context = ZmqContext.Create())
             {
-
-                //var ForwarderDevice = new ForwarderDevice(context, Pipe.PublishAddressServer, Pipe.SubscribeAddressServer, DeviceMode.Threaded);
-                //ForwarderDevice.Start();
-                //while (!ForwarderDevice.IsRunning)
-                //{ }
-
-                //frontend = context.CreateSocket(SocketType.XSUB);
-                //backend = context.CreateSocket(SocketType.XPUB);
-                    
-                //frontend.Bind(Pipe.SubscribeAddressServer); //"tcp://*:5559");
-                ////frontend.SubscribeAll();
-                //backend.Bind(Pipe.PublishAddressServer); //"tcp://*:5560");
-                //frontend.ReceiveReady += new EventHandler<SocketEventArgs>(frontend_ReceiveReady);
-                //backend.ReceiveReady += new EventHandler<SocketEventArgs>(backend_ReceiveReady);
-                //Poller poller = new Poller(new ZmqSocket[] { frontend, backend });
-                //while (true)
-                //{
-                //    poller.Poll();
-                //}
-
-
-
                 var pipe = new Pipe();
                 pipe.Start(context);
                 Console.WriteLine("enter to exit=>");
                 input = Console.ReadLine();
-                //pipe.Exit();
-
             }
         }
 

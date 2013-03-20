@@ -104,7 +104,7 @@ namespace Samples
 
             using (var context = ZmqContext.Create())
             {
-                ISerializer serializer = new Daytona.Store.Serializer(Encoding.UTF8);
+                ISerializer serializer = new Daytona.Store.Serializer(Encoding.Unicode);
                 var actorFactory = new Actor(context);
 
                 actorFactory.RegisterActor<DBPayload<Customer>>("Writer", "Writer", "Sender", serializer, (message, inRoute, outRoute, socket, actor) =>

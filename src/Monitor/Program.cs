@@ -23,10 +23,8 @@ namespace Monitor
                     while (!interrupted)
                     {
                         var signal = monitorService.Receive(Encoding.Unicode);
-                        Console.WriteLine("Signal Recieved: " + signal);
+                        Console.WriteLine("::> " + signal);
                         monitorService.Send("", Encoding.Unicode);
-
-                       
                     }
                 }
             }

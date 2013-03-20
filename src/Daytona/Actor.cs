@@ -156,6 +156,7 @@ namespace Daytona
             subscriber.Connect(Pipe.SubscribeAddressClient);
 
             subscriber.Subscribe(InRoute, Encoding.Unicode);
+            subscriber.Subscribe(this.Serializer.GetBuffer(InRoute));
             MonitorChannel.Send("Set up Receive channel on " + Pipe.SubscribeAddressClient + " listening on: " + InRoute, Encoding.Unicode);
             var signal = MonitorChannel.Receive(Encoding.Unicode);
             //if(this.sendControlChannel == null)
@@ -180,8 +181,7 @@ namespace Daytona
             OutputChannel = context.CreateSocket(SocketType.PUB);
             OutputChannel.Connect(Pipe.PublishAddressClient);
 
-            MonitorChannel.Send("Set up output channel on " + Pipe.PublishAddressClient + " Default sending on: " + this.OutRoute, Encoding.Unicode);
-            var signal = MonitorChannel.Receive(Encoding.Unicode);
+            WriteLine("Set up output channel on " + Pipe.PublishAddressClient + " Default sending on: " + this.OutRoute);
                 
             //if(this.sendControlChannel == null)
             //{
@@ -191,6 +191,12 @@ namespace Daytona
             //this.sendControlChannel.Send("Actor OutputChannel connected, Sending on " + Pipe.PublishAddressClient, Encoding.Unicode);
             //var replySignal = this.sendControlChannel.Receive(Encoding.Unicode);
             //Actor.Writeline(replySignal);
+        }
+
+        private void WriteLine(string line)
+        {
+            MonitorChannel.Send(line, Encoding.Unicode);
+            var signal = MonitorChannel.Receive(Encoding.Unicode);
         }
 
         void SetUpMonitorChannel(ZmqContext context)
