@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Runtime.Remoting.Messaging;
 using System.Text;
 using System.Threading.Tasks;
@@ -9,7 +10,7 @@ namespace Daytona.Store
 {
     public delegate int CallBackWithID(IPayload payLoad);
     public delegate int AsyncMethodCaller<T>(T input);
-
+    //public delegate SaveCompletedEventhandler();
 
     public class Scope<T> : IScope, IDisposable
     {
@@ -24,6 +25,7 @@ namespace Daytona.Store
         public Scope(Actor actor)
         {
             this.actor = actor;
+            SaveCompletedEvent += this.actor.SaveCompletedEvent;
         }
 
         public int Save<T>(T input)
@@ -35,9 +37,34 @@ namespace Daytona.Store
             return 1;
         }
 
-        public async Task<int> SaveAsync<T>(T input) where T : IPayload
+        //public async Task<int> SaveAsync<T>(T input) where T : IPayload
+        //{
+        //    return await Task<int>.Factory.FromAsync(SaveAsynchonosly<T>(input), this.actor.CallBack);
+        //}
+
+        public Task<int> SaveAsync<T>(T input) where T : IPayload
         {
-            return await Task<int>.Factory.FromAsync(SaveAsynchonosly<T>(input), this.actor.CallBack);
+           
+            var tcs = new TaskCompletionSource<int>();
+            SaveCompletedEvent += (object s, SaveCompletedEventArgs e) =>
+                {
+                    if (e.Error != null) tcs.TrySetException(e.Error);
+                    else if (e.Cancelled) tcs.TrySetCanceled();
+                    else tcs.TrySetResult(e.Result);
+                };
+
+
+            return tcs.Task;
+        }
+
+        public event EventHandler SaveCompletedEvent;
+
+        public void SaveCompletedEventHandler(object sender, SaveCompletedEventArgs e)
+        {
+            var tcs = new TaskCompletionSource<int>();
+            if (e.Error != null) tcs.TrySetException(e.Error);
+                    else if (e.Cancelled) tcs.TrySetCanceled();
+                    else tcs.TrySetResult(e.Result);
         }
 
         public IAsyncResult SaveAsynchonosly<T>(T input) where T : IPayload
