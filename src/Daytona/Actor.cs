@@ -168,7 +168,7 @@ namespace Daytona
             subscriber = context.CreateSocket(SocketType.SUB);
             subscriber.Connect(Pipe.SubscribeAddressClient);
 
-            subscriber.Subscribe(InRoute, Encoding.Unicode);
+           // subscriber.Subscribe(InRoute, Encoding.Unicode);
             subscriber.Subscribe(this.Serializer.GetBuffer(InRoute));
             MonitorChannel.Send("Set up Receive channel on " + Pipe.SubscribeAddressClient + " listening on: " + InRoute, Encoding.Unicode);
             var signal = MonitorChannel.Receive(Encoding.Unicode);
@@ -454,9 +454,16 @@ namespace Daytona
             socket.SendMessage(zmqMessage);
         }
 
-        public int CallBack(IAsyncResult result)
+        public event EventHandler SaveCompletedEvent;
+
+        public void CallBack(int result)
         {
-            return Id;
+            var eventArgs = new CallBackEventArgs
+            {
+                Result = result
+            };
+
+           this.SaveCompletedEvent(this, eventArgs);
         }
 
         private static readonly object synchLock = new object();

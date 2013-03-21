@@ -56,7 +56,8 @@ namespace Daytona.Store
             ISerializer serializer3 = new Serializer(Encoding.UTF8);
             connection.AddScope<T>(new Scope<T>(new Actor(context, "Sender", "Writer", serializer3,(IPayload message, byte[] messageAsBytes, string inRoute, string outRoute, ZmqSocket socket, Actor actor) =>
                 {
-                    actor.CallBack(null);
+                    var payload = (DBPayload<T>)message;
+                    actor.Callback(payload.Id);
                 })));
             return connection;
         }

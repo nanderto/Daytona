@@ -16,8 +16,6 @@ namespace Samples
     {
         static bool interrupted = false;
 
-        
-
         static void ConsoleCancelHandler(object sender, ConsoleCancelEventArgs e)
         {
             e.Cancel = true;
@@ -75,7 +73,7 @@ namespace Samples
                 actorFactory.RegisterActor<DBPayload<Customer>>("Sender", "Sender", "NO OUT ROUTE", serializer, (IPayload message, byte[] messageAsBytes, string inRoute, string outRoute, ZmqSocket socket, Actor actor) =>
                 {
                     Actor.Writeline("Got here in the Sender");
-                    actor.CallBack(null);
+                    actor.CallBack(1);
                     var dBPayload = new DBPayload<Customer>();
                     //dBPayload.Id = Id;
                 });

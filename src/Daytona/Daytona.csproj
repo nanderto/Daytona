@@ -45,6 +45,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Actor.cs" />
+    <Compile Include="CallBackEventArgs.cs" />
     <Compile Include="DebuggingForwarder.cs" />
     <Compile Include="IPayload.cs" />
     <Compile Include="ISerializer.cs" />
