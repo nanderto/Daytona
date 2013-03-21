@@ -143,6 +143,7 @@ namespace Samples
                     };
                     var task1 = connection.Save(customer);
                     int id = task1.Result;
+                    Console.WriteLine("the id returned is: " + id.ToString());
                     Console.WriteLine("Pausing=>");
                     Console.ReadLine();
                 }

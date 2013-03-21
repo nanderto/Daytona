@@ -454,7 +454,7 @@ namespace Daytona
             socket.SendMessage(zmqMessage);
         }
 
-        public event EventHandler SaveCompletedEvent;
+        public event EventHandler<CallBackEventArgs> SaveCompletedEvent;
 
         public void CallBack(int result)
         {
