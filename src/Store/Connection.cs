@@ -22,6 +22,7 @@ namespace Daytona.Store
             this.scopes.TryGetValue(typeof(T).Name, out scope);
             //Scope<T> s = (Scope<T>)scope;
             var result = scope.SaveAsync<T>(input);
+            
             return await result;
         }
 
@@ -59,3 +60,4 @@ namespace Daytona.Store
 
 
 }
+

@@ -21,7 +21,7 @@ namespace Samples
             e.Cancel = true;
             interrupted = true;
         }
-        
+
         private static void SendOneSimpleMessage(string address, string message, ZmqSocket publisher)
         {
             {
@@ -143,6 +143,7 @@ namespace Samples
                     };
                     var task1 = connection.Save(customer);
                     int id = task1.Result;
+                    Console.WriteLine("the id returned is: " + id.ToString());
                     Console.WriteLine("Pausing=>");
                     Console.ReadLine();
                 }
@@ -167,7 +168,7 @@ namespace Samples
 
 
                     Console.WriteLine("Received acknowledgement=>");
-                   // Console.ReadLine();
+                    // Console.ReadLine();
                     bool run = true;
                     string input;
                     while (run)
@@ -255,3 +256,4 @@ namespace Samples
 
     }
 }
+

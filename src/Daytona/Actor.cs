@@ -29,7 +29,7 @@ namespace Daytona
         private Dictionary<string, Action> ActorTypes = new Dictionary<string, Action>();
 
         public Dictionary<string, string> PropertyBag { get; set; }
-        
+
         public Actor(ZmqContext context)
         {
             this.context = context;
@@ -168,7 +168,7 @@ namespace Daytona
             subscriber = context.CreateSocket(SocketType.SUB);
             subscriber.Connect(Pipe.SubscribeAddressClient);
 
-           // subscriber.Subscribe(InRoute, Encoding.Unicode);
+            // subscriber.Subscribe(InRoute, Encoding.Unicode);
             subscriber.Subscribe(this.Serializer.GetBuffer(InRoute));
             MonitorChannel.Send("Set up Receive channel on " + Pipe.SubscribeAddressClient + " listening on: " + InRoute, Encoding.Unicode);
             var signal = MonitorChannel.Receive(Encoding.Unicode);
@@ -195,7 +195,7 @@ namespace Daytona
             OutputChannel.Connect(Pipe.PublishAddressClient);
 
             WriteLine("Set up output channel on " + Pipe.PublishAddressClient + " Default sending on: " + this.OutRoute);
-                
+
             //if(this.sendControlChannel == null)
             //{
             //    this.sendControlChannel = context.CreateSocket(SocketType.REQ);
@@ -229,8 +229,8 @@ namespace Daytona
                 //string message = subscriber.Receive(Encoding.Unicode);
                 var zmqmessage = subscriber.ReceiveMessage();
                 var frameContents = zmqmessage.Select(f => Encoding.Unicode.GetString(f.Buffer)).ToList();
-                                   //var message = zmqmessage.;
-               
+                //var message = zmqmessage.;
+
                 if (frameContents.Count > 1)
                 {
                     var address = frameContents[0];
@@ -282,7 +282,7 @@ namespace Daytona
                 Writeline("Waiting for message");
                 byte[] messageAsBytes = null;
                 //this.sendControlChannel.Send("Waiting for message");
-                T message = this.ReceiveMessage<T>(subscriber, out zmqmessage, out address, out stop, out messageAsBytes,this.Serializer);
+                T message = this.ReceiveMessage<T>(subscriber, out zmqmessage, out address, out stop, out messageAsBytes, this.Serializer);
                 Writeline("Received message");
                 //this.sendControlChannel.Send("Received message");
                 if (message != null)
@@ -293,7 +293,7 @@ namespace Daytona
                     parameters[1] = messageAsBytes;
                     parameters[2] = address;
                     parameters[3] = OutRoute;
-                    parameters[4] = OutputChannel;                   
+                    parameters[4] = OutputChannel;
                     parameters[5] = this;
                     Workload.DynamicInvoke(parameters);
                 }
@@ -311,7 +311,7 @@ namespace Daytona
             int i = 0;
             while (hasMore)
             {
-                Frame frame = subscriber.ReceiveFrame();
+                 Frame frame = subscriber.ReceiveFrame();
                 if (i == 0)
                 {
                     address = serializer.GetString(frame.Buffer);
@@ -326,10 +326,10 @@ namespace Daytona
                         Writeline("received stop");
                         stopSignal = true;
                     }
-                    else 
+                    else
                     {
                         result = serializer.Deserializer<T>(stopMessage);
-                    }                                                  
+                    }
                 }
                 i++;
                 zmqOut.Append(new Frame(frame.Buffer));
@@ -431,7 +431,7 @@ namespace Daytona
 
         public void Execute<T>(T input)
         {
-            this.ExecuteAction.DynamicInvoke(input);           
+            this.ExecuteAction.DynamicInvoke(input);
         }
 
         public void SendOneMessageOfType<T>(string address, T message, ISerializer serializer, ZmqSocket socket) where T : IPayload
@@ -454,7 +454,7 @@ namespace Daytona
             socket.SendMessage(zmqMessage);
         }
 
-        public event EventHandler SaveCompletedEvent;
+        public event EventHandler<CallBackEventArgs> SaveCompletedEvent;
 
         public void CallBack(int result)
         {
@@ -463,7 +463,7 @@ namespace Daytona
                 Result = result
             };
 
-           this.SaveCompletedEvent(this, eventArgs);
+            this.SaveCompletedEvent(this, eventArgs);
         }
 
         private static readonly object synchLock = new object();
@@ -517,5 +517,6 @@ namespace Daytona
     }
 
 
-     
+
 }
+

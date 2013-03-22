@@ -41,7 +41,7 @@ namespace Daytona.Store
                 dBPayload.Id = Id;
 
                 Id = writer.Save(messageAsBytes);
-                
+
                 actor.SendOneMessageOfType<DBPayload<T>>(outRoute, dBPayload, serializer, socket);
             });
 
@@ -54,11 +54,11 @@ namespace Daytona.Store
             //actorFactory.CreateNewActor("Sender");
             actorFactory.CreateNewActor("Writer");
             ISerializer serializer3 = new Serializer(Encoding.UTF8);
-            connection.AddScope<T>(new Scope<T>(new Actor(context, "Sender", "Writer", serializer3,(IPayload message, byte[] messageAsBytes, string inRoute, string outRoute, ZmqSocket socket, Actor actor) =>
-                {
-                    var payload = (DBPayload<T>)message;
-                    actor.Callback(payload.Id);
-                })));
+            connection.AddScope<T>(new Scope<T>(new Actor(context, "Sender", "Writer", serializer3, (IPayload message, byte[] messageAsBytes, string inRoute, string outRoute, ZmqSocket socket, Actor actor) =>
+            {
+                var payload = (DBPayload<T>)message;
+                actor.CallBack(payload.Id);
+            })));
             return connection;
         }
 
@@ -84,3 +84,4 @@ namespace Daytona.Store
         }
     }
 }
+
