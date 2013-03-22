@@ -72,10 +72,17 @@ namespace Samples
 
                 actorFactory.RegisterActor<DBPayload<Customer>>("Sender", "Sender", "NO OUT ROUTE", serializer, (IPayload message, byte[] messageAsBytes, string inRoute, string outRoute, ZmqSocket socket, Actor actor) =>
                 {
-                    Actor.Writeline("Got here in the Sender");
-                    actor.CallBack(1);
-                    var dBPayload = new DBPayload<Customer>();
-                    //dBPayload.Id = Id;
+                    try
+                    {
+                        Actor.Writeline("Got here in the Sender");
+                        var dBPayload = new DBPayload<Customer>();
+                        actor.CallBack(1, null, null);
+                    }
+                    catch (Exception ex)
+                    {
+                        actor.CallBack(1, null, ex);
+                    }
+                    
                 });
 
                 actorFactory.StartAllActors();

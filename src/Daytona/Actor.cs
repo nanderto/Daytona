@@ -456,11 +456,13 @@ namespace Daytona
 
         public event EventHandler<CallBackEventArgs> SaveCompletedEvent;
 
-        public void CallBack(int result)
+        public void CallBack(int result, List<IPayload> payload, Exception exception)
         {
             var eventArgs = new CallBackEventArgs
             {
-                Result = result
+                Result = result,
+                Error = exception,
+                Payload = payload
             };
 
             this.SaveCompletedEvent(this, eventArgs);

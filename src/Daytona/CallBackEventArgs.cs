@@ -10,5 +10,6 @@ namespace Daytona
         public Exception Error { get; set; }
         public bool Cancelled { get; set; }
         public int Result { get; set; }
+        public List<IPayload> Payload { get; set; }
     }
 }
