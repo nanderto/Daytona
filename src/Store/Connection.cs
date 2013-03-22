@@ -21,7 +21,8 @@ namespace Daytona.Store
             IScope scope = null;
             this.scopes.TryGetValue(typeof(T).Name, out scope);
             //Scope<T> s = (Scope<T>)scope;
-            return await scope.SaveAsync<T>(input);
+            var result = scope.SaveAsync<T>(input);
+            return await result;
         }
 
         public void Dispose()
