@@ -13,6 +13,7 @@ namespace Daytona
     public class Pipe : IDisposable
     {
         public ZmqContext Context { get; set; }
+        private Poller poller;
         private CancellationTokenSource cancellationTokenSource;
         public static ForwarderDevice ForwarderDevice = null;
         public static QueueDevice QueueDevce = null;
@@ -20,15 +21,15 @@ namespace Daytona
         private bool disposed;
         public static string PublishAddressClient = "tcp://localhost:5550";
         public static string PublishAddressServer = "tcp://*:5550";
-        public static string SubscribeAddressServer =  "tcp://*:5553";//"inproc://back";
-        public static string SubscribeAddressClient = "tcp://localhost:5553"; //"inproc://back";
+        public static string SubscribeAddressServer =  "tcp://*:5553"; ////"inproc://back";
+        public static string SubscribeAddressClient = "tcp://localhost:5553"; ////"inproc://back";
 
         public static string PubSubControlFrontAddress = "tcp://*:5551";
         public static string PubSubControlFrontAddressClient = "tcp://localhost:5551";
-        public static string PubSubControlBackAddressServer = "tcp://*:5552";//"inproc://pubsubcontrol";//
-        public static string PubSubControlBackAddressClient = "tcp://localhost:5552";//"inproc://pubsubcontrol";//
+        public static string PubSubControlBackAddressServer = "tcp://*:5552"; ////"inproc://pubsubcontrol";//
+        public static string PubSubControlBackAddressClient = "tcp://localhost:5552"; ////"inproc://pubsubcontrol";//
 
-        public static string MonitorAddressClient = "tcp://localhost:5560";//"inproc://pubsubcontrol";//
+        public static string MonitorAddressClient = "tcp://localhost:5560"; ////"inproc://pubsubcontrol";//
         public static string MonitorAddressServer = "tcp://*:5560";
 
         static ZmqSocket frontend, backend;
@@ -62,7 +63,7 @@ namespace Daytona
             Writeline("Control channel started");
 
             this.Context = context;
-            cancellationTokenSource = new CancellationTokenSource();
+            this.cancellationTokenSource = new CancellationTokenSource();
             var token = cancellationTokenSource.Token;
             Task.Run(() =>
             {
@@ -74,14 +75,14 @@ namespace Daytona
                         backend.Bind(Pipe.SubscribeAddressServer); //"tcp://*:5553");
                         frontend.ReceiveReady += new EventHandler<SocketEventArgs>(frontend_ReceiveReady);
                         backend.ReceiveReady += new EventHandler<SocketEventArgs>(backend_ReceiveReady);
-                        Poller poller = new Poller(new ZmqSocket[] { frontend, backend });
+                        poller = new Poller(new ZmqSocket[] { frontend, backend });
                         
                         Writeline("About to start polling");
                         
                         while (true)
                         {
                             poller.Poll();
-
+                            
                             Writeline("polling");
                             if (token.IsCancellationRequested)
                                 break;
@@ -94,8 +95,8 @@ namespace Daytona
         private bool Writeline(string line)
         {
             MonitorChannel.Send(line, Encoding.Unicode);
-            var signal = MonitorChannel.Receive(Encoding.Unicode, new TimeSpan(0,0,5));
-            if(string.IsNullOrEmpty(signal))
+            var signal = MonitorChannel.Receive(Encoding.Unicode, new TimeSpan(0, 0, 5));
+            if (signal == null)
             {
                 return false;
             }
@@ -113,8 +114,8 @@ namespace Daytona
 
         public void Exit()
         {
-            CleanUpDevices();
-            cancellationTokenSource.Cancel();
+            this.CleanUpDevices();
+            this.cancellationTokenSource.Cancel();
         }
 
         static void backend_ReceiveReady(object sender, SocketEventArgs e)
@@ -151,6 +152,11 @@ namespace Daytona
                 }
                 ForwarderDevice.Dispose();
             }
+
+            ////if (this.poller != null)
+            ////{
+            ////    this.poller.Dispose();
+            ////}
         }
 
         public static void WritelineToLogFile(string line)
@@ -164,17 +170,17 @@ namespace Daytona
 
         public void Dispose()
         {
-            Dispose(true);
+            this.Dispose(true);
             GC.SuppressFinalize(this);
         }
 
         private void Dispose(bool disposing)
         {
-            if (!disposed)
+            if (!this.disposed)
             {
                 if (disposing)
                 {
-                    CleanUpDevices();
+                    this.CleanUpDevices();
                 }
 
                 // There are no unmanaged resources to release, but
