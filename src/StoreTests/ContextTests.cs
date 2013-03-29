@@ -42,17 +42,19 @@ namespace StoreTests
         [TestMethod]
         public void SaveACustomer()
         {
-            Daytona.Store.Context context = new Daytona.Store.Context();
-            using (var connection = context.GetConnection<Customer>())
+            using (Daytona.Store.Context context = new Daytona.Store.Context())
             {
-                var customer = new Customer
-                { 
-                    Firstname = "John",
-                    Lastname = "Lemon"
-                };
-                var task = connection.Save(customer);
-                 int id = task.Result;
-                Assert.AreEqual(1, id);
+                using (var connection = context.GetConnection<Customer>())
+                {
+                    var customer = new Customer
+                    {
+                        Firstname = "John",
+                        Lastname = "Lemon"
+                    };
+                    var task = connection.Save(customer);
+                    int id = task.Result;
+                    Assert.AreEqual(1, id);
+                }
             }
         }
     }

@@ -7,6 +7,12 @@ using ZeroMQ;
 
 namespace Daytona.Store
 {
+    /// <summary>
+    /// Context for Database, only one should be created, it should live for the life of the application.
+    /// It runs the framework components that are responsible for sending messages from senders to recievers.
+    /// It also handles the access to the actual storage mechanism
+    /// There are no checks in the code to ensure only one context is created.
+    /// </summary>
     public class Context : IDisposable
     {
         private ZeroMQ.ZmqContext context;
@@ -34,13 +40,22 @@ namespace Daytona.Store
 
             actorFactory.RegisterActor<DBPayload<T>>("Writer", "Writer", "Sender", serializer, (IPayload message, byte[] messageAsBytes, string inRoute, string outRoute, ZmqSocket socket, Actor actor) =>
             {
-                Actor.Writeline("Got here in the writer");
+                if (!actor.PropertyBag.ContainsKey("Count"))
+                {
+                    actor.PropertyBag.Add("Count", "0");
+                }
+                var count = int.Parse(actor.PropertyBag["Count"]);
+                count++;
+                actor.PropertyBag["Count"] = count.ToString();
+
+                actor.WriteLineToMonitor("Got here in the writer");
+                
                 var writer = new Writer();
                 var dBPayload = (DBPayload<T>)message;
-                int Id = writer.Save(dBPayload);
-                dBPayload.Id = Id;
+                
+                int Id = writer.Save(messageAsBytes, actor.Serializer);
 
-                Id = writer.Save(messageAsBytes);
+                dBPayload.Id = count;
 
                 actor.SendOneMessageOfType<DBPayload<T>>(outRoute, dBPayload, serializer, socket);
             });
@@ -53,6 +68,7 @@ namespace Daytona.Store
             //});
             //actorFactory.CreateNewActor("Sender");
             actorFactory.CreateNewActor("Writer");
+
             ISerializer serializer3 = new Serializer(Encoding.UTF8);
             connection.AddScope<T>(new Scope<T>(new Actor(context, "Sender", "Writer", serializer3, (IPayload message, byte[] messageAsBytes, string inRoute, string outRoute, ZmqSocket socket, Actor actor) =>
             {
@@ -84,6 +100,10 @@ namespace Daytona.Store
                 if (disposing)
                 {
                     pipe.Exit();
+                    //if (context != null)
+                    //{
+                    //    context.Dispose();
+                    //}
                 }
 
                 // There are no unmanaged resources to release, but

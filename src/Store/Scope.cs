@@ -38,22 +38,34 @@ namespace Daytona.Store
         public Task<int> SaveAsync<T>(T input) where T : IPayload
         {
             var tcs = new TaskCompletionSource<int>();
-            //Task task = tcs.Task;
 
             this.actor.SaveCompletedEvent += (object s, CallBackEventArgs e) =>
             {
-                if (e.Error != null) tcs.TrySetException(e.Error);
-                else if (e.Cancelled) tcs.TrySetCanceled();
-                else tcs.TrySetResult(e.Result);
+                if (e.Error != null)
+                {
+                    tcs.TrySetException(e.Error);
+                }
+                else if (e.Cancelled)
+                {
+                    tcs.TrySetCanceled();
+                }
+                else
+                {
+                    tcs.TrySetResult(e.Result);
+                }
             };
 
             var dbPayload = new DBPayload<T>();
             dbPayload.Payload = input;
             this.actor.SendOneMessageOfType<DBPayload<T>>(this.actor.OutRoute, dbPayload, this.actor.Serializer, this.actor.OutputChannel);
-            Task.Run(() =>
-                {
-                    this.actor.Start<DBPayload<T>>();
-                });
+            
+            if (this.actor.IsRunning == false)
+            {
+                Task.Run(() =>
+                    {
+                        this.actor.Start<DBPayload<T>>();
+                    });
+            }
 
             return tcs.Task;
         }
