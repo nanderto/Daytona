@@ -20,6 +20,12 @@ namespace Daytona.Store
             return 1;
         }
 
+        public int Save(byte[] messageAsBytes, ISerializer serializer)
+        {
+            Writeline(serializer.GetString(messageAsBytes));
+            return 1;
+        }
+
         public static void Writeline(string line)
         {
             FileInfo fi = new FileInfo(@"c:\dev\Store.log");

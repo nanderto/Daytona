@@ -72,10 +72,17 @@ namespace Samples
 
                 actorFactory.RegisterActor<DBPayload<Customer>>("Sender", "Sender", "NO OUT ROUTE", serializer, (IPayload message, byte[] messageAsBytes, string inRoute, string outRoute, ZmqSocket socket, Actor actor) =>
                 {
-                    Actor.Writeline("Got here in the Sender");
-                    actor.CallBack(1);
-                    var dBPayload = new DBPayload<Customer>();
-                    //dBPayload.Id = Id;
+                    try
+                    {
+                        Actor.Writeline("Got here in the Sender");
+                        var dBPayload = new DBPayload<Customer>();
+                        actor.CallBack(1, null, null);
+                    }
+                    catch (Exception ex)
+                    {
+                        actor.CallBack(1, null, ex);
+                    }
+                    
                 });
 
                 actorFactory.StartAllActors();
@@ -131,21 +138,39 @@ namespace Samples
 
         private static void RunStoreTest()
         {
-            var task = Task.Run(() =>
+            var task = Task.Run(async () =>
             {
-                Daytona.Store.Context context = new Daytona.Store.Context();
-                using (var connection = context.GetConnection<Customer>())
+                using (Daytona.Store.Context context = new Daytona.Store.Context())
                 {
-                    var customer = new Customer
+                    using (var connection = context.GetConnection<Customer>())
                     {
-                        Firstname = "John",
-                        Lastname = "Lemon"
-                    };
-                    var task1 = connection.Save(customer);
-                    int id = task1.Result;
-                    Console.WriteLine("the id returned is: " + id.ToString());
-                    Console.WriteLine("Pausing=>");
-                    Console.ReadLine();
+                        var customer = new Customer
+                        {
+                            Firstname = "John",
+                            Lastname = "Lemon"
+                        };
+                        var task1 = connection.Save(customer);
+                        int id = task1.Result;
+                        Console.WriteLine("the id returned is: " + id.ToString());
+                        Console.WriteLine("Pausing=>");
+                        Console.ReadLine();
+
+                        for (int i = 0; i < 100; i++)
+                        {
+                            var customer2 = new Customer
+                            {
+                                Firstname = "John" + i.ToString(),
+                                Lastname = "Lemon"
+                            };
+                            var task2 = connection.Save(customer2);
+                            id = -1;
+                            id = await task2;
+                            Console.WriteLine("the id returned is: " + id.ToString()); 
+                        }
+
+                        Console.WriteLine("Pausing=>");
+                        Console.ReadLine();
+                    }
                 }
             });
             task.Wait();
