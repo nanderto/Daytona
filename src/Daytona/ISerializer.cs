@@ -1,23 +1,22 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
+﻿//-----------------------------------------------------------------------
+// <copyright file="ISerializer.cs" company="The Phantom Coder">
+//     Copyright The Phantom Coder. All rights reserved.
+// </copyright>
+//-----------------------------------------------------------------------
 namespace Daytona
 {
+    using System.Text;
+    
     public interface ISerializer
     {
         Encoding Encoding { get; }
-        
-        byte[] GetBuffer<T>(T message);
 
         T Deserializer<T>(byte[] input);
 
-        string GetString(byte[] buffer);
-
-        //bool TryDeserializer<T>(byte[] inputBuffer, out T result);
-
         T Deserializer<T>(string input);
 
+        byte[] GetBuffer<T>(T message);
+
+        string GetString(byte[] buffer);
     }
 }
