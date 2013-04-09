@@ -52,6 +52,7 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Transactions" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -61,13 +62,24 @@
   <ItemGroup>
     <Compile Include="Connection.cs" />
     <Compile Include="DBPayloadConverter.cs" />
+    <Compile Include="EsentConfig.cs" />
+    <Compile Include="EsentDatabaseException.cs" />
+    <Compile Include="EsentInstanceService.cs" />
+    <Compile Include="EsentStore.cs" />
+    <Compile Include="EsentStoreProvider.cs" />
+    <Compile Include="EsentStoreResourceManager.cs" />
+    <Compile Include="IEsentStore.cs" />
     <Compile Include="IScope.cs" />
+    <Compile Include="IStoreProvider.cs" />
+    <Compile Include="IUnitOfWork.cs" />
+    <Compile Include="Repository.cs" />
     <Compile Include="SaveCompletedEventArgs.cs" />
     <Compile Include="Scope.cs" />
     <Compile Include="Context.cs" />
     <Compile Include="DBPayload.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Serializer.cs" />
+    <Compile Include="Utils.cs" />
     <Compile Include="Writer.cs" />
   </ItemGroup>
   <ItemGroup>

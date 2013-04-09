@@ -18,7 +18,7 @@ namespace Daytona
         public static ForwarderDevice ForwarderDevice = null;
 
         public static string MonitorAddressClient = "tcp://localhost:5560";  ////"inproc://pubsubcontrol";//
-          
+
         public static string MonitorAddressServer = "tcp://*:5560";
 
         public static string PublishAddressClient = "tcp://localhost:5550";
@@ -129,7 +129,7 @@ namespace Daytona
                         }
                     }
                 }
-            }, 
+            },
             token);
         }
 

@@ -64,7 +64,8 @@ namespace Samples
                 {
                     Actor.Writeline("Got here in the writer");
                     var writer = new Writer();
-                    int Id = writer.Save(messageAsBytes);
+                    //int Id = writer.Save(messageAsBytes);
+                    int Id = 3;
                     var dBPayload = new DBPayload<Customer>();
                     dBPayload.Id = Id;
                     actor.SendOneMessageOfType<DBPayload<Customer>>(outRoute, dBPayload, serializer, socket);

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Isam.Esent.Interop;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -9,7 +10,7 @@ namespace Daytona.Store
 {
     /// <summary>
     /// Context for Database, only one should be created, it should live for the life of the application.
-    /// It runs the framework components that are responsible for sending messages from senders to recievers.
+    /// It runs the framework components that are responsible for sending messages from senders to receivers.
     /// It also handles the access to the actual storage mechanism
     /// There are no checks in the code to ensure only one context is created.
     /// </summary>
@@ -17,13 +18,17 @@ namespace Daytona.Store
     {
         private ZeroMQ.ZmqContext context;
 
+        private Instance EsentInstance { get; set; }
+        
         Pipe pipe;
+        
         private bool disposed;
 
         public Context()
         {
             context = ZmqContext.Create();
-            pipe = new Pipe(context);
+            pipe = new Pipe(context);           
+            EsentInstance = EsentInstanceService.Service.EsentInstance;
         }
 
         public Connection GetConnection<T>()
@@ -50,10 +55,10 @@ namespace Daytona.Store
 
                 actor.WriteLineToMonitor("Got here in the writer");
                 
-                var writer = new Writer();
+                var writer = new Writer(this.EsentInstance);
                 var dBPayload = (DBPayload<T>)message;
                 
-                int Id = writer.Save(messageAsBytes, actor.Serializer);
+                int Id = writer.Save<T>(messageAsBytes, actor.Serializer);
 
                 dBPayload.Id = count;
 

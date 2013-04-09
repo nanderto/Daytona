@@ -88,7 +88,6 @@ namespace TestHelpers
         {
             var zmqMessage = new ZmqMessage();
             bool hasMore = true;
-            string message = "";
             int i =0;
             string address = string.Empty;
             
