@@ -12,6 +12,7 @@ namespace StoreTests
         [TestMethod]
         public void SaveTest()
         {
+            var context = new Context();
             var esentInstance = EsentInstanceService.Service.EsentInstance;
             var writer = new Writer(esentInstance);
             var result = writer.Save<Customer>(Encoding.Unicode.GetBytes("this is my message"));
