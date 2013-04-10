@@ -6,6 +6,9 @@
     using System.Linq;
     using System.Text;
     using Microsoft.Isam.Esent.Interop;
+    using System.Diagnostics;
+    using System.Globalization;
+    using System.Threading;
 
     public class Writer
     {
@@ -14,6 +17,7 @@
         public Writer(Instance instance)
         {
             this.instance = instance;
+       
         }
 
         public Writer()
@@ -66,5 +70,7 @@
             Writeline(serializer.GetString(messageAsBytes));
             return 1;
         }
+
+        public string Name { get; set; }
     }
 }

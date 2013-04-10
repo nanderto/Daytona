@@ -1,8 +1,11 @@
 ﻿using Microsoft.Isam.Esent.Interop;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using ZeroMQ;
 
@@ -23,12 +26,75 @@ namespace Daytona.Store
         Pipe pipe;
         
         private bool disposed;
+        private string longStoreName;
+        private bool isStoreConfigured;
+        private static readonly object synclock = new object();
+        private string Name;
 
         public Context()
         {
             context = ZmqContext.Create();
-            pipe = new Pipe(context);           
+            pipe = new Pipe(context);
+            // this.Name = CleanupName(typeof(T).ToString());
+            this.longStoreName = EsentConfig.DatabaseName;
+
+            ConfigureEsentDatabase(); 
+
             EsentInstance = EsentInstanceService.Service.EsentInstance;
+        }
+
+        private void ConfigureEsentDatabase()
+        {
+            bool esentTempPathInUseExceptionTrue = false;
+            int retryCount = 0;
+            do
+            {
+                esentTempPathInUseExceptionTrue = false;
+                try
+                {
+                    if (!isStoreConfigured)
+                    {
+
+                        lock (synclock)
+                        {
+                            if (!isStoreConfigured)
+                            {
+                                isStoreConfigured = this.ConfigureStore(this.Name);
+                            }
+                        }
+                    }
+                }
+                catch (EsentTempPathInUseException)
+                {
+                    Trace.WriteLine("Path in use exception" + retryCount.ToString(CultureInfo.CurrentCulture));
+                    esentTempPathInUseExceptionTrue = true;
+                    ++retryCount;
+                    if (retryCount > 4)
+                    {
+                        throw;
+                    }
+
+                    Thread.Sleep(retryCount * retryCount * 1000);
+                }
+            }
+            while (esentTempPathInUseExceptionTrue);
+        }
+
+        public bool ConfigureStore(string storeName)
+        {
+            if (!EsentConfig.DoesDatabaseExist(EsentConfig.DatabaseName))
+            {
+                EsentConfig.CreateDatabaseAndActorStore(storeName);
+            }
+            else
+            {
+                if (!EsentConfig.DoesStoreExist(storeName))
+                {
+                    EsentConfig.CreateMessageStore(storeName);
+                }
+            }
+
+            return true;
         }
 
         public Connection GetConnection<T>()
