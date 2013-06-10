@@ -1,6 +1,9 @@
 ﻿using System;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using TestHelpers;
+using ZeroMQ;
+using Daytona;
+using System.Threading.Tasks;
 
 namespace StoreTests
 {
@@ -10,8 +13,10 @@ namespace StoreTests
         [TestMethod, TestCategory("Unit")]
         public void IsAContext()
         {
-            Daytona.Store.Context context = new Daytona.Store.Context();
-            Assert.IsInstanceOfType(context, typeof(Daytona.Store.Context));
+            using (Daytona.Store.Context context = new Daytona.Store.Context())
+            {
+                Assert.IsInstanceOfType(context, typeof(Daytona.Store.Context));
+            }
         }
 
         [TestMethod, TestCategory("Unit")]
@@ -24,19 +29,26 @@ namespace StoreTests
         [TestMethod, TestCategory("Unit")]
         public void IsAConnection()
         {
-            Daytona.Store.Connection connection = new Daytona.Store.Connection();
+            ZmqContext zmqContext = ZmqContext.Create();
+            Daytona.Store.Connection connection = new Daytona.Store.Connection(zmqContext);
             Assert.IsInstanceOfType(connection, typeof(Daytona.Store.Connection));
         }
 
-        [TestMethod]
+        [TestMethod, TestCategory("Unit")]
         public void GetConnection()
         {
-            Daytona.Store.Context context = new Daytona.Store.Context();
-            using (Daytona.Store.Connection connection = new Daytona.Store.Connection())
+            var task = Task.Run(() =>
             {
-                Assert.IsInstanceOfType(connection, typeof(Daytona.Store.Connection));
-            }
-            
+                using (Daytona.Store.Context context = new Daytona.Store.Context())
+                {
+                    using (var connection = context.GetConnection<Customer>())
+                    {
+                        Assert.IsInstanceOfType(connection, typeof(Daytona.Store.Connection));
+                    }
+                }
+            });
+
+            task.Wait();
         }
 
         [TestMethod]

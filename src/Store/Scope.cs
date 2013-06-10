@@ -55,16 +55,28 @@ namespace Daytona.Store
                 }
             };
 
-            var dbPayload = new DBPayload<T>();
-            dbPayload.Payload = input;
-            this.actor.SendOneMessageOfType<DBPayload<T>>(this.actor.OutRoute, dbPayload, this.actor.Serializer, this.actor.OutputChannel);
-            
-            if (this.actor.IsRunning == false)
+            try
             {
-                Task.Run(() =>
+                var dbPayload = new DBPayload<T>();
+                dbPayload.Payload = input;
+                if (this.actor.OutputChannelDisposed == true)
+                {
+                    throw new ChannelDisposedException(new StringBuilder().Append("the OutputChannel on this actor has been Disposed, The Actor is : ").Append(this.actor.Id.ToString()).ToString());    
+                }
+
+                this.actor.SendOneMessageOfType<DBPayload<T>>(this.actor.OutRoute, dbPayload, this.actor.Serializer, this.actor.OutputChannel);
+                
+                if (this.actor.IsRunning == false)
+                {
+                    Task.Run(() =>
                     {
                         this.actor.Start<DBPayload<T>>();
                     });
+                }
+            }
+            catch (ChannelDisposedException e)
+            {
+                tcs.TrySetException(e);
             }
 
             return tcs.Task;

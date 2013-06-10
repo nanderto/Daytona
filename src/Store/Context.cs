@@ -1,16 +1,19 @@
-﻿using Microsoft.Isam.Esent.Interop;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using ZeroMQ;
-
+﻿//-----------------------------------------------------------------------
+// <copyright file="Context.cs" company="The Phantom Coder">
+//     Copyright The Phantom Coder. All rights reserved.
+// </copyright>
+//-----------------------------------------------------------------------
 namespace Daytona.Store
 {
+    using Microsoft.Isam.Esent.Interop;
+    using System;
+    using System.Collections.Generic;
+    using System.Diagnostics;
+    using System.Globalization;
+    using System.Text;
+    using System.Threading;
+    using ZeroMQ;
+
     /// <summary>
     /// Context for Database, only one should be created, it should live for the life of the application.
     /// It runs the framework components that are responsible for sending messages from senders to receivers.
@@ -19,89 +22,68 @@ namespace Daytona.Store
     /// </summary>
     public class Context : IDisposable
     {
-        private ZeroMQ.ZmqContext context;
-
-        private Instance EsentInstance { get; set; }
-        
-        Pipe pipe;
-        
-        private bool disposed;
-        private string longStoreName;
-        private bool isStoreConfigured;
         private static readonly object synclock = new object();
-        private string Name;
+
+        private readonly ZeroMQ.ZmqContext context;
+
+        private bool disposed;
+
+        private bool isStoreConfigured;
+
+        private string longStoreName;
+
+        private Pipe pipe;
+
+        private Dictionary<string, bool>  tableDoesExist = new Dictionary<string, bool>();
 
         public Context()
         {
             context = ZmqContext.Create();
+            SetUpOutputChannel(context);
             pipe = new Pipe(context);
-            // this.Name = CleanupName(typeof(T).ToString());
-            this.longStoreName = EsentConfig.DatabaseName;
-
-            ConfigureEsentDatabase(); 
-
-            EsentInstance = EsentInstanceService.Service.EsentInstance;
+            ConfigureEsentDatabase();
+            this.EsentInstance = GetEsentInstance();
         }
 
-        private void ConfigureEsentDatabase()
-        {
-            bool esentTempPathInUseExceptionTrue = false;
-            int retryCount = 0;
-            do
-            {
-                esentTempPathInUseExceptionTrue = false;
-                try
-                {
-                    if (!isStoreConfigured)
-                    {
+        private Instance EsentInstance { get; set; }
 
-                        lock (synclock)
-                        {
-                            if (!isStoreConfigured)
-                            {
-                                isStoreConfigured = this.ConfigureStore(this.Name);
-                            }
-                        }
-                    }
-                }
-                catch (EsentTempPathInUseException)
-                {
-                    Trace.WriteLine("Path in use exception" + retryCount.ToString(CultureInfo.CurrentCulture));
-                    esentTempPathInUseExceptionTrue = true;
-                    ++retryCount;
-                    if (retryCount > 4)
-                    {
-                        throw;
-                    }
-
-                    Thread.Sleep(retryCount * retryCount * 1000);
-                }
-            }
-            while (esentTempPathInUseExceptionTrue);
-        }
-
-        public bool ConfigureStore(string storeName)
+        public bool ConfigureStore()
         {
             if (!EsentConfig.DoesDatabaseExist(EsentConfig.DatabaseName))
             {
-                EsentConfig.CreateDatabaseAndActorStore(storeName);
-            }
-            else
-            {
-                if (!EsentConfig.DoesStoreExist(storeName))
-                {
-                    EsentConfig.CreateMessageStore(storeName);
-                }
+                EsentConfig.CreateDatabase();
             }
 
             return true;
         }
 
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
         public Connection GetConnection<T>()
         {
-            var connection = new Connection();
+            var storeName = CleanupName(typeof(T).ToString());
+            bool exists = false;
+            if (!this.tableDoesExist.TryGetValue(storeName, out exists))
+            {
+                if (!EsentConfig.DoesStoreExist(storeName, this.EsentInstance))
+                {
+                    EsentConfig.CreateMessageStore(storeName, this.EsentInstance);
+                    this.tableDoesExist.Add(storeName, true);
+                }
+            }
 
+            var connection = new Connection(context);
             return GetConnection<T>(connection);
+        }
+
+        private void SetUpOutputChannel(ZmqContext context)
+        {
+            this.OutputChannel = context.CreateSocket(SocketType.PUB);
+            this.OutputChannel.Connect(Pipe.PublishAddressClient);
         }
 
         public Connection GetConnection<T>(Connection connection)
@@ -120,10 +102,10 @@ namespace Daytona.Store
                 actor.PropertyBag["Count"] = count.ToString();
 
                 actor.WriteLineToMonitor("Got here in the writer");
-                
+
                 var writer = new Writer(this.EsentInstance);
                 var dBPayload = (DBPayload<T>)message;
-                
+
                 int Id = writer.Save<T>(messageAsBytes, actor.Serializer);
 
                 dBPayload.Id = count;
@@ -152,16 +134,59 @@ namespace Daytona.Store
                 catch (Exception ex)
                 {
                     actor.CallBack(-1, null, ex);
-                }                             
+                }
             })));
 
             return connection;
         }
 
-        public void Dispose()
+        private static string CleanupName(string dirtyname)
         {
-            Dispose(true);
-            GC.SuppressFinalize(this);
+            return dirtyname.ToString().Replace("{", string.Empty).Replace("}", string.Empty).Replace("_", string.Empty).Replace(".", string.Empty);
+        }
+
+        private void ConfigureEsentDatabase()
+        {
+            bool esentTempPathInUseExceptionTrue = false;
+            int retryCount = 0;
+            do
+            {
+                esentTempPathInUseExceptionTrue = false;
+                try
+                {
+                    if (!isStoreConfigured)
+                    {
+                        lock (synclock)
+                        {
+                            if (!isStoreConfigured)
+                            {
+                                isStoreConfigured = this.ConfigureStore();
+                            }
+                        }
+                    }
+                }
+                catch (EsentTempPathInUseException)
+                {
+                    Trace.WriteLine("Path in use exception" + retryCount.ToString(CultureInfo.CurrentCulture));
+                    esentTempPathInUseExceptionTrue = true;
+                    ++retryCount;
+                    if (retryCount > 4)
+                    {
+                        throw;
+                    }
+
+                    Thread.Sleep(retryCount * retryCount * 1000);
+                }
+            }
+            while (esentTempPathInUseExceptionTrue);
+        }
+
+        private static void SendMessage(string address, string message, ISerializer serializer, ZmqSocket socket)
+        {
+            ZmqMessage zmqMessage = new ZmqMessage();
+            zmqMessage.Append(new Frame(serializer.Encoding.GetBytes(address)));
+            zmqMessage.Append(new Frame(serializer.Encoding.GetBytes(message)));
+            socket.SendMessage(zmqMessage);
         }
 
         private void Dispose(bool disposing)
@@ -169,12 +194,32 @@ namespace Daytona.Store
             if (!disposed)
             {
                 if (disposing)
-                {
+                {                   
+                    ISerializer serializer = new Serializer(Encoding.UTF8);
+                    //ISerializer serializer2 = new Serializer(Encoding.UTF8);
+                    SendMessage("Writer", "stop", serializer, this.OutputChannel);
+                    //SendMessage("Sender", "stop", serializer2, this.OutputChannel);
+                    
+
+                    if (this.EsentInstance != null)
+                    {
+                        this.EsentInstance.Dispose();
+                    }
+
                     pipe.Exit();
-                    //if (context != null)
-                    //{
-                    //    context.Dispose();
-                    //}
+
+                    if (this.OutputChannel != null)
+                    {
+                        this.OutputChannel.Linger = new TimeSpan(0, 0, 0, 0, 500);
+                        this.OutputChannel.Close();
+                        this.OutputChannel.Dispose();
+                    }
+
+                    if (context != null)
+                    {
+                        context.Terminate();
+                        context.Dispose();
+                    }
                 }
 
                 // There are no unmanaged resources to release, but
@@ -182,6 +227,25 @@ namespace Daytona.Store
             }
             disposed = true;
         }
+
+        //private readonly string name = EsentConfig.DatabaseName;
+        private Instance GetEsentInstance()
+        {
+            var esentInstance = new Instance("Instance");
+            esentInstance.Parameters.CircularLog = true;
+            esentInstance.Init();
+            using (var session = new Session(esentInstance))
+            {
+                Api.JetAttachDatabase(session, EsentConfig.DatabaseName, AttachDatabaseGrbit.None);
+            }
+            return esentInstance;
+        }
+
+        public ZmqSocket OutputChannel { get; set; }
+
+        internal void SendMessage(string p1, string p2)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
-

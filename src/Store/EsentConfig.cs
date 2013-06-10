@@ -46,6 +46,24 @@ namespace Daytona.Store
         /// Creates the message store.
         /// </summary>
         /// <param name="database">The database.</param>
+        public static void CreateDatabase()
+        {
+            using (var instance = new Instance("createdatabase"))
+            {
+                instance.Parameters.CircularLog = true;
+                instance.Init();
+                using (var session = new Session(instance))
+                {
+                    JET_DBID dbid;
+                    Api.JetCreateDatabase(session, DatabaseName, null, out dbid, CreateDatabaseGrbit.OverwriteExisting);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Creates the message store.
+        /// </summary>
+        /// <param name="database">The database.</param>
         public static void CreateDatabaseAndActorStore(string messageTypeName)
         {
             using (var instance = new Instance("createdatabase"))
@@ -61,18 +79,13 @@ namespace Daytona.Store
             }
         }
 
-        public static void CreateMessageStore(string MessageTypeName)
+        public static void CreateMessageStore(string MessageTypeName, Instance instance)
         {
-            using (var instance = new Instance("createdatabase"))
+            using (var session = new Session(instance))
             {
-                instance.Parameters.CircularLog = true;
-                instance.Init();
-                using (var session = new Session(instance))
-                {
-                    JET_DBID dbid;
-                    Api.JetOpenDatabase(session, DatabaseName, null, out dbid, OpenDatabaseGrbit.None);
-                    CreateMessageTable(MessageTypeName, session, dbid);
-                }
+                JET_DBID dbid;
+                Api.JetOpenDatabase(session, DatabaseName, null, out dbid, OpenDatabaseGrbit.None);
+                CreateMessageTable(MessageTypeName, session, dbid);
             }
         }
 
@@ -217,6 +230,7 @@ namespace Daytona.Store
                 {
                     Api.JetOpenDatabase(session, DatabaseName, null, out dbid, OpenDatabaseGrbit.None);
                     JET_TABLEID tableid;
+                    
                     if (Api.TryOpenTable(session, dbid, storeName, OpenTableGrbit.None, out tableid))
                     {
                         return true;
@@ -228,5 +242,25 @@ namespace Daytona.Store
                 }
             }
         }
+
+        internal static bool DoesStoreExist(string storeName, Instance instance)
+        {
+            JET_DBID dbid;
+
+            using (var session = new Session(instance))
+            {
+                Api.JetOpenDatabase(session, DatabaseName, null, out dbid, OpenDatabaseGrbit.None);
+                JET_TABLEID tableid;
+                storeName = storeName + "payload";
+                if (Api.TryOpenTable(session, dbid, storeName, OpenTableGrbit.None, out tableid))
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+        }            
     }
 }
