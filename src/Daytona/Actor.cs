@@ -191,6 +191,14 @@ namespace Daytona
         }
 
         public event EventHandler<CallBackEventArgs> SaveCompletedEvent;
+        private bool monitorChannelDisposed = false;
+        private bool subscriberDisposed = false;
+       
+        public bool OutputChannelDisposed
+        {
+            get { return monitorChannelDisposed; }
+            set { monitorChannelDisposed = value; }
+        }
 
         public Delegate Callback { get; set; }
 
@@ -358,45 +366,52 @@ namespace Daytona
         {
             while (true)
             {
-                var zmqmessage = this.subscriber.ReceiveMessage();
-                var frameContents = zmqmessage.Select(f => Encoding.Unicode.GetString(f.Buffer)).ToList();
-
-                if (frameContents.Count > 1)
+                if (this.subscriberDisposed != true)
                 {
-                    var message = frameContents[1];
+                    var zmqmessage = this.subscriber.ReceiveMessage();
+                    var frameContents = zmqmessage.Select(f => Encoding.Unicode.GetString(f.Buffer)).ToList();
 
-                    if (message != null)
+                    if (frameContents.Count > 1)
                     {
-                        if (string.IsNullOrEmpty(this.OutRoute))
+                        var message = frameContents[1];
+
+                        if (message != null)
                         {
-                            object[] inputParameters = new object[2];
-                            inputParameters[0] = message;
-                            inputParameters[1] = this.InRoute;
-                            this.Workload.DynamicInvoke(inputParameters);
-                        }
-                        else
-                        {
-                            if (this.PropertyBag != null)
+                            if (string.IsNullOrEmpty(this.OutRoute))
                             {
-                                object[] inputParameters = new object[5];
+                                object[] inputParameters = new object[2];
                                 inputParameters[0] = message;
                                 inputParameters[1] = this.InRoute;
-                                inputParameters[2] = this.OutRoute;
-                                inputParameters[3] = this.OutputChannel;
-                                inputParameters[4] = this;
                                 this.Workload.DynamicInvoke(inputParameters);
                             }
                             else
                             {
-                                object[] inputParameters = new object[4];
-                                inputParameters[0] = message;
-                                inputParameters[1] = this.InRoute;
-                                inputParameters[2] = this.OutRoute;
-                                inputParameters[3] = this.OutputChannel;
-                                this.Workload.DynamicInvoke(inputParameters);
+                                if (this.PropertyBag != null)
+                                {
+                                    object[] inputParameters = new object[5];
+                                    inputParameters[0] = message;
+                                    inputParameters[1] = this.InRoute;
+                                    inputParameters[2] = this.OutRoute;
+                                    inputParameters[3] = this.OutputChannel;
+                                    inputParameters[4] = this;
+                                    this.Workload.DynamicInvoke(inputParameters);
+                                }
+                                else
+                                {
+                                    object[] inputParameters = new object[4];
+                                    inputParameters[0] = message;
+                                    inputParameters[1] = this.InRoute;
+                                    inputParameters[2] = this.OutRoute;
+                                    inputParameters[3] = this.OutputChannel;
+                                    this.Workload.DynamicInvoke(inputParameters);
+                                }
                             }
                         }
                     }
+                }
+                else
+                {
+                    break;
                 }
             }
         }
@@ -414,7 +429,11 @@ namespace Daytona
                 
                 byte[] messageAsBytes = null;
                 T message = this.ReceiveMessage<T>(this.subscriber, out zmqmessage, out address, out stop, out messageAsBytes, this.Serializer);
-                
+                if (stop == true)
+                {
+                    this.IsRunning = false;
+                }
+
                 this.WriteLineToMonitor("Received message");
                 
                 if (message != null)
@@ -429,6 +448,7 @@ namespace Daytona
                     this.Workload.DynamicInvoke(parameters);
                 }
             }
+            this.WriteLineToMonitor("Exiting actor");
         }
 
         /// <summary>
@@ -449,8 +469,11 @@ namespace Daytona
 
         public void WriteLineToMonitor(string line)
         {
-            this.MonitorChannel.Send(line, Encoding.Unicode);
-            var signal = this.MonitorChannel.Receive(Encoding.Unicode);
+            if (this.monitorChannelDisposed == false)
+            {
+                this.MonitorChannel.Send(line, Encoding.Unicode);
+                var signal = this.MonitorChannel.Receive(Encoding.Unicode); 
+            }
         }
 
         private void Dispose(bool disposing)
@@ -461,16 +484,19 @@ namespace Daytona
                 {
                     if (this.subscriber != null)
                     {
+                        this.subscriberDisposed = true;
                         this.subscriber.Dispose();
                     }
 
                     if (this.OutputChannel != null)
                     {
+                        this.OutputChannelDisposed = true;
                         this.OutputChannel.Dispose();
                     }
 
                     if (this.MonitorChannel != null)
                     {
+                        this.monitorChannelDisposed = true;
                         this.MonitorChannel.Dispose();
                     }
                 }
@@ -563,6 +589,6 @@ namespace Daytona
         {
             this.InRoute = route;
             this.SetUpReceivers(context);
-        }
+        }       
     }
 }

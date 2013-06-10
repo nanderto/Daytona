@@ -55,11 +55,11 @@ namespace Daytona
 
         public Pipe(ZmqContext context)
         {
-            this.Context = context;
+            //this.Context = context;
             this.Start(context);
         }
 
-        public ZmqContext Context { get; set; }
+        //public ZmqContext Context { get; set; }
 
         public static void WritelineToLogFile(string line)
         {
@@ -78,8 +78,8 @@ namespace Daytona
 
         public void Exit()
         {
-            this.CleanUpDevices();
             this.cancellationTokenSource.Cancel();
+            this.CleanUpDevices();
         }
 
         public void Start(ZmqContext context)
@@ -100,7 +100,7 @@ namespace Daytona
 
             this.Writeline("Control channel started");
 
-            this.Context = context;
+            //this.Context = context;
             this.cancellationTokenSource = new CancellationTokenSource();
             var token = this.cancellationTokenSource.Token;
             Task.Run(() =>
@@ -113,20 +113,23 @@ namespace Daytona
                         backend.Bind(Pipe.SubscribeAddressServer); ////"tcp://*:5553");
                         frontend.ReceiveReady += new EventHandler<SocketEventArgs>(FrontendReceiveReady);
                         backend.ReceiveReady += new EventHandler<SocketEventArgs>(BackendReceiveReady);
-                        poller = new Poller(new ZmqSocket[] { frontend, backend });
-
-                        Writeline("About to start polling");
-
-                        while (true)
+                        using (poller = new Poller(new ZmqSocket[] { frontend, backend }))
                         {
-                            poller.Poll();
+                            Writeline("About to start polling");
 
-                            Writeline("polling");
-                            if (token.IsCancellationRequested)
+                            while (true)
                             {
-                                break;
+                                poller.Poll(new TimeSpan(0,0,0,0,50));
+                                
+                                if (token.IsCancellationRequested)
+                                {
+                                    Writeline("break");
+                                    break;
+                                }
                             }
                         }
+
+                        Writeline("stopped polling and exiting");
                     }
                 }
             },
@@ -169,6 +172,10 @@ namespace Daytona
                 ForwarderDevice.Dispose();
             }
 
+            if (this.MonitorChannel != null)
+            {
+                this.MonitorChannel.Dispose();
+            }
             ////if (this.poller != null)
             ////{
             ////    this.poller.Dispose();
@@ -199,16 +206,28 @@ namespace Daytona
 
         private bool Writeline(string line)
         {
-            this.MonitorChannel.Send(line, Encoding.Unicode);
-            var signal = this.MonitorChannel.Receive(Encoding.Unicode, new TimeSpan(0, 0, 5));
-            if (signal == null)
+            try
             {
-                return false;
+                if (this.MonitorChannel != null)
+                {
+                    this.MonitorChannel.Send(line, Encoding.Unicode);
+                    var signal = this.MonitorChannel.Receive(Encoding.Unicode, new TimeSpan(0, 0, 0, 0, 100));
+                    if (signal == null)
+                    {
+                        return false;
+                    }
+                    else
+                    {
+                        return true;
+                    }
+                }
             }
-            else
+            catch (Exception)
             {
-                return true;
+               
             }
+
+            return false;
         }
     }
 }
