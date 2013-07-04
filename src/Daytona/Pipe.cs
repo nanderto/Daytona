@@ -120,7 +120,7 @@ namespace Daytona
                             while (true)
                             {
                                 poller.Poll(new TimeSpan(0,0,0,0,50));
-                                Writeline("polling");
+                                
                                 if (token.IsCancellationRequested)
                                 {
                                     Writeline("break");
@@ -211,32 +211,23 @@ namespace Daytona
                 if (this.MonitorChannel != null)
                 {
                     this.MonitorChannel.Send(line, Encoding.Unicode);
-                    return ReadSignal();
+                    var signal = this.MonitorChannel.Receive(Encoding.Unicode, new TimeSpan(0, 0, 0, 0, 100));
+                    if (signal == null)
+                    {
+                        return false;
+                    }
+                    else
+                    {
+                        return true;
+                    }
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                //Writeline(ex.ToString());
-                if(ex.ToString()=="")
-                {
-                    return ReadSignal();
-                }
+               
             }
 
             return false;
-        }
-  
-        private bool ReadSignal()
-        {
-            var signal = this.MonitorChannel.Receive(Encoding.Unicode, new TimeSpan(0, 0, 0, 0, 100));
-            if (signal == null)
-            {
-                return false;
-            }
-            else
-            {
-                return true;
-            }
         }
     }
 }

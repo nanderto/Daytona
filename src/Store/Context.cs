@@ -10,7 +10,6 @@ namespace Daytona.Store
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.Globalization;
-    using System.IO;
     using System.Text;
     using System.Threading;
     using ZeroMQ;
@@ -199,13 +198,8 @@ namespace Daytona.Store
                     ISerializer serializer = new Serializer(Encoding.UTF8);
                     //ISerializer serializer2 = new Serializer(Encoding.UTF8);
                     SendMessage("Writer", "stop", serializer, this.OutputChannel);
-                    Writeline("sending stop");
                     //SendMessage("Sender", "stop", serializer2, this.OutputChannel);
-
-                    while (true)
-                    {
-                        
-                    }
+                    
 
                     if (this.EsentInstance != null)
                     {
@@ -252,20 +246,6 @@ namespace Daytona.Store
         internal void SendMessage(string p1, string p2)
         {
             throw new NotImplementedException();
-        }
-
-        static object SynchLock = new object();
-        public static void Writeline(string line)
-        {
-            
-            lock (SynchLock)
-            {
-                FileInfo fi = new FileInfo(@"c:\dev\context.log");
-                var stream = fi.AppendText();
-                stream.WriteLine(line);
-                stream.Flush();
-                stream.Close();
-            }
         }
     }
 }
