@@ -268,7 +268,7 @@ namespace DaytonaTests
         [TestMethod, TestCategory("IntegrationZMQ")]
         public void SendFiveMessageOfTypeConfigureActorToProcess()
         {
-            string input = string.Empty;
+             string input = string.Empty;
             string expectedAddress = "XXXXxxxx";
             string message = string.Empty;
 
@@ -293,7 +293,7 @@ namespace DaytonaTests
                                 var count = int.Parse(Actor.PropertyBag["Count"]);
                                 count++;
                                 Actor.PropertyBag["Count"] = count.ToString();
-                                    
+
                                 //Assert.AreEqual(cust.Firstname, customer.Firstname);
                                 Helper.SendOneSimpleMessage("log", customer.Firstname + " " + customer.Lastname + " " + " Count " + Actor.PropertyBag["Count"], Socket);
                             }).RegisterActor("Logger", "log", (Message, InRoute) =>
@@ -301,21 +301,22 @@ namespace DaytonaTests
                                     Helper.Writeline(Message);
                                 });
                             actor.StartAllActors();
+
+                            Task.Delay(5000);
+
+                            for (int i = 0; i < 5; i++)
+                            {
+                                ISerializer serializer2 = new Serializer(Encoding.Unicode);
+                                Customer cust = new Customer();
+                                cust.Firstname = "John" + i.ToString();
+                                cust.Lastname = "Wilson" + i.ToString();
+
+                                Helper.SendOneMessageOfType<Customer>(expectedAddress, cust, serializer2, pub);
+                            }
+
+                            Helper.SendOneSimpleMessage(expectedAddress, "Stop", pub);
+                            Task.Delay(5000);
                         }
-                        Task.Delay(5000);
-
-                        for (int i = 0; i < 5; i++)
-                        {
-                            ISerializer serializer = new Serializer(Encoding.Unicode);
-                            Customer cust = new Customer();
-                            cust.Firstname = "John" + i.ToString();
-                            cust.Lastname = "Wilson" + i.ToString();
-
-                            Helper.SendOneMessageOfType<Customer>(expectedAddress, cust, serializer, pub);
-                        }
-
-                        Helper.SendOneSimpleMessage(expectedAddress, "Stop", pub);
-                        Task.Delay(5000);
                     }
                 }
                 pipe.Exit();
