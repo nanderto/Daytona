@@ -202,10 +202,10 @@ namespace Daytona.Store
                     Writeline("sending stop");
                     //SendMessage("Sender", "stop", serializer2, this.OutputChannel);
 
-                    while (true)
-                    {
+                    //while (true)
+                    //{
                         
-                    }
+                    //}
 
                     if (this.EsentInstance != null)
                     {

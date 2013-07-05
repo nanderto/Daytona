@@ -39,7 +39,13 @@ namespace Daytona
 
         public static string SubscribeAddressServer = "tcp://*:5553"; ////"inproc://back";
 
+        public static string SubscriberCountAddress = "SubscriberCountAddress";
+
+        public static Encoding ControlChannelEncoding = Encoding.Unicode;
+
         public ZmqSocket MonitorChannel = null;
+
+        private ZmqSocket AddSubscriberCountChannel = null;
 
         private static ZmqSocket frontend, backend;
 
@@ -78,6 +84,11 @@ namespace Daytona
 
         public void Exit()
         {
+            ////DONT SHUT DOWN UNTILL THE SUBSCRIBERS HAVE ALL SHUT DOWN
+            while (SubscriberCount > 0)
+            {
+                
+            }
             this.cancellationTokenSource.Cancel();
             this.CleanUpDevices();
         }
@@ -85,6 +96,7 @@ namespace Daytona
         public void Start(ZmqContext context)
         {
             this.SetUpMonitorChannel(context);
+            this.SetUpAddSubscriberCountChannel(context);
 
             ////this should work but the forwarder device appears to be broken - it does not use XSUb and XPUB sockets
             ////ForwarderDevice = new ForwarderDevice(context, PublishAddressServer, SubscribeAddressServer, DeviceMode.Threaded);
@@ -113,13 +125,14 @@ namespace Daytona
                         backend.Bind(Pipe.SubscribeAddressServer); ////"tcp://*:5553");
                         frontend.ReceiveReady += new EventHandler<SocketEventArgs>(FrontendReceiveReady);
                         backend.ReceiveReady += new EventHandler<SocketEventArgs>(BackendReceiveReady);
-                        using (poller = new Poller(new ZmqSocket[] { frontend, backend }))
+                        this.AddSubscriberCountChannel.ReceiveReady += new EventHandler<SocketEventArgs>(AddSubscriberCountChannelReceiveReady);
+                        using (poller = new Poller(new ZmqSocket[] { frontend, backend, this.AddSubscriberCountChannel }))
                         {
                             Writeline("About to start polling");
 
                             while (true)
                             {
-                                poller.Poll(new TimeSpan(0,0,0,0,50));
+                                poller.Poll(new TimeSpan(0,0,0,0,5));
                                 Writeline("polling");
                                 if (token.IsCancellationRequested)
                                 {
@@ -134,6 +147,13 @@ namespace Daytona
                 }
             },
             token);
+        }
+
+        private static void AddSubscriberCountChannelReceiveReady(object sender, SocketEventArgs e)
+        {
+            WritelineToLogFile("AddSubscriberCountChannelReceiveReady");
+            var messageReceiver = new MessageReceiver();
+            SubscriberCount = SubscriberCount + messageReceiver.ReceiveMessage((ZmqSocket)sender);
         }
 
         private static void BackendReceiveReady(object sender, SocketEventArgs e)
@@ -204,13 +224,20 @@ namespace Daytona
             this.MonitorChannel.Connect(Pipe.MonitorAddressClient);
         }
 
+        private void SetUpAddSubscriberCountChannel(ZmqContext zmqContext)
+        {
+            this.AddSubscriberCountChannel = zmqContext.CreateSocket(SocketType.SUB);
+            this.AddSubscriberCountChannel.Connect(Pipe.SubscribeAddressClient);
+            this.AddSubscriberCountChannel.Subscribe(Pipe.ControlChannelEncoding.GetBytes(Pipe.SubscriberCountAddress));
+        }
+
         private bool Writeline(string line)
         {
             try
             {
                 if (this.MonitorChannel != null)
                 {
-                    this.MonitorChannel.Send(line, Encoding.Unicode);
+                    this.MonitorChannel.Send(line, Pipe.ControlChannelEncoding);
                     return ReadSignal();
                 }
             }
@@ -228,7 +255,7 @@ namespace Daytona
   
         private bool ReadSignal()
         {
-            var signal = this.MonitorChannel.Receive(Encoding.Unicode, new TimeSpan(0, 0, 0, 0, 100));
+            var signal = this.MonitorChannel.Receive(Pipe.ControlChannelEncoding, new TimeSpan(0, 0, 0, 0, 100));
             if (signal == null)
             {
                 return false;
@@ -238,5 +265,7 @@ namespace Daytona
                 return true;
             }
         }
+
+        public static int SubscriberCount { get; set; }
     }
 }

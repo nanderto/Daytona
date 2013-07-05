@@ -22,7 +22,7 @@ namespace Monitor
 
                     while (!interrupted)
                     {
-                        var signal = monitorService.Receive(Encoding.Unicode);
+                        var signal = monitorService.Receive(Pipe.ControlChannelEncoding);
                         Console.WriteLine("::> " + signal);
                         monitorService.Send("", Encoding.Unicode);
                     }

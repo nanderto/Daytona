@@ -31,10 +31,12 @@ namespace PipeRunner
 
             using (var context = ZmqContext.Create())
             {
-                var pipe = new Pipe();
-                pipe.Start(context);
-                Console.WriteLine("enter to exit=>");
-                input = Console.ReadLine();
+                using (var pipe = new Pipe())
+                {
+                    pipe.Start(context);
+                    Console.WriteLine("enter to exit=>");
+                    input = Console.ReadLine();
+                }
             }
         }
 

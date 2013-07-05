@@ -64,7 +64,46 @@ namespace MessageSender
             ////    input = Console.ReadLine();
             ////    pipe.Exit();
             ////}
-            input = SynchronizedSender(input);
+            input = Sender(input);
+        }
+
+        private static string Sender(string input)
+        {
+
+            using (var context = ZmqContext.Create())
+            {
+                using (ZmqSocket pub = Helper.GetConnectedPublishSocket(context, Pipe.PublishAddressClient),
+                      syncService = context.CreateSocket(SocketType.REP))
+                {
+                    //syncService.Connect(Pipe.PubSubControlFrontAddressClient);
+                    //for (int i = 0; i < 1; i++)
+                    //{
+                    //    syncService.Receive(Encoding.Unicode);
+                    //    syncService.Send("", Encoding.Unicode);
+                    //}
+
+                    for (int i = 0; i < 100000; i++)
+                    {
+                        Console.WriteLine("Enter to send message=>");
+                        input = Console.ReadLine();
+                        SendMessage(Pipe.ControlChannelEncoding.GetBytes(Pipe.SubscriberCountAddress), Pipe.ControlChannelEncoding.GetBytes("ADDSUBSCRIBER"), pub);
+                        if (input == "Exit") break;
+                        Console.WriteLine("message sent");
+                    }
+
+                    Console.WriteLine("message sent enter to exit=>");
+                    input = Console.ReadLine();
+                }
+            }
+            return input;
+        }
+
+        public static void SendMessage(byte[] address, byte[] message, ZmqSocket socket)
+        {
+            ZmqMessage zmqMessage = new ZmqMessage();
+            zmqMessage.Append(new Frame(address));
+            zmqMessage.Append(new Frame(message));
+            socket.SendMessage(zmqMessage);
         }
 
         static void repSocket_ReceiveReady(object sender, SocketEventArgs e)
@@ -123,6 +162,7 @@ namespace MessageSender
                     {
                         Console.WriteLine("Enter to send message=>");
                         input = Console.ReadLine();
+
                         if (input == "Exit") break;
 
                         var cust = new Customer
