@@ -169,7 +169,6 @@ namespace Daytona.Store
         
         public int? SavePayload(byte[] body, string tableName)
         {
-            tableName = tableName + "payload";
             int? autoinc = null;
             using (var table = new Table(this.currentSession, this.dbid, tableName, OpenTableGrbit.None))
             {

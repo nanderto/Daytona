@@ -139,8 +139,8 @@ namespace Samples
 
         private static void RunStoreTest()
         {
-            var task = Task.Run(async () =>
-            {
+            //var task = Task.Run(async () =>
+            //{
                 using (Daytona.Store.Context context = new Daytona.Store.Context())
                 {
                     using (var connection = context.GetConnection<Customer>())
@@ -156,7 +156,7 @@ namespace Samples
                         Console.WriteLine("Pausing=>");
                         Console.ReadLine();
 
-                        for (int i = 0; i < 100; i++)
+                        for ( int i = 0; i < 100; i++)
                         {
                             var customer2 = new Customer
                             {
@@ -165,16 +165,23 @@ namespace Samples
                             };
                             var task2 = connection.Save(customer2);
                             id = -1;
-                            id = await task2;
+                            //id = await task2;
+                            id = task2.Result;
                             Console.WriteLine("the id returned is: " + id.ToString()); 
                         }
 
                         Console.WriteLine("Pausing=>");
                         Console.ReadLine();
+
+                        
+                        
+                        
+                        var result = connection.GetAsync<Customer>(198);
+                        var returnedId = result.Result.Firstname;
                     }
                 }
-            });
-            task.Wait();
+            //});
+            //task.Wait();
         }
 
         private static Task RunSubscriber()

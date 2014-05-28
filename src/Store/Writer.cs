@@ -35,7 +35,7 @@
         {
             using (var store = new EsentStore<T>(this.instance))
             {
-                Repository<T> repository = new Repository<T>((IEsentStore<T>)store);
+                var repository = new Repository<T>((IEsentStore<T>)store);
 
                 var result = repository.SavePayload(messageAsBytes, Writer.CleanupName(typeof(T).ToString()));
                 return result;
@@ -67,8 +67,13 @@
 
         internal int Save<T>(byte[] messageAsBytes, ISerializer serializer)
         {
-            Writeline(serializer.GetString(messageAsBytes));
-            return 1;
+            var result = Save<T>(messageAsBytes);
+            int ret = -1;
+            if (result != null)
+            {
+                ret = result.Value;
+            }
+            return ret;
         }
 
         public string Name { get; set; }

@@ -2,6 +2,7 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.Configuration;
     using System.Text;
     using System.Threading.Tasks;
     using ZeroMQ;
@@ -86,6 +87,19 @@
             }
 
             disposed = true;
+        }
+
+        public async Task<T> GetAsync<T>(int id) where T :  IPayload
+        {
+            IScope scope = null;
+            var name = typeof(T).Name;
+            this.scopes.TryGetValue(name, out scope);
+            if (scope != null)
+            {
+                return await scope.GetAsync<T>(id);
+            }
+
+            throw new ArgumentOutOfRangeException(string.Format("Scope was not set up prior to calling function: {0}", name)); 
         }
     }
 }

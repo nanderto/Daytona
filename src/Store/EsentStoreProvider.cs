@@ -91,7 +91,7 @@ namespace Daytona.Store
             {
                 if (!EsentConfig.DoesStoreExist(storeName))
                 {
-                    EsentConfig.CreateMessageStore(storeName, null);
+                    EsentConfig.CreateActorStore(storeName, null);
                 }
             }
 

@@ -54,7 +54,7 @@ namespace StoreTests
         [TestMethod]
         public void SaveACustomer()
         {
-            using (Daytona.Store.Context context = new Daytona.Store.Context())
+            using (var context = new Daytona.Store.Context())
             {
                 using (var connection = context.GetConnection<Customer>())
                 {
@@ -65,6 +65,8 @@ namespace StoreTests
                     };
                     var task = connection.Save(customer);
                     int id = task.Result;
+                    //Task cust = connection.Get(id); 
+                    //var customer2 = cust.RunSynchronously();
                     Assert.AreEqual(1, id);
                 }
             }

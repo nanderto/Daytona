@@ -105,6 +105,7 @@
     <Compile Include="EsentStore.cs" />
     <Compile Include="EsentStoreProvider.cs" />
     <Compile Include="EsentStoreResourceManager.cs" />
+    <Compile Include="Getter.cs" />
     <Compile Include="IEsentStore.cs" />
     <Compile Include="IScope.cs" />
     <Compile Include="IStoreProvider.cs" />

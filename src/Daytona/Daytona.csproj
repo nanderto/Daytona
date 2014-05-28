@@ -68,8 +68,20 @@
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="AssemblyVerifier">
+      <HintPath>..\packages\AssemblyVerifier.5.0.1.0\lib\net40\AssemblyVerifier.dll</HintPath>
+    </Reference>
     <Reference Include="clrzmq">
       <HintPath>..\packages\clrzmq.3.0.0-rc1\lib\net40\clrzmq.dll</HintPath>
+    </Reference>
+    <Reference Include="DynamicProxies">
+      <HintPath>..\packages\DynamicProxies.3.0.0.0\lib\net40\DynamicProxies.dll</HintPath>
+    </Reference>
+    <Reference Include="EmitDebugging">
+      <HintPath>..\packages\EmitDebugger.2.0.0.0\lib\net40\EmitDebugging.dll</HintPath>
+    </Reference>
+    <Reference Include="Spackle">
+      <HintPath>..\packages\Spackle.7.1.0.0\lib\NET4.0\Spackle.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -84,10 +96,14 @@
     <Compile Include="CallBackEventArgs.cs" />
     <Compile Include="DebuggingForwarder.cs" />
     <Compile Include="IPayload.cs" />
+    <Compile Include="IProxyInvocationHandler.cs" />
     <Compile Include="ISerializer.cs" />
     <Compile Include="MessageReceiver.cs" />
+    <Compile Include="MessageSenderProxy.cs" />
+    <Compile Include="MetaDataFactory.cs" />
     <Compile Include="Pipe.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ProxyFactory.cs" />
     <Compile Include="ZeroMQExtensionMethods.cs" />
   </ItemGroup>
   <ItemGroup>

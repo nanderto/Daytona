@@ -72,7 +72,7 @@ namespace Daytona.Store
             {
                 if (!EsentConfig.DoesStoreExist(storeName, this.EsentInstance))
                 {
-                    EsentConfig.CreateMessageStore(storeName, this.EsentInstance);
+                    EsentConfig.CreateActorStore(storeName, this.EsentInstance);
                     this.tableDoesExist.Add(storeName, true);
                 }
             }
@@ -109,7 +109,22 @@ namespace Daytona.Store
 
                 int Id = writer.Save<T>(messageAsBytes, actor.Serializer);
 
-                dBPayload.Id = count;
+                dBPayload.Id = Id;
+
+                actor.SendOneMessageOfType<DBPayload<T>>(outRoute, dBPayload, serializer, socket);
+            });
+
+            //actorFactory.RegisterActor(new Getter());
+            actorFactory.RegisterActor<DBPayload<T>>("Getter", "Getter", "Sender", serializer, (IPayload message, byte[] messageAsBytes, string inRoute, string outRoute, ZmqSocket socket, Actor actor) =>
+            {
+                actor.WriteLineToMonitor("Got here in the Getter");
+
+               // var writer = new Writer(this.EsentInstance);
+                var dBPayload = (DBPayload<T>)message;
+
+                //int Id = writer.Save<T>(messageAsBytes, actor.Serializer);
+
+                dBPayload.Id = 123;
 
                 actor.SendOneMessageOfType<DBPayload<T>>(outRoute, dBPayload, serializer, socket);
             });
@@ -126,11 +141,12 @@ namespace Daytona.Store
             ISerializer serializer3 = new Serializer(Encoding.UTF8);
             connection.AddScope<T>(new Scope<T>(new Actor(context, "Sender", "Writer", serializer3, (IPayload message, byte[] messageAsBytes, string inRoute, string outRoute, ZmqSocket socket, Actor actor) =>
             {
-                DBPayload<T> payload;
                 try
                 {
-                    payload = (DBPayload<T>)message;
-                    actor.CallBack(payload.Id, null, null);
+                    actor.WriteLineToMonitor("Got here in the scope");
+                    var payload = (DBPayload<T>)message;
+                    var payloads = new List<IPayload> { message };
+                    actor.CallBack(payload.Id, payloads, null);
                 }
                 catch (Exception ex)
                 {

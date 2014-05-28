@@ -32,18 +32,13 @@ namespace Daytona.Store
         /// <returns>True if database exists</returns>
         public static bool DoesDatabaseExist(string databaseName)
         {
-            bool result = false;
-
-            if (File.Exists(databaseName))
-            {
-                result = true;
-            }
+            bool result = File.Exists(databaseName);
 
             return result;
         }
 
         /// <summary>
-        /// Creates the message store.
+        /// Creates the Actor Database.
         /// </summary>
         /// <param name="database">The database.</param>
         public static void CreateDatabase()
@@ -61,10 +56,10 @@ namespace Daytona.Store
         }
 
         /// <summary>
-        /// Creates the message store.
+        /// Creates the actor store.
         /// </summary>
-        /// <param name="database">The database.</param>
-        public static void CreateDatabaseAndActorStore(string messageTypeName)
+        /// <param name="actorTypeName"></param>
+        public static void CreateDatabaseAndActorStore(string actorTypeName)
         {
             using (var instance = new Instance("createdatabase"))
             {
@@ -74,18 +69,37 @@ namespace Daytona.Store
                 {
                     JET_DBID dbid;
                     Api.JetCreateDatabase(session, DatabaseName, null, out dbid, CreateDatabaseGrbit.OverwriteExisting);
-                    CreateMessageTable(messageTypeName, session, dbid);
+                    CreateActorTable(actorTypeName, session, dbid);
                 }
             }
         }
 
-        public static void CreateMessageStore(string MessageTypeName, Instance instance)
+        /// <summary>
+        /// Creates the database and a single table that stores all actors.
+        /// </summary>
+        /// <param name="actorTypeName"></param>
+        public static void CreateDatabaseAndSingleActorStore()
+        {
+            using (var instance = new Instance("createdatabase"))
+            {
+                instance.Parameters.CircularLog = true;
+                instance.Init();
+                using (var session = new Session(instance))
+                {
+                    JET_DBID dbid;
+                    Api.JetCreateDatabase(session, DatabaseName, null, out dbid, CreateDatabaseGrbit.OverwriteExisting);
+                    CreateActorTable("actortable", session, dbid);
+                }
+            }
+        }
+
+        public static void CreateActorStore(string actorTypeName, Instance instance)
         {
             using (var session = new Session(instance))
             {
                 JET_DBID dbid;
                 Api.JetOpenDatabase(session, DatabaseName, null, out dbid, OpenDatabaseGrbit.None);
-                CreateMessageTable(MessageTypeName, session, dbid);
+                CreateActorTable(actorTypeName, session, dbid);
             }
         }
 
@@ -103,9 +117,8 @@ namespace Daytona.Store
         //    }
         //}
 
-        private static void CreateMessageTable(string tableName, Session session, JET_DBID dbid)
+        private static void CreateActorTable(string tableName, Session session, JET_DBID dbid)
         {
-            tableName = tableName + "payload";
             using (var transaction = new Transaction(session))
             {
                 JET_TABLEID tableid;
@@ -139,14 +152,22 @@ namespace Daytona.Store
 
                 columndef = new JET_COLUMNDEF
                 {
+                    coltyp = JET_coltyp.LongText,
+                    cp = JET_CP.Unicode
+                };
+
+                Api.JetAddColumn(sesid, tableid, "textpayload", columndef, null, 0, out columnid);
+
+                columndef = new JET_COLUMNDEF
+                {
                     coltyp = JET_coltyp.Long,
                     grbit = ColumndefGrbit.ColumnAutoincrement
                 };
 
                 Api.JetAddColumn(sesid, tableid, "id", columndef, null, 0, out columnid);
 
-                string indexDef = "+id\0\0";
-                Api.JetCreateIndex(sesid, tableid, "primary", CreateIndexGrbit.IndexPrimary, indexDef, indexDef.Length, 100);
+                const string IndexDef = "+id\0\0";
+                Api.JetCreateIndex(sesid, tableid, "primary", CreateIndexGrbit.IndexPrimary, IndexDef, IndexDef.Length, 100);
 
                 transaction.Commit(CommitTransactionGrbit.LazyFlush);
             }
@@ -251,7 +272,6 @@ namespace Daytona.Store
             {
                 Api.JetOpenDatabase(session, DatabaseName, null, out dbid, OpenDatabaseGrbit.None);
                 JET_TABLEID tableid;
-                storeName = storeName + "payload";
                 if (Api.TryOpenTable(session, dbid, storeName, OpenTableGrbit.None, out tableid))
                 {
                     return true;

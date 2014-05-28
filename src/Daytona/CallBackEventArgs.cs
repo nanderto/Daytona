@@ -16,6 +16,8 @@ namespace Daytona
         
         public int Result { get; set; }
         
-        public List<IPayload> Payload { get; set; }
+        public List<IPayload> Payloads { get; set; }
+
+        public IPayload Payload { get; set; }
     }
 }
