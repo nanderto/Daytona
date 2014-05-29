@@ -11,4 +11,21 @@ namespace DaytonaTests
         public string Firstname { get; set; }
         public string Lastname { get; set; }
     }
+
+    public interface IAccount
+    {
+        void UpdateHolder(string name);
+    }
+
+    public class Account : IAccount
+    {
+        public int Number { get; set; }
+
+        public string Holder { get; set; }
+
+        public void UpdateHolder(string name)
+        {
+            this.Holder = name;
+        }
+    }
 }

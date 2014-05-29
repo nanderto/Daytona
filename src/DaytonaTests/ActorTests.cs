@@ -9,9 +9,11 @@ namespace Daytona.Tests
 {
     using Daytona.Store;
 
-    using TestHelpers;
+    using DaytonaTests;
 
     using ZeroMQ;
+
+    using Customer = TestHelpers.Customer;
 
     [TestClass]
     public class ActorTests
@@ -47,5 +49,27 @@ namespace Daytona.Tests
 
             }
          }
+
+        [TestMethod]
+        public void RegisterAccount()
+        {
+            using (var context = ZmqContext.Create())
+            {
+            //    ISerializer serializer = new Daytona.Store.Serializer(Encoding.Unicode);
+                var actor = new Actor(context);
+            //    actorFactory.RegisterActor<DBPayload<Customer>>(serializer,
+            //        (IPayload message, byte[] messageAsBytes, Actor actor) =>
+            //            {
+                            //var payload = (DBPayload<Customer>)message;
+                            var account = (IAccount) actor.CreateInstance<Account>();
+                var newName = string.Format("{0}, {1}", "wilson", "Brad");
+                            account.UpdateHolder(newName);
+                        //});
+
+            //    actorFactory.StartAllActors();
+            }
+        }
+
+
     }
 }

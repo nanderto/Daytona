@@ -314,14 +314,21 @@ namespace Daytona
             return this;
         }
 
-        public Actor RegisterActor<T>(ISerializer serializer, Action<IPayload, byte[], Actor> workload) where T : IPayload
+        /// <summary>
+        /// latest addition
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="serializer"></param>
+        /// <param name="workLoad"></param>
+        /// <returns></returns>
+        public Actor RegisterActor<T>(ISerializer serializer, Action<IPayload, byte[], Actor> workLoad) where T : IPayload
         {
             var name = typeof(T).ToString().Replace("{", string.Empty).Replace("}", string.Empty).Replace("_", string.Empty).Replace(".", string.Empty); 
             this.actorTypes.Add(
                 name,
                 () =>
                 {
-                    using (var actor = new Actor(this.context, name, serializer, workload))
+                    using (var actor = new Actor(this.context, name, serializer, workLoad))
                     {
                         actor.Start<T>();
                     }
@@ -642,9 +649,14 @@ namespace Daytona
             this.SetUpReceivers(context);
         }
 
-        public static Object NewInstance(Object obj)
+        //public static Object NewInstance(Object obj)
+        //{
+        //    return ProxyFactory.GetInstance().Create(new MessageSenderProxy(), obj.GetType());
+        //}
+
+        public object CreateInstance<T>()
         {
-            return ProxyFactory.GetInstance().Create(new MessageSenderProxy(), obj.GetType());
+            return ProxyFactory.GetInstance().Create(new MessageSenderProxy(this), typeof(T));
         }
     }
 }
