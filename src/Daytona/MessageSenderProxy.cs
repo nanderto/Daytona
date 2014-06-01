@@ -8,12 +8,13 @@ namespace Daytona
 {
     public class MessageSenderProxy : IProxyInvocationHandler
     {
-        private Actor actor;
+        private   actor;
 
         public MessageSenderProxy(Actor actor)
         {
             this.actor = actor;
         }
+
         public object Invoke(object proxy, System.Reflection.MethodInfo method, object[] parameters)
         {
             return new object();

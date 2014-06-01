@@ -13,13 +13,11 @@ namespace Daytona
 
     public class ProxyFactory
     {
-        private static ProxyFactory instance;
+        private readonly MetaDataFactory metadata = new MetaDataFactory();
 
-        private static Object lockObj = new Object();
+        private readonly Hashtable typeMap = new Hashtable();
 
-        private Hashtable typeMap = Hashtable.Synchronized(new Hashtable());
-
-        private static readonly Hashtable opCodeTypeMapper = new Hashtable();
+        private readonly Hashtable opCodeTypeMapper = new Hashtable();
 
         private const string PROXY_SUFFIX = "Proxy";
 
@@ -31,7 +29,7 @@ namespace Daytona
 
         // Initialize the value type mapper.  This is needed for methods with intrinsic 
         // return types, used in the Emit process.
-        static ProxyFactory()
+        public ProxyFactory()
         {
             opCodeTypeMapper.Add(typeof(System.Boolean), OpCodes.Ldind_I1);
             opCodeTypeMapper.Add(typeof(System.Int16), OpCodes.Ldind_I2);
@@ -42,32 +40,7 @@ namespace Daytona
             opCodeTypeMapper.Add(typeof(System.UInt16), OpCodes.Ldind_U2);
             opCodeTypeMapper.Add(typeof(System.UInt32), OpCodes.Ldind_U4);
         }
-
-        private ProxyFactory()
-        {
-
-        }
-
-        public static ProxyFactory GetInstance()
-        {
-            if (instance == null)
-            {
-                CreateInstance();
-            }
-
-            return instance;
-        }
-
-        private static void CreateInstance()
-        {
-            lock (lockObj)
-            {
-                if (instance == null)
-                {
-                    instance = new ProxyFactory();
-                }
-            }
-        }
+        
 
         public Object Create(IProxyInvocationHandler handler, Type objType, bool isObjInterface)
         {
@@ -172,7 +145,8 @@ namespace Daytona
 
         private void GenerateMethod(Type interfaceType, FieldBuilder handlerField, TypeBuilder typeBuilder)
         {
-            MetaDataFactory.Add(interfaceType);
+            
+            metadata.Add(interfaceType);
             MethodInfo[] interfaceMethods = interfaceType.GetMethods();
             if (interfaceMethods != null)
             {

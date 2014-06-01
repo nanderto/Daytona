@@ -1,6 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2012
+# Visual Studio 2013
+VisualStudioVersion = 12.0.30501.0
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Daytona", "Daytona\Daytona.csproj", "{626CB1E5-251F-4A23-8D7D-C3A7B35F67D2}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{D1F18DDE-E70B-4CAC-AD0C-664D76FC25F6}"
@@ -29,6 +31,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WeatherServer", "WeatherServer\WeatherServer.csproj", "{70D4D564-3A51-4C1A-8D2D-68AF0E57F712}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WeatherClient", "WeatherClient\WeatherClient.csproj", "{1058A2AC-521A-4230-ABC3-F8E07947150F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DynamicProxyImplementation", "DynamicProxyImplementation\DynamicProxyImplementation.csproj", "{054A4F0C-156C-4566-A072-AFEF90EFD58F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -172,6 +176,14 @@ Global
 		{1058A2AC-521A-4230-ABC3-F8E07947150F}.Release|x64.Build.0 = Release|x64
 		{1058A2AC-521A-4230-ABC3-F8E07947150F}.Release|x86.ActiveCfg = Release|x86
 		{1058A2AC-521A-4230-ABC3-F8E07947150F}.Release|x86.Build.0 = Release|x86
+		{054A4F0C-156C-4566-A072-AFEF90EFD58F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{054A4F0C-156C-4566-A072-AFEF90EFD58F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{054A4F0C-156C-4566-A072-AFEF90EFD58F}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{054A4F0C-156C-4566-A072-AFEF90EFD58F}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{054A4F0C-156C-4566-A072-AFEF90EFD58F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{054A4F0C-156C-4566-A072-AFEF90EFD58F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{054A4F0C-156C-4566-A072-AFEF90EFD58F}.Release|x64.ActiveCfg = Release|Any CPU
+		{054A4F0C-156C-4566-A072-AFEF90EFD58F}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

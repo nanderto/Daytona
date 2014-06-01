@@ -95,6 +95,7 @@
     <Compile Include="Actor.cs" />
     <Compile Include="CallBackEventArgs.cs" />
     <Compile Include="DebuggingForwarder.cs" />
+    <Compile Include="DynamicProxy\MessageSenderDynamicProxy.cs" />
     <Compile Include="IPayload.cs" />
     <Compile Include="IProxyInvocationHandler.cs" />
     <Compile Include="ISerializer.cs" />
@@ -109,6 +110,13 @@
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\DynamicProxyImplementation\DynamicProxyImplementation.csproj">
+      <Project>{054a4f0c-156c-4566-a072-afef90efd58f}</Project>
+      <Name>DynamicProxyImplementation</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="$(SolutionDir)\.nuget\nuget.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

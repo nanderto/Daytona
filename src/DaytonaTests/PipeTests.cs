@@ -296,7 +296,7 @@ namespace DaytonaTests
 
                                 //Assert.AreEqual(cust.Firstname, customer.Firstname);
                                 Helper.SendOneSimpleMessage("log", customer.Firstname + " " + customer.Lastname + " " + " Count " + Actor.PropertyBag["Count"], Socket);
-                            }).RegisterActor("Logger", "log", (Message, InRoute) =>
+                            }). RegisterActor("Logger", "log", (Message, InRoute) =>
                                 {
                                     Helper.Writeline(Message);
                                 });

@@ -1,11 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Daytona
+﻿namespace Daytona
 {
+    using System;
     using System.Collections;
     using System.Reflection;
 
@@ -14,30 +9,20 @@ namespace Daytona
     /// </summary>
     public class MetaDataFactory
     {
-        private static Hashtable typeMap = new Hashtable();
-
-        /// <summary>
-        /// Class constructor.  Private because this is a static class.
-        /// </summary>
-        private MetaDataFactory()
-        {
-        }
+        private readonly Hashtable typeMap = new Hashtable();
 
         ///<summary>
         /// Method to add a new Type to the cache, using the type's fully qualified
         /// name as the key
         ///</summary>
         ///<param name="interfaceType">Type to cache</param>
-        public static void Add(Type interfaceType)
+        public void Add(Type interfaceType)
         {
             if (interfaceType != null)
             {
-                lock (typeMap.SyncRoot)
+                if (!typeMap.ContainsKey(interfaceType.FullName))
                 {
-                    if (!typeMap.ContainsKey(interfaceType.FullName))
-                    {
-                        typeMap.Add(interfaceType.FullName, interfaceType);
-                    }
+                    typeMap.Add(interfaceType.FullName, interfaceType);
                 }
             }
         }
@@ -48,14 +33,10 @@ namespace Daytona
         ///<param name="name">Fully qualified name of the method to return</param>
         ///<param name="i">Index to use to return MethodInfo</param>
         ///<returns>MethodInfo</returns>
-        public static MethodInfo GetMethod(string name, int i)
+        public MethodInfo GetMethod(string name, int i)
         {
             Type type = null;
-            lock (typeMap.SyncRoot)
-            {
-                type = (Type)typeMap[name];
-            }
-
+            type = (Type)typeMap[name];
             MethodInfo[] methods = type.GetMethods();
             if (i < methods.Length)
             {
