@@ -1,0 +1,278 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>9.0.30729</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{6400C4CD-6C04-4A37-9544-0924907630A4}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Pfz</RootNamespace>
+    <AssemblyName>Pfz</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>Pfz.snk</AssemblyOriginatorKeyFile>
+    <FileUpgradeFlags>
+    </FileUpgradeFlags>
+    <OldToolsVersion>3.5</OldToolsVersion>
+    <UpgradeBackupLocation />
+    <PublishUrl>publish\</PublishUrl>
+    <Install>true</Install>
+    <InstallFrom>Disk</InstallFrom>
+    <UpdateEnabled>false</UpdateEnabled>
+    <UpdateMode>Foreground</UpdateMode>
+    <UpdateInterval>7</UpdateInterval>
+    <UpdateIntervalUnits>Days</UpdateIntervalUnits>
+    <UpdatePeriodically>false</UpdatePeriodically>
+    <UpdateRequired>false</UpdateRequired>
+    <MapFileExtensions>true</MapFileExtensions>
+    <ApplicationRevision>0</ApplicationRevision>
+    <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
+    <IsWebBootstrapper>false</IsWebBootstrapper>
+    <UseApplicationTrust>false</UseApplicationTrust>
+    <BootstrapperEnabled>true</BootstrapperEnabled>
+    <TargetFrameworkProfile>Client</TargetFrameworkProfile>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>
+    </DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <DocumentationFile>
+    </DocumentationFile>
+    <RunCodeAnalysis>false</RunCodeAnalysis>
+    <CodeAnalysisRuleSet>Pfz.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>TRACE;DEBUG;CHECK_FOR_DEAD_LOCKS</DefineConstants>
+    <DocumentationFile>
+    </DocumentationFile>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="System.Data" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Caching\IReferenceData.cs" />
+    <Compile Include="Caching\ReferenceData.cs" />
+    <Compile Include="Collections\AutoTrimDictionary.cs" />
+    <Compile Include="Caching\Reference.cs" />
+    <Compile Include="Caching\IReference.cs" />
+    <Compile Include="Caching\ThreadUnsafeReference.cs" />
+    <Compile Include="Caching\WeakList.cs" />
+    <Compile Include="Collections\ActualValueEnumerator.cs" />
+    <Compile Include="Collections\AutoTrimHashSet.cs" />
+    <Compile Include="Collections\CollectionWrapper.cs" />
+    <Compile Include="Collections\EnumeratorDistributorClient.cs" />
+    <Compile Include="Collections\EnumeratorDistributor.cs" />
+    <Compile Include="Collections\FastEnumeratorWrapper.cs" />
+    <Compile Include="Collections\ImmutableArray.cs" />
+    <Compile Include="Collections\IReadOnlyDictionary.cs" />
+    <Compile Include="Collections\IReadOnlyHashSet.cs" />
+    <Compile Include="DataTypes\TypeTypeConverter.cs" />
+    <Compile Include="DynamicObjects\CallConstructorAttribute.cs" />
+    <Compile Include="DynamicObjects\CastAttribute.cs" />
+    <Compile Include="DynamicObjects\Internal\_DynamicModule.cs" />
+    <Compile Include="DynamicObjects\Internal\BaseDuckForInstances.cs" />
+    <Compile Include="DynamicObjects\Internal\BaseDuck.cs" />
+    <Compile Include="DynamicObjects\Internal\BaseDuckForTypes.cs" />
+    <Compile Include="DynamicObjects\Internal\BaseImplementedProxy.cs" />
+    <Compile Include="DynamicObjects\DuckCaster.cs" />
+    <Compile Include="DynamicObjects\StructuralCaster.cs" />
+    <Compile Include="Extensions\PfzCastingExtensions.cs" />
+    <Compile Include="Extensions\PfzHashSetExtensions.cs" />
+    <Compile Include="Extensions\PfzMethodInfoExtensions.cs" />
+    <Compile Include="Extensions\PfzParameterInfoExtensions.cs" />
+    <Compile Include="Factories\AutoRegisterInFactoryAttribute.cs" />
+    <Compile Include="Factories\AutoRegisterInFactoryAttributeBase.cs" />
+    <Compile Include="Factories\AutoRegisterInSearcherFactoryAttribute.cs" />
+    <Compile Include="Factories\Editor.cs" />
+    <Compile Include="Factories\EditorFactory.cs" />
+    <Compile Include="Factories\Factories.cs" />
+    <Compile Include="Factories\Factory.cs" />
+    <Compile Include="Factories\AutoRegisterInControlFactoryAttribute.cs" />
+    <Compile Include="Factories\AutoRegisterInEditorFactoryAttribute.cs" />
+    <Compile Include="Factories\FactoryBaseAttribute.cs" />
+    <Compile Include="Factories\IEditor.cs" />
+    <Compile Include="Factories\IEditorOrSearcher.cs" />
+    <Compile Include="Factories\IFactory.cs" />
+    <Compile Include="Factories\IHasPreferredDataType.cs" />
+    <Compile Include="Factories\ISearcher.cs" />
+    <Compile Include="Factories\IValueControl.cs" />
+    <Compile Include="Factories\Searcher.cs" />
+    <Compile Include="Factories\SearcherFactory.cs" />
+    <Compile Include="Factories\TypeDictionary.cs" />
+    <Compile Include="DataTypes\EmailString.cs" />
+    <Compile Include="DataTypes\EnumWrapper.cs" />
+    <Compile Include="DataTypes\EventArgs.cs" />
+    <Compile Include="DataTypes\Ranges\BasicComparer.cs" />
+    <Compile Include="DataTypes\Ranges\BasicComparerAttribute.cs" />
+    <Compile Include="DataTypes\Ranges\BasicComparison.cs" />
+    <Compile Include="DataTypes\Ranges\NegativeWithout0.cs" />
+    <Compile Include="DataTypes\Ranges\PositiveWithout0.cs" />
+    <Compile Include="DataTypes\Ranges\NegativeWith0.cs" />
+    <Compile Include="DataTypes\Ranges\IBasicComparer.cs" />
+    <Compile Include="DataTypes\Ranges\PositiveWith0.cs" />
+    <Compile Include="DynamicObjects\InvokeDelegate_EventArgs.cs" />
+    <Compile Include="DynamicObjects\DelegateProxier.cs" />
+    <Compile Include="DynamicObjects\InterfaceProxier.cs" />
+    <Compile Include="DynamicObjects\Invoke_EventArgs.cs" />
+    <Compile Include="DynamicObjects\InvokeEvent_EventArgs.cs" />
+    <Compile Include="DynamicObjects\InvokeMethod_EventArgs.cs" />
+    <Compile Include="DynamicObjects\InvokeProperty_EventArgs.cs" />
+    <Compile Include="DynamicObjects\IProxyDelegate.cs" />
+    <Compile Include="DynamicObjects\IProxyObject.cs" />
+    <Compile Include="EnumParser.cs" />
+    <Compile Include="ExceptionAwareStream.cs" />
+    <Compile Include="Extensions\PfzEmitExtensions.cs" />
+    <Compile Include="Extensions\PfzEventExtensions.cs" />
+    <Compile Include="Extensions\PfzClonningExtensions.cs" />
+    <Compile Include="Extensions\PfzDictionaryExtensions.cs" />
+    <Compile Include="Extensions\PfzDisposeExtensions.cs" />
+    <Compile Include="Extensions\PfzFastEnumeratorExtensions.cs" />
+    <Compile Include="Extensions\PfzStreamExtensions.cs" />
+    <Compile Include="ICloneable.cs" />
+    <Compile Include="IExceptionAwareDisposable.cs" />
+    <Compile Include="DataTypes\IValueContainer.cs" />
+    <Compile Include="DataTypes\PasswordString.cs" />
+    <Compile Include="DataTypes\Ranges\Range0_1000.cs" />
+    <Compile Include="DataTypes\Ranges\IRange.cs" />
+    <Compile Include="DataTypes\Ranges\Range.cs" />
+    <Compile Include="DataTypes\Ranges\Range0_100.cs" />
+    <Compile Include="DataTypes\Ranges\RangeAttribute.cs" />
+    <Compile Include="ReferenceComparer.cs" />
+    <Compile Include="ReflectionHelper.cs" />
+    <Compile Include="Remoting\BidirectionalDictionary.cs" />
+    <Compile Include="Remoting\CacheRemotePropertyValuesAttribute.cs" />
+    <Compile Include="Remoting\Channel.cs" />
+    <Compile Include="Remoting\ChannelCreatedEventArgs.cs" />
+    <Compile Include="Remoting\ConnectedEventArgs.cs" />
+    <Compile Include="Remoting\ConnectionInfo.cs" />
+    <Compile Include="Remoting\Instructions\RemotingResult.cs" />
+    <Compile Include="Remoting\RemotingParameters.cs" />
+    <Compile Include="Remoting\RemotingClient.cs" />
+    <Compile Include="Remoting\RemotingCommon.cs" />
+    <Compile Include="Remoting\DuplexStream.cs" />
+    <Compile Include="Remoting\IChanneller.cs" />
+    <Compile Include="Remoting\IListener.cs" />
+    <Compile Include="Remoting\Instructions\Instruction.cs" />
+    <Compile Include="Remoting\Instructions\InstructionAddEvent.cs" />
+    <Compile Include="Remoting\Instructions\InstructionCreateObject.cs" />
+    <Compile Include="Remoting\Instructions\InstructionEvent.cs" />
+    <Compile Include="Remoting\Instructions\InstructionGetProperty.cs" />
+    <Compile Include="Remoting\Instructions\InstructionInformReferencesNotFound.cs" />
+    <Compile Include="Remoting\Instructions\InstructionInvokeDelegate.cs" />
+    <Compile Include="Remoting\Instructions\InstructionInvokeMethod.cs" />
+    <Compile Include="Remoting\Instructions\InstructionInvokeStaticMethod.cs" />
+    <Compile Include="Remoting\Instructions\InstructionObjectsCollected.cs" />
+    <Compile Include="Remoting\Instructions\InstructionRecreate.cs" />
+    <Compile Include="Remoting\Instructions\InstructionRemoveEvent.cs" />
+    <Compile Include="Remoting\Instructions\InstructionRemoveReferencesNotFound.cs" />
+    <Compile Include="Remoting\Instructions\InstructionSetProperty.cs" />
+    <Compile Include="Remoting\IReconnectable.cs" />
+    <Compile Include="Remoting\IRemotable.cs" />
+    <Compile Include="Remoting\NamedPipeChanneller.cs" />
+    <Compile Include="Remoting\NamedPipeClient.cs" />
+    <Compile Include="Remoting\NamedPipeListener.cs" />
+    <Compile Include="Remoting\ReconnectableAttribute.cs" />
+    <Compile Include="Remoting\ReconnectResult.cs" />
+    <Compile Include="Remoting\ReferenceOrWrapped.cs" />
+    <Compile Include="Remoting\RemotingEventGroup.cs" />
+    <Compile Include="Remoting\RemotingException.cs" />
+    <Compile Include="Remoting\RemotingProxy.cs" />
+    <Compile Include="Remoting\RemotingProxyDelegate.cs" />
+    <Compile Include="Remoting\RemotingProxyObject.cs" />
+    <Compile Include="Remoting\RemotingServer.cs" />
+    <Compile Include="Remoting\SecureStream.cs" />
+    <Compile Include="Remoting\StreamChanneller.cs" />
+    <Compile Include="Remoting\TcpListenerWrapper.cs" />
+    <Compile Include="Remoting\ThreadData.cs" />
+    <Compile Include="Remoting\WeakBidirectionalDictionary.cs" />
+    <Compile Include="Serialization\BinarySerializer.cs" />
+    <Compile Include="Serialization\RemotingSerializer.cs" />
+    <Compile Include="Threading\AbortSafe.cs" />
+    <Compile Include="Threading\ActionRunner.cs" />
+    <Compile Include="DataTypes\Box.cs" />
+    <Compile Include="Caching\KeepAliveWeakReference.cs" />
+    <Compile Include="Caching\InternalWeakDelegate.cs" />
+    <Compile Include="Caching\WeakDelegateSet.cs" />
+    <Compile Include="Caching\WeakKeyDictionary.cs" />
+    <Compile Include="DataTypes\Date.cs" />
+    <Compile Include="DisplayNameAttribute.cs" />
+    <Compile Include="Caching\KeepAliveGCHandle.cs" />
+    <Compile Include="Extensions\PfzAttributeExtensions.cs" />
+    <Compile Include="Caching\GCUtils.cs" />
+    <Compile Include="Extensions\PfzDisplayNameExtensions.cs" />
+    <Compile Include="DataTypes\PropertyError.cs" />
+    <Compile Include="Threading\Contexts\ThrowingExceptionEventArgs.cs" />
+    <Compile Include="Threading\Contexts\ValidationException.cs" />
+    <Compile Include="Threading\Contexts\ThreadErrors.cs" />
+    <Compile Include="Threading\ReaderWriterThreadSafeDisposable.cs" />
+    <Compile Include="Threading\LockConfiguration.cs" />
+    <Compile Include="Extensions\PfzMonitorLockExtensions.cs" />
+    <Compile Include="Extensions\PfzReaderWriterLockExtensions.cs" />
+    <Compile Include="Extensions\PfzTypeExtensions.cs" />
+    <Compile Include="IAdvancedDisposable.cs" />
+    <Compile Include="Extensions\PfzNumericConversionsExtensions.cs" />
+    <Compile Include="Collections\IFastEnumerator.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Threading\MonitorLockDisposer.cs" />
+    <Compile Include="Threading\ReadLockDisposer.cs" />
+    <Compile Include="Threading\ThreadSafeDisposable.cs" />
+    <Compile Include="Threading\ThreadSafeExceptionAwareDisposable.cs" />
+    <Compile Include="Threading\TicksOrIncrement.cs" />
+    <Compile Include="DataTypes\Time.cs" />
+    <Compile Include="Threading\UnlimitedThreadPool.cs" />
+    <Compile Include="Caching\WeakDictionary.cs" />
+    <Compile Include="Caching\WeakHashSet.cs" />
+    <Compile Include="Caching\UnsafeWeakArray.cs" />
+    <Compile Include="Caching\WeakArray.cs" />
+    <Compile Include="Threading\UpgradeableLockDisposer.cs" />
+    <Compile Include="Threading\WriteLockDisposer.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Pfz.ruleset" />
+    <None Include="Pfz.snk" />
+  </ItemGroup>
+  <ItemGroup>
+    <BootstrapperPackage Include=".NETFramework,Version=v4.0">
+      <Visible>False</Visible>
+      <ProductName>Microsoft .NET Framework 4 %28x86 and x64%29</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Net.Client.3.5">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1 Client Profile</ProductName>
+      <Install>false</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1</ProductName>
+      <Install>false</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Windows.Installer.3.1">
+      <Visible>False</Visible>
+      <ProductName>Windows Installer 3.1</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
+  </ItemGroup>
+  <ItemGroup />
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

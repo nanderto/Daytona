@@ -1,35 +1,38 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Daytona;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿
 namespace Daytona.Tests
 {
-    using Daytona.Store;
-
+    using Daytona;
     using DaytonaTests;
-
+    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text;
+    using System.Threading.Tasks;
     using ZeroMQ;
-
     using Customer = TestHelpers.Customer;
 
     [TestClass]
     public class ActorTests
     {
         [TestMethod]
+        public void CreateActor()
+        {
+            using (var context = ZmqContext.Create())
+            {
+                var actorFactory = new Actor<ActorFactory>(context);
+            }
+        }
+
+        [TestMethod]
         public void RegisterActorTest()
         {
             using (var context = ZmqContext.Create())
             {
-                ISerializer serializer = new Daytona.Store.Serializer(Encoding.Unicode);
-                var actorFactory = new Actor(context);
+                //ISerializer serializer = new Daytona.Store.Serializer(Encoding.Unicode);
+                var actorFactory = new Actor<ActorFactory>(context);
 
-                actorFactory.RegisterActor<DBPayload<Customer>>("Writer", "Writer", "Sender", serializer, (IPayload message, byte[] messageAsBytes, string inRoute, string outRoute, ZmqSocket socket, Actor actor) =>
-                {
-
-                });
+                actorFactory.RegisterActor(new Customer());
 
             }
         }
@@ -39,30 +42,26 @@ namespace Daytona.Tests
         {
             using (var context = ZmqContext.Create())
             {
-                ISerializer serializer = new Daytona.Store.Serializer(Encoding.Unicode);
-                var actorFactory = new Actor(context);
+                var actorFactory = new Actor<ActorFactory>(context);
 
-                actorFactory.RegisterActor<Customer>(serializer, (IPayload message, byte[] messageAsBytes, Actor actor) =>
-                {
-
-                });
+                actorFactory.RegisterActor(new Customer());
 
             }
          }
 
-        [TestMethod]
-        public void ClearHolderTest()
-        {
-            using (var context = ZmqContext.Create())
-            {
-                var actor = new Actor(context);
-                var account = (IAccount)actor.CreateInstance<IAccount, Account>();
-                var newName = string.Format("{0}, {1}", "wilson", "Brad");
-                Assert.IsInstanceOfType(account, typeof(IAccount));
-                account.ClearHolder();
-                account.UpdateHolder(newName);
-            }
-        }
+        //[TestMethod]
+        //public void ClearHolderTest()
+        //{
+        //    using (var context = ZmqContext.Create())
+        //    {
+        //        var actor = new Actor(context);
+        //        var account = (IAccount)actor.CreateInstance<IAccount, Account>();
+        //        var newName = string.Format("{0}, {1}", "wilson", "Brad");
+        //        Assert.IsInstanceOfType(account, typeof(IAccount));
+        //        account.ClearHolder();
+        //        account.UpdateHolder(newName);
+        //    }
+        //}
 
         [TestMethod]
         public void RegisterAccount()
