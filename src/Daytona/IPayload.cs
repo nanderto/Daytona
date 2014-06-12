@@ -5,6 +5,8 @@
 //-----------------------------------------------------------------------
 namespace Daytona
 {
+    using System;
+
     /// <summary>
     /// IPayload interface provides access to treat data handled by system as a payload
     /// </summary>
@@ -19,5 +21,19 @@ namespace Daytona
     public interface IPayload<T>
     {
         T Payload { get; set; }
+    }
+
+    [Serializable]
+    public class MessagePayload<T> : IPayload, IPayload<T>
+    {
+        private object[] args;
+        public MessagePayload(object[] args)
+        {
+            this.args = args;
+        }
+
+        public int Id { get; set; }
+
+        public T Payload { get; set; }
     }
 }

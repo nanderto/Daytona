@@ -15,6 +15,8 @@ namespace DaytonaTests
     public interface IAccount
     {
         void UpdateHolder(string name);
+
+        void ClearHolder();
     }
 
     public class Account : IAccount
@@ -26,6 +28,11 @@ namespace DaytonaTests
         public void UpdateHolder(string name)
         {
             this.Holder = name;
+        }
+
+        public void ClearHolder()
+        {
+            this.Holder = string.Empty;
         }
     }
 }
