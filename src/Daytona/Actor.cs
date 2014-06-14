@@ -13,6 +13,9 @@ namespace Daytona
     using System.IO;
     using System.Linq;
     using System.Threading.Tasks;
+
+    using NProxy.Core;
+
     using ZeroMQ;
 
     /// <summary>
@@ -193,7 +196,9 @@ namespace Daytona
         }
 
         public event EventHandler<CallBackEventArgs> SaveCompletedEvent;
+        
         private bool monitorChannelDisposed = false;
+        
         private bool subscriberDisposed = false;
        
         public bool OutputChannelDisposed
@@ -223,7 +228,14 @@ namespace Daytona
         public ISerializer Serializer { get; set; }
         
         public Delegate Workload { get; set; }
-        
+
+        public T CreateInstance<T>() where T : class
+        {
+            var proxyFactory = new ProxyFactory();
+            
+            return proxyFactory.CreateProxy<T>(Type.EmptyTypes, new MessageSenderProxy());
+        }
+
         public static void Writeline(string line)
         {
             lock (SynchLock)
