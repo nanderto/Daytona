@@ -23,11 +23,6 @@
   <MSTestThreadApartmentState>STA</MSTestThreadApartmentState>
   <BuildProcessArchitecture>x86</BuildProcessArchitecture>
   <IgnoredTests>
-    <FixtureTestSelector>
-      <FixtureName>StoreTests.ContextTests</FixtureName>
-    </FixtureTestSelector>
-    <FixtureTestSelector>
-      <FixtureName>StoreTests.SerializationTests</FixtureName>
-    </FixtureTestSelector>
+    <AllTestsSelector />
   </IgnoredTests>
 </ProjectConfiguration>
