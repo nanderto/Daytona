@@ -10,6 +10,7 @@ namespace Daytona
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
+    using System.Text;
     using System.Threading.Tasks;
     using ZeroMQ;
 
@@ -17,7 +18,10 @@ namespace Daytona
     /// The Actor is the coe object of the Actor framework, it is self configuring to listen for messages that come in and execute what ever 
     /// workload that is configured for it.
     /// </summary>
-    public class Actor : IDisposable
+    /// <typeparam name="T">
+    /// The object to compose with this actor
+    /// </typeparam>
+    public class Actor<T> : IDisposable
     {
         private static readonly object SynchLock = new object();
 
@@ -39,7 +43,16 @@ namespace Daytona
             this.IsRunning = false;
             this.context = context;
         }
-
+        
+        private T actor; 
+        
+        public Actor(ZmqContext context, T actor)
+        {
+            this.IsRunning = false;
+            this.context = context;
+            this.actor = actor;
+            this.Serializer = new DefaultSerializer(Encoding.Unicode); 
+        }
         /// <summary>
         /// Initializes a new instance of the <see cref="Actor"/> class.
         /// Use this constructor when the actor does not need to send messages to other actors.
@@ -337,6 +350,23 @@ namespace Daytona
                 });
             return this;
         }
+
+        public Actor<T> RegisterActor<TObject>(TObject objectToRun) where TObject : class
+        {
+            var nameIndex = typeof(TObject).ToString().Replace("{", string.Empty).Replace("}", string.Empty).Replace("_", string.Empty).Replace(".", string.Empty);
+            this.actorTypes.Add(
+                nameIndex,
+                () =>
+                {
+                    using (var actorToRun = new Actor<TObject>(this.context, objectToRun))
+                    {
+                        actorToRun.Start();
+                    }
+                });
+
+            return this;
+        }
+ 
 
         public void SendMessage(string address, byte[] message, ISerializer serializer, ZmqSocket socket)
         {
