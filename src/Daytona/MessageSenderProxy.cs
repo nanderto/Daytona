@@ -7,11 +7,11 @@
 
     using NProxy.Core;
 
-    public class MessageSenderProxy : IInvocationHandler
+    public class MessageSenderProxy<T> : IInvocationHandler
     {
-        private Actor actor;
+        private Actor<T> actor;
 
-        public MessageSenderProxy(Actor actor)
+        public MessageSenderProxy(Actor<T> actor)
         {
             this.actor = actor;
         }

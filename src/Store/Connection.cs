@@ -57,14 +57,14 @@
                 {
                     foreach (var item in this.scopes)
                     {
-                        if (item.Value.actor.IsRunning)
+                        if (item.Value.Actor.IsRunning)
                         {
                             var OutputChannel = zmqContext.CreateSocket(SocketType.PUB);
                             OutputChannel.Connect(Pipe.PublishAddressClient);
                             ISerializer serializer = new Serializer(Encoding.UTF8);
                             SendMessage ("Sender", "stop", serializer, OutputChannel);
 
-                            while (item.Value.actor.IsRunning == true)
+                            while (item.Value.Actor.IsRunning == true)
                             {
                                 string a = "base";
                             }

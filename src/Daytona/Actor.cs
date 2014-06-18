@@ -12,6 +12,9 @@ namespace Daytona
     using System.Linq;
     using System.Text;
     using System.Threading.Tasks;
+
+    using NProxy.Core;
+
     using ZeroMQ;
 
     /// <summary>
@@ -44,167 +47,47 @@ namespace Daytona
             this.context = context;
         }
         
-        private T actor; 
-        
+        private T actor;
+
         public Actor(ZmqContext context, T actor)
         {
             this.IsRunning = false;
             this.context = context;
             this.actor = actor;
-            this.Serializer = new DefaultSerializer(Encoding.Unicode); 
-        }
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Actor"/> class.
-        /// Use this constructor when the actor does not need to send messages to other actors.
-        /// </summary>
-        /// <param name="context">The ZmqContext for creating message channels</param>
-        /// <param name="inRoute">the input address that this actor will listen to</param>
-        /// <param name="workload">the Lambda expression that is the work that this Actor does. This expression <b>Must</b> be single threaded</param>
-        public Actor(ZmqContext context, string inRoute, Action<string, string> workload)
-        {
-            this.IsRunning = false;
-            this.context = context;
-            this.InRoute = inRoute;
-            this.Workload = workload;
+            this.Serializer = new DefaultSerializer(Encoding.Unicode);
             this.SetUpMonitorChannel(context);
             this.SetUpOutputChannel(context);
+            var inRoute = typeof(T).Name.Replace("{", string.Empty).Replace("}", string.Empty).Replace("_", string.Empty).Replace(".", string.Empty);
             this.SetUpReceivers(context, inRoute);
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Actor"/> class.
-        /// Use this constructor when the actor needs to send messages to other actors, and it needs data from the actor work with.
-        /// </summary>
-        /// <param name="context">The ZmqContext for creating message channels</param>
-        /// <param name="inRoute">the input address that this actor will listen to</param>
-        /// <param name="outRoute">the address that the actor will send messages to, Currently a little limited because we should be able to send to any address</param>
-        /// <param name="workload">the Lambda expression that is the work that this Actor does. this expression Must be single threaded</param>
-        public Actor(ZmqContext context, string inRoute, string outRoute, Action<string, string, string, ZmqSocket> workload)
-        {
-            this.IsRunning = false;
-            this.OutRoute = outRoute;
-            this.context = context;
-            this.InRoute = inRoute;
-            this.Workload = workload;
-            this.SetUpMonitorChannel(context);
-            this.SetUpOutputChannel(context);
-            this.SetUpReceivers(context, inRoute);
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Actor"/> class.
-        /// Use this constructor when the actor needs to send messages to other actors, and it needs data from the actor work with.
-        /// </summary>
-        /// <param name="context">The ZmqContext for creating message channels</param>
-        /// <param name="inRoute">the input address that this actor will listen to</param>
-        /// <param name="outRoute">the address that the actor will send messages to, Currently a little limited because we should be able to send to any address</param>
-        /// <param name="workload">the Lambda expression that is the work that this Actor does. this expression Must be single threaded. In this case the Lambda has access
-        /// to the Actor and data contained within the Actor</param>
-        public Actor(ZmqContext context, string inRoute, string outRoute, Action<string, string, string, ZmqSocket, Actor> workload)
-        {
-            this.IsRunning = false;
-            this.context = context;
-            this.InRoute = inRoute;
-            this.OutRoute = outRoute;
-            this.Workload = workload;
             this.PropertyBag = new Dictionary<string, string>();
-            this.SetUpMonitorChannel(context);
-            this.SetUpOutputChannel(context);
-            this.SetUpReceivers(context, inRoute);
+            this.Serializer = new DefaultSerializer(Encoding.Unicode);
         }
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Actor"/> class.
-        /// Use this constructor when the actor needs to send messages to other actors, it needs data from the actor work with, and it needs the serializer 
-        /// to deserialize the data.
-        /// </summary>
-        /// <param name="context">The ZmqContext for creating message channels</param>
-        /// <param name="inRoute">the input address that this actor will listen to</param>
-        /// <param name="outRoute">the address that the actor will send messages to, Currently a little limited because we should be able to send to any address</param>
-        /// <param name="serializer">The serializer, used to serialize and deserialize the payload</param>
-        /// <param name="workload">The Lambda expression that is the work that this Actor does. this expression Must be single threaded. In this case the Lambda has access
-        /// to the Payload and to the Actor and data contained within the Actor, in addition to the Send socket</param>
-        public Actor(ZmqContext context, string inRoute, string outRoute, ISerializer serializer, Action<IPayload, string, string, ZmqSocket, Actor> workload)
+        public Actor(ZmqContext context, T actor, ISerializer serializer)
         {
             this.IsRunning = false;
+            this.context = context;
+            this.actor = actor;
+            this.Serializer = new DefaultSerializer(Encoding.Unicode);
+            this.SetUpMonitorChannel(context);
+            this.SetUpOutputChannel(context);
+            var inRoute = typeof(T).Name.Replace("{", string.Empty).Replace("}", string.Empty).Replace("_", string.Empty).Replace(".", string.Empty);
+            this.SetUpReceivers(context, inRoute);
+            this.PropertyBag = new Dictionary<string, string>();
             this.Serializer = serializer;
-            this.context = context;
-            this.InRoute = inRoute;
-            this.OutRoute = outRoute;
-            this.Workload = workload;
-            this.PropertyBag = new Dictionary<string, string>();
-            this.SetUpMonitorChannel(context);
-            this.SetUpOutputChannel(context);
-            this.SetUpReceivers(context, inRoute);
         }
 
-        public Actor(ZmqContext context, string inRoute, string outRoute, ISerializer serializer, Action<IPayload, byte[], string, string, ZmqSocket, Actor> workload)
+        public TInstance CreateInstance<TInstance>() where TInstance : class
         {
-            this.IsRunning = false;
-            this.Serializer = serializer;
-            this.context = context;
-            this.InRoute = inRoute;
-            this.OutRoute = outRoute;
-            this.Workload = workload;
-            this.PropertyBag = new Dictionary<string, string>();
-            this.SetUpMonitorChannel(context);
-            this.SetUpOutputChannel(context);
-            this.SetUpReceivers(context, inRoute);
-        }
-
-        public Actor(ZmqContext context, string inRoute, string outRoute, ISerializer serializer, Action<IPayload, string, string, ZmqSocket, Actor> workload, Action<IPayload, string, ZmqSocket, Actor> executeAction)
-        {
-            this.IsRunning = false;
-            this.ExecuteAction = executeAction;
-            this.Serializer = serializer;
-            this.context = context;
-            this.InRoute = inRoute;
-            this.OutRoute = outRoute;
-            this.Workload = workload;
-            this.PropertyBag = new Dictionary<string, string>();
-            this.SetUpMonitorChannel(context);
-            this.SetUpOutputChannel(context);
-            this.SetUpReceivers(context, inRoute);
-        }
-
-        public Actor(ZmqContext context, string inRoute, string outRoute, ISerializer serializer)
-        {
-            this.IsRunning = false;
-            this.Serializer = serializer;
-            this.context = context;
-            this.InRoute = inRoute;
-            this.OutRoute = outRoute;
-            this.PropertyBag = new Dictionary<string, string>();
-            this.SetUpMonitorChannel(context);
-            this.SetUpOutputChannel(context);
-            this.SetUpReceivers(context, inRoute);
-        }
-
-        public Actor(ZmqContext context, string outRoute, ISerializer serializer)
-        {
-            this.IsRunning = false;
-            this.Serializer = serializer;
-            this.context = context;
-            this.OutRoute = outRoute;
-            this.PropertyBag = new Dictionary<string, string>();
-            this.SetUpMonitorChannel(context);
-            this.SetUpOutputChannel(this.context);
-        }
-
-        public Actor(ZmqContext context, string inRoute, Action<Actor> workload)
-        {
-            this.IsRunning = false;
-            this.context = context;
-            this.InRoute = inRoute;
-            this.Workload = workload;
-            this.PropertyBag = new Dictionary<string, string>();
-            this.SetUpMonitorChannel(context);
-            this.SetUpOutputChannel(context);
-            this.SetUpReceivers(context, inRoute);
+            var invocationHandler = new MessageSenderProxy<T>(this);
+            var proxyFactory = new ProxyFactory();
+            return proxyFactory.CreateProxy<TInstance>(Type.EmptyTypes, invocationHandler);
         }
 
         public event EventHandler<CallBackEventArgs> SaveCompletedEvent;
+        
         private bool monitorChannelDisposed = false;
+        
         private bool subscriberDisposed = false;
        
         public bool OutputChannelDisposed
@@ -214,8 +97,6 @@ namespace Daytona
         }
 
         public Delegate Callback { get; set; }
-
-        public Action<IPayload, string, ZmqSocket, Actor> ExecuteAction { get; set; }
 
         public int Id { get; set; }
 
@@ -282,74 +163,6 @@ namespace Daytona
             GC.SuppressFinalize(this);
         }
 
-        public void Execute<T>(T input)
-        {
-            this.ExecuteAction.DynamicInvoke(input);
-        }
-
-        /// <summary>
-        /// Register a Sub-Actor within this actor
-        /// </summary>
-        /// <param name="name">Name of Sub-Actor</param>
-        /// <param name="inRoute">Address that this actor will respond to</param>
-        /// <param name="outRoute">Address that this actor send its output messages to</param>
-        /// <param name="workload">The workload that the Actor will perform</param>
-        /// <returns>it's self</returns>
-        public Actor RegisterActor(string name, string inRoute, string outRoute, Action<string, string, string, ZmqSocket> workload)
-        {
-            this.actorTypes.Add(
-                name,
-                () =>
-                {
-                    using (var actor = new Actor(this.context, inRoute, outRoute, workload))
-                    {
-                        actor.Start();
-                    }
-                });
-            return this;
-        }
-
-        public Actor RegisterActor<T>(string name, string inRoute, string outRoute, ISerializer serializer, Action<IPayload, string, string, ZmqSocket, Actor> workload) where T : IPayload
-        {
-            this.actorTypes.Add(
-                name,
-                () =>
-                {
-                    using (var actor = new Actor(this.context, inRoute, outRoute, serializer, workload))
-                    {
-                        actor.Start<T>();
-                    }
-                });
-            return this;
-        }
-
-        public Actor RegisterActor<T>(string name, string inRoute, string outRoute, ISerializer serializer, Action<IPayload, byte[], string, string, ZmqSocket, Actor> workload) where T : IPayload
-        {
-            this.actorTypes.Add(
-                name, 
-                () =>
-            {
-                using (var actor = new Actor(this.context, inRoute, outRoute, serializer, workload))
-                {
-                    actor.Start<T>();
-                }
-            });
-            return this;
-        }
-
-        public Actor RegisterActor(string name, string route, Action<string, string> workload)
-        {
-            this.actorTypes.Add(
-                name,
-                () =>
-                {
-                    using (var actor = new Actor(this.context, route, workload))
-                    {
-                        actor.Start();
-                    }
-                });
-            return this;
-        }
 
         public Actor<T> RegisterActor<TObject>(TObject objectToRun) where TObject : class
         {
