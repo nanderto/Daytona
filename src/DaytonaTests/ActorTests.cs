@@ -24,7 +24,32 @@ namespace Daytona.Tests
                 var customer = actor.CreateInstance<Customer>();
                 Assert.IsInstanceOfType(customer, typeof(Customer));
             }
-            Assert.Fail();
+        }
+
+        [TestMethod]
+        public void CallMethod()
+        {
+            //using (var context = ZmqContext.Create())
+            //{
+            //    var actor = new Actor<Customer>(context);
+            //    var customer = actor.CreateInstance<ICustomer>();
+            //    Assert.IsInstanceOfType(customer, typeof(ICustomer));
+            //    customer.UpdateName("XXX"); //called without exception
+            //}
+        }
+
+        [TestMethod]   
+        public void CallMethod_usingBinarySerializer()
+        {
+            using (var context = ZmqContext.Create())
+            {
+                using (var actor = new Actor<Customer>(context, new BinarySerializer()))
+                {
+                    var customer = actor.CreateInstance<ICustomer>();
+                    Assert.IsInstanceOfType(customer, typeof(ICustomer));
+                    customer.UpdateName("XXX"); //called without exception
+                }
+            }
         }
     }
 }

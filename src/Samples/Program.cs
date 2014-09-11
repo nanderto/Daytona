@@ -8,8 +8,6 @@ using System.Threading.Tasks;
 using TestHelpers;
 using ZeroMQ;
 using ZeroMQ.Devices;
-using Daytona.Store;
-
 namespace Samples
 {
     class Program

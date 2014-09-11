@@ -234,18 +234,18 @@ namespace DaytonaTests
                                 cust.Firstname = "Johnx";
                                 cust.Lastname = "Wilson";
 
-                                using (var actor = new Actor(context))
-                                {
-                                    actor.RegisterActor<Customer>("Basic", expectedAddress, "OutRoute", serializer, (Message, InRoute, OutRoute, Socket, Actor) =>
-                                        {
-                                            var customer = (Customer)Message;
-                                            Assert.AreEqual(cust.Firstname, customer.Firstname);
-                                            Helper.Writeline(customer.Firstname, @"c:\dev\xx.log");
-                                        });
-                                    actor.StartAllActors();
+                                //using (var actor = new Actor(context))
+                                //{
+                                //    actor.RegisterActor<Customer>("Basic", expectedAddress, "OutRoute", serializer, (Message, InRoute, OutRoute, Socket, Actor) =>
+                                //        {
+                                //            var customer = (Customer)Message;
+                                //            Assert.AreEqual(cust.Firstname, customer.Firstname);
+                                //            Helper.Writeline(customer.Firstname, @"c:\dev\xx.log");
+                                //        });
+                                //    actor.StartAllActors();
 
-                                    Thread.Sleep(0);
-                                }
+                                //    Thread.Sleep(0);
+                                //}
 
                                 for (int i = 0; i < 10; i++)
                                 {
@@ -280,43 +280,43 @@ namespace DaytonaTests
                 {
                     using (var sub = Helper.GetConnectedSubscribeSocket(context))
                     {
-                        using (var actor = new Actor(context))
-                        {
-                            ISerializer serializer = new Serializer(Encoding.Unicode);
-                            actor.RegisterActor<Customer>("Basic", expectedAddress, "OutRoute", serializer, (Message, InRoute, OutRoute, Socket, Actor) =>
-                            {
-                                var customer = (Customer)Message;
-                                if (!Actor.PropertyBag.ContainsKey("Count"))
-                                {
-                                    Actor.PropertyBag.Add("Count", "0");
-                                }
-                                var count = int.Parse(Actor.PropertyBag["Count"]);
-                                count++;
-                                Actor.PropertyBag["Count"] = count.ToString();
+                        //using (var actor = new Actor(context))
+                        //{
+                        //    ISerializer serializer = new Serializer(Encoding.Unicode);
+                        //    actor.RegisterActor<Customer>("Basic", expectedAddress, "OutRoute", serializer, (Message, InRoute, OutRoute, Socket, Actor) =>
+                        //    {
+                        //        var customer = (Customer)Message;
+                        //        if (!Actor.PropertyBag.ContainsKey("Count"))
+                        //        {
+                        //            Actor.PropertyBag.Add("Count", "0");
+                        //        }
+                        //        var count = int.Parse(Actor.PropertyBag["Count"]);
+                        //        count++;
+                        //        Actor.PropertyBag["Count"] = count.ToString();
 
-                                //Assert.AreEqual(cust.Firstname, customer.Firstname);
-                                Helper.SendOneSimpleMessage("log", customer.Firstname + " " + customer.Lastname + " " + " Count " + Actor.PropertyBag["Count"], Socket);
-                            }).RegisterActor("Logger", "log", (Message, InRoute) =>
-                                {
-                                    Helper.Writeline(Message);
-                                });
-                            actor.StartAllActors();
+                        //        //Assert.AreEqual(cust.Firstname, customer.Firstname);
+                        //        Helper.SendOneSimpleMessage("log", customer.Firstname + " " + customer.Lastname + " " + " Count " + Actor.PropertyBag["Count"], Socket);
+                        //    }).RegisterActor("Logger", "log", (Message, InRoute) =>
+                        //        {
+                        //            Helper.Writeline(Message);
+                        //        });
+                        //    actor.StartAllActors();
 
-                            Task.Delay(5000);
+                        //    Task.Delay(5000);
 
-                            for (int i = 0; i < 5; i++)
-                            {
-                                ISerializer serializer2 = new Serializer(Encoding.Unicode);
-                                Customer cust = new Customer();
-                                cust.Firstname = "John" + i.ToString();
-                                cust.Lastname = "Wilson" + i.ToString();
+                        //    for (int i = 0; i < 5; i++)
+                        //    {
+                        //        ISerializer serializer2 = new Serializer(Encoding.Unicode);
+                        //        Customer cust = new Customer();
+                        //        cust.Firstname = "John" + i.ToString();
+                        //        cust.Lastname = "Wilson" + i.ToString();
 
-                                Helper.SendOneMessageOfType<Customer>(expectedAddress, cust, serializer2, pub);
-                            }
+                        //        Helper.SendOneMessageOfType<Customer>(expectedAddress, cust, serializer2, pub);
+                        //    }
 
-                            Helper.SendOneSimpleMessage(expectedAddress, "Stop", pub);
-                            Task.Delay(5000);
-                        }
+                        //    Helper.SendOneSimpleMessage(expectedAddress, "Stop", pub);
+                        //    Task.Delay(5000);
+                        //}
                     }
                 }
                 pipe.Exit();

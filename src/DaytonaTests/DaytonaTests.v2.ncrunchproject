@@ -23,6 +23,8 @@
   <MSTestThreadApartmentState>STA</MSTestThreadApartmentState>
   <BuildProcessArchitecture>x86</BuildProcessArchitecture>
   <IgnoredTests>
-    <AllTestsSelector />
+    <FixtureTestSelector>
+      <FixtureName>DaytonaTests.PipeTests</FixtureName>
+    </FixtureTestSelector>
   </IgnoredTests>
 </ProjectConfiguration>
