@@ -4,7 +4,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>b0944eb3-6055-4eeb-8712-f917c7853450</ProjectGuid>
+    <ProjectGuid>{A709894A-B0C2-41C8-A6E7-F0145911F7C4}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>nProxySample</RootNamespace>
@@ -46,6 +46,16 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Daytona\Daytona.csproj">
+      <Project>{626cb1e5-251f-4a23-8d7d-c3a7b35f67d2}</Project>
+      <Name>Daytona</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\TestHelpers\TestHelpers.csproj">
+      <Project>{9e8d7d0c-488e-49c9-b441-7250fa62bff6}</Project>
+      <Name>TestHelpers</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
