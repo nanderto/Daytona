@@ -35,6 +35,8 @@ namespace nProxySample
 
         private static string RunNProxyTest(string input)
         {
+            //todo register an actor and start program
+
             Console.WriteLine("enter to exit=>");
             input = Console.ReadLine();
 
