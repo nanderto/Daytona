@@ -1,9 +1,8 @@
-﻿//-----------------------------------------------------------------------
-// <copyright file="Actor.cs" company="The Phantom Coder">
-//     Copyright The Phantom Coder. All rights reserved.
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="Actor.cs" company="">
+//   
 // </copyright>
-//-----------------------------------------------------------------------
-
+// --------------------------------------------------------------------------------------------------------------------
 namespace Daytona
 {
     using System;
@@ -11,7 +10,6 @@ namespace Daytona
     using System.IO;
     using System.Linq;
     using System.Reflection;
-    using System.Runtime.Remoting;
     using System.Text;
     using System.Threading.Tasks;
 
@@ -19,18 +17,48 @@ namespace Daytona
 
     using ZeroMQ;
 
+    public class Actor : Actor<T>
+    {
+        #region Fields
+
+        private ZmqContext context;
+
+        #endregion
+
+        #region Constructors and Destructors
+
+        public Actor(ZmqContext context)
+        {
+            // TODO: Complete member initialization
+            this.context = context;
+        }
+
+        #endregion
+
+        #region Public Methods and Operators
+
+        public virtual Actor<TObject> RegisterActor<TObject>(TObject objectToRun) where TObject : class
+        {
+            throw new NotImplementedException();
+        }
+
+        #endregion
+    }
+
     /// <summary>
-    /// The Actor is the coe object of the Actor framework, it is self configuring to listen for messages that come in and execute what ever 
-    /// workload that is configured for it.
+    ///     The Actor is the coe object of the Actor framework, it is self configuring to listen for messages that come in and
+    ///     execute what ever
+    ///     workload that is configured for it.
     /// </summary>
     /// <typeparam name="T">
-    /// The object to compose with this actor
+    ///     The object to compose with this actor
     /// </typeparam>
     [Serializable]
-    public class Actor<T> : IDisposable where T : class
+    public class Actor<T> : IDisposable
+        where T : class
     {
         private static readonly object SynchLock = new object();
-
+        
         private readonly Dictionary<string, Action> actorTypes = new Dictionary<string, Action>();
 
         [NonSerialized]
@@ -38,12 +66,27 @@ namespace Daytona
 
         private bool disposed;
 
+        private T model;
+
+        [NonSerialized]
+        private ZmqSocket monitorChannel;
+
+        private bool monitorChannelDisposed = false;
+
+        [NonSerialized]
+        private ZmqSocket outputChannel;
+
+        [NonSerialized]
+        private ISerializer serializer;
+
         [NonSerialized]
         private ZmqSocket subscriber;
 
+        private bool subscriberDisposed = false;
+        
         /// <summary>
-        /// Initializes a new instance of the <see cref="Actor"/> class.
-        /// This is generally used when creating a actor to act as a Actor factory.
+        ///     Initializes a new instance of the <see cref="Actor" /> class.
+        ///     This is generally used when creating a actor to act as a Actor factory.
         /// </summary>
         /// <param name="context">The context.</param>
         public Actor(ZmqContext context)
@@ -60,11 +103,9 @@ namespace Daytona
             this.IsRunning = false;
             this.context = context;
             this.Serializer = serializer;
-             this.SetUpMonitorChannel(context);
+            this.SetUpMonitorChannel(context);
             this.SetUpOutputChannel(context);
         }
-        
-        private T model;
 
         public Actor(ZmqContext context, T model)
         {
@@ -74,44 +115,23 @@ namespace Daytona
             this.Serializer = new DefaultSerializer(Encoding.Unicode);
             this.SetUpMonitorChannel(context);
             this.SetUpOutputChannel(context);
-            var inRoute = typeof(T).Name.Replace("{", string.Empty).Replace("}", string.Empty).Replace("_", string.Empty).Replace(".", string.Empty);
+            var inRoute =
+                typeof(T).Name.Replace("{", string.Empty)
+                    .Replace("}", string.Empty)
+                    .Replace("_", string.Empty)
+                    .Replace(".", string.Empty);
             this.SetUpReceivers(context, inRoute);
             this.PropertyBag = new Dictionary<string, string>();
         }
 
         public Actor(ZmqContext context, T model, ISerializer serializer)
+            : this(context, model)
         {
-            this.IsRunning = false;
-            this.context = context;
-            this.model = model;
-            this.Serializer = new DefaultSerializer(Encoding.Unicode);
-            this.SetUpMonitorChannel(context);
-            this.SetUpOutputChannel(context);
-            var inRoute = typeof(T).Name.Replace("{", string.Empty).Replace("}", string.Empty).Replace("_", string.Empty).Replace(".", string.Empty);
-            this.SetUpReceivers(context, inRoute);
-            this.PropertyBag = new Dictionary<string, string>();
             this.Serializer = serializer;
-        }
-
-        public TInterface CreateInstance<TInterface>() where TInterface : class
-        {
-            var invocationHandler = new MessageSenderProxy<T>(this);
-            var proxyFactory = new ProxyFactory();
-            return proxyFactory.CreateProxy<TInterface>(Type.EmptyTypes, invocationHandler);
         }
 
         public event EventHandler<CallBackEventArgs> SaveCompletedEvent;
         
-        private bool monitorChannelDisposed = false;
-        
-        private bool subscriberDisposed = false;
-       
-        public bool OutputChannelDisposed
-        {
-            get { return monitorChannelDisposed; }
-            set { monitorChannelDisposed = value; }
-        }
-
         public Delegate Callback { get; set; }
 
         public int Id { get; set; }
@@ -120,9 +140,6 @@ namespace Daytona
 
         public bool IsRunning { get; set; }
 
-        [NonSerialized]
-        private ZmqSocket monitorChannel;
-        
         public ZmqSocket MonitorChannel
         {
             get
@@ -136,11 +153,7 @@ namespace Daytona
             }
         }
 
-        [NonSerialized]
-        private ZmqSocket outputChannel;
-
-        [NonSerialized]
-        private ISerializer serializer;
+        public string OutRoute { get; set; }
 
         public ZmqSocket OutputChannel
         {
@@ -155,6 +168,21 @@ namespace Daytona
             }
         }
 
+        public bool OutputChannelDisposed
+        {
+            get
+            {
+                return this.monitorChannelDisposed;
+            }
+
+            set
+            {
+                this.monitorChannelDisposed = value;
+            }
+        }
+
+        public Dictionary<string, string> PropertyBag { get; set; }
+
         public ISerializer Serializer
         {
             get
@@ -168,18 +196,13 @@ namespace Daytona
             }
         }
 
-        public string OutRoute { get; set; }
-
-        public Dictionary<string, string> PropertyBag { get; set; }
-
-        
         public Delegate Workload { get; set; }
-        
+         
         public static void Writeline(string line)
         {
             lock (SynchLock)
             {
-                FileInfo fi = new FileInfo(@"c:\dev\Actor.log");
+                var fi = new FileInfo(@"c:\dev\Actor.log");
                 var stream = fi.AppendText();
                 stream.WriteLine(line);
                 stream.Flush();
@@ -189,19 +212,21 @@ namespace Daytona
 
         public void CallBack(int result, List<IPayload> payload, Exception exception)
         {
-            var eventArgs = new CallBackEventArgs
-            {
-                Result = result,
-                Error = exception,
-                Payload = payload
-            };
+            var eventArgs = new CallBackEventArgs { Result = result, Error = exception, Payload = payload };
 
             this.SaveCompletedEvent(this, eventArgs);
         }
 
+        public TInterface CreateInstance<TInterface>() where TInterface : class
+        {
+            var invocationHandler = new MessageSenderProxy<T>(this);
+            var proxyFactory = new ProxyFactory();
+            return proxyFactory.CreateProxy<TInterface>(Type.EmptyTypes, invocationHandler);
+        }
+
         /// <summary>
-        /// Create and start a new actor by invoking the Lambda registered with the name provided. This new actor is 
-        /// created on its own thread
+        ///     Create and start a new actor by invoking the Lambda registered with the name provided. This new actor is
+        ///     created on its own thread
         /// </summary>
         /// <param name="name">name of the actor</param>
         public void CreateNewActor(string name)
@@ -209,10 +234,7 @@ namespace Daytona
             Action del;
             if (this.actorTypes.TryGetValue(name, out del))
             {
-                Task.Run(() =>
-                {
-                    del.DynamicInvoke();
-                });
+                Task.Run(() => { del.DynamicInvoke(); });
             }
         }
 
@@ -222,76 +244,58 @@ namespace Daytona
             GC.SuppressFinalize(this);
         }
 
-
         public Actor<T> RegisterActor<TObject>(TObject objectToRun) where TObject : class
         {
-            var nameIndex = typeof(TObject).ToString().Replace("{", string.Empty).Replace("}", string.Empty).Replace("_", string.Empty).Replace(".", string.Empty);
+            var nameIndex =
+                typeof(TObject).ToString()
+                    .Replace("{", string.Empty)
+                    .Replace("}", string.Empty)
+                    .Replace("_", string.Empty)
+                    .Replace(".", string.Empty);
             this.actorTypes.Add(
-                nameIndex,
+                nameIndex, 
                 () =>
-                {
-                    using (var actorToRun = new Actor<TObject>(this.context, objectToRun))
                     {
-                        actorToRun.Start();
-                    }
-                });
+                        using (var actorToRun = new Actor<TObject>(this.context, objectToRun))
+                        {
+                            actorToRun.Start();
+                        }
+                    });
 
             return this;
         }
- 
 
         public void SendMessage(string address, byte[] message, ISerializer serializer, ZmqSocket socket)
         {
-            SendMessage(serializer.Encoding.GetBytes(address), message, socket);
+            this.SendMessage(serializer.Encoding.GetBytes(address), message, socket);
         }
 
         public void SendMessage(byte[] address, byte[] message, ZmqSocket socket)
         {
-            ZmqMessage zmqMessage = new ZmqMessage();
+            var zmqMessage = new ZmqMessage();
             zmqMessage.Append(new Frame(address));
             zmqMessage.Append(new Frame(message));
             socket.SendMessage(zmqMessage);
         }
 
-        internal void SendMessage(object[] parameters, System.Reflection.MethodInfo methodInfo)
+        public void SendOneMessageOfType<T>(string address, T message, ISerializer serializer, ZmqSocket socket)
+            where T : IPayload
         {
             var zmqMessage = new ZmqMessage();
-            var address = methodInfo.Name;
-            zmqMessage.Append(new Frame(this.Serializer.GetBuffer(address)));
-            zmqMessage.Append(new Frame(this.Serializer.GetBuffer("Process")));
-            
-            //var binarySerializer = new BinarySerializer();
-            //var buffer = binarySerializer.GetBuffer(methodInfo);
-
-            var serializedMethodInfo = this.Serializer.GetBuffer(methodInfo);
-            zmqMessage.Append(new Frame(serializedMethodInfo));
-            zmqMessage.Append(new Frame(this.Serializer.GetBuffer(string.Format("ParameterCount:{0}", parameters.Length))));
-            foreach (var parameter in parameters)
-            {
-                zmqMessage.Append(this.Serializer.GetBuffer(parameter.GetType()));
-                zmqMessage.Append(this.Serializer.GetBuffer(parameter));
-            }
-
-            this.OutputChannel.SendMessage(zmqMessage);
-
-           
-        }
-
-        public void SendOneMessageOfType<T>(string address, T message, ISerializer serializer, ZmqSocket socket) where T : IPayload
-        {
-            ZmqMessage zmqMessage = new ZmqMessage();
             zmqMessage.Append(new Frame(serializer.GetBuffer(address)));
             zmqMessage.Append(new Frame(serializer.GetBuffer(message)));
+
             ////var replySignal = this.sendControlChannel.Receive(Pipe.ControlChannelEncoding);
             socket.SendMessage(zmqMessage);
+
             ////this.sendControlChannel.Send("Just sent message to " + address + " Message is: " + message, Pipe.ControlChannelEncoding);
             ////replySignal = this.sendControlChannel.Receive(Pipe.ControlChannelEncoding);
             ////Actor.Writeline(replySignal);
         }
 
         /// <summary>
-        /// Start is called on all actors to have them listen for messages, they will receive and process one message 
-        /// at a time
+        ///     Start is called on all actors to have them listen for messages, they will receive and process one message
+        ///     at a time
         /// </summary>
         public void Start()
         {
@@ -310,7 +314,7 @@ namespace Daytona
                         {
                             if (string.IsNullOrEmpty(this.OutRoute))
                             {
-                                object[] inputParameters = new object[2];
+                                var inputParameters = new object[2];
                                 inputParameters[0] = message;
                                 inputParameters[1] = this.InRoute;
                                 this.Workload.DynamicInvoke(inputParameters);
@@ -319,7 +323,7 @@ namespace Daytona
                             {
                                 if (this.PropertyBag != null)
                                 {
-                                    object[] inputParameters = new object[5];
+                                    var inputParameters = new object[5];
                                     inputParameters[0] = message;
                                     inputParameters[1] = this.InRoute;
                                     inputParameters[2] = this.OutRoute;
@@ -329,7 +333,7 @@ namespace Daytona
                                 }
                                 else
                                 {
-                                    object[] inputParameters = new object[4];
+                                    var inputParameters = new object[4];
                                     inputParameters[0] = message;
                                     inputParameters[1] = this.InRoute;
                                     inputParameters[2] = this.OutRoute;
@@ -355,21 +359,27 @@ namespace Daytona
                 this.IsRunning = true;
                 string address = string.Empty;
                 ZmqMessage zmqmessage = null;
-                
+
                 this.WriteLineToMonitor("Waiting for message");
-                
+
                 byte[] messageAsBytes = null;
-                T message = this.ReceiveMessage<T>(this.subscriber, out zmqmessage, out address, out stop, out messageAsBytes, this.Serializer);
+                var message = this.ReceiveMessage<T>(
+                    this.subscriber, 
+                    out zmqmessage, 
+                    out address, 
+                    out stop, 
+                    out messageAsBytes, 
+                    this.Serializer);
                 if (stop == true)
                 {
                     this.IsRunning = false;
                 }
 
                 this.WriteLineToMonitor("Received message");
-                
+
                 if (message != null)
                 {
-                    object[] parameters = new object[6];
+                    var parameters = new object[6];
                     parameters[0] = message;
                     parameters[1] = messageAsBytes;
                     parameters[2] = address;
@@ -379,22 +389,20 @@ namespace Daytona
                     this.Workload.DynamicInvoke(parameters);
                 }
             }
+
             this.WriteLineToMonitor("Exiting actor");
         }
 
         /// <summary>
-        /// Create and start all actors that are registered in the collection of subActors. this 
-        /// is done by invoking the Lambda registered in the collection.
-        /// Each actor is started on its own thread
+        ///     Create and start all actors that are registered in the collection of subActors. this
+        ///     is done by invoking the Lambda registered in the collection.
+        ///     Each actor is started on its own thread
         /// </summary>
         public void StartAllActors()
         {
             foreach (var item in this.actorTypes)
             {
-                Task.Run(() =>
-                {
-                    item.Value.DynamicInvoke();
-                });
+                Task.Run(() => { item.Value.DynamicInvoke(); });
             }
         }
 
@@ -403,8 +411,30 @@ namespace Daytona
             if (this.monitorChannelDisposed == false)
             {
                 this.MonitorChannel.Send(line, Pipe.ControlChannelEncoding);
-                var signal = this.MonitorChannel.Receive(Pipe.ControlChannelEncoding); 
+                var signal = this.MonitorChannel.Receive(Pipe.ControlChannelEncoding);
             }
+        }
+        
+        internal void SendMessage(object[] parameters, MethodInfo methodInfo)
+        {
+            var zmqMessage = new ZmqMessage();
+            var address = methodInfo.Name;
+            zmqMessage.Append(new Frame(this.Serializer.GetBuffer(address)));
+            zmqMessage.Append(new Frame(this.Serializer.GetBuffer("Process")));
+
+            // var binarySerializer = new BinarySerializer();
+            // var buffer = binarySerializer.GetBuffer(methodInfo);
+            var serializedMethodInfo = this.Serializer.GetBuffer(methodInfo);
+            zmqMessage.Append(new Frame(serializedMethodInfo));
+            zmqMessage.Append(
+                new Frame(this.Serializer.GetBuffer(string.Format("ParameterCount:{0}", parameters.Length))));
+            foreach (var parameter in parameters)
+            {
+                zmqMessage.Append(this.Serializer.GetBuffer(parameter.GetType()));
+                zmqMessage.Append(this.Serializer.GetBuffer(parameter));
+            }
+
+            this.OutputChannel.SendMessage(zmqMessage);
         }
 
         private void Dispose(bool disposing)
@@ -431,7 +461,7 @@ namespace Daytona
                         this.MonitorChannel.Dispose();
                     }
                 }
-                
+
                 //// There are no unmanaged resources to release, but
                 //// if we add them, they need to be released here.
             }
@@ -439,11 +469,17 @@ namespace Daytona
             this.disposed = true;
         }
 
-        private T ReceiveMessage<T>(ZmqSocket subscriber, out ZmqMessage zmqMessage, out string address, out bool stopSignal, out byte[] messageAsBytes, ISerializer serializer)
+        private T ReceiveMessage<T>(
+            ZmqSocket subscriber, 
+            out ZmqMessage zmqMessage, 
+            out string address, 
+            out bool stopSignal, 
+            out byte[] messageAsBytes, 
+            ISerializer serializer)
         {
             stopSignal = false;
             T result = default(T);
-            ZmqMessage zmqOut = new ZmqMessage();
+            var zmqOut = new ZmqMessage();
             bool hasMore = true;
             address = string.Empty;
             messageAsBytes = null;
@@ -464,7 +500,10 @@ namespace Daytona
                     if (stopMessage.ToLower() == "stop")
                     {
                         Writeline("received stop");
-                        this.SendMessage(Pipe.ControlChannelEncoding.GetBytes(Pipe.SubscriberCountAddress),Pipe.ControlChannelEncoding.GetBytes("SHUTTINGDOWN"), this.OutputChannel);
+                        this.SendMessage(
+                            Pipe.ControlChannelEncoding.GetBytes(Pipe.SubscriberCountAddress), 
+                            Pipe.ControlChannelEncoding.GetBytes("SHUTTINGDOWN"), 
+                            this.OutputChannel);
                         stopSignal = true;
                     }
                     else
@@ -493,7 +532,9 @@ namespace Daytona
             this.OutputChannel = context.CreateSocket(SocketType.PUB);
             this.OutputChannel.Connect(Pipe.PublishAddressClient);
 
-            this.WriteLineToMonitor("Set up output channel on " + Pipe.PublishAddressClient + " Default sending on: " + this.OutRoute);
+            this.WriteLineToMonitor(
+                "Set up output channel on " + Pipe.PublishAddressClient + " Default sending on: " + this.OutRoute);
+
             ////if(this.sendControlChannel == null)
             ////{
             ////    this.sendControlChannel = context.CreateSocket(SocketType.REQ);
@@ -505,7 +546,7 @@ namespace Daytona
         }
 
         /// <summary>
-        /// Creates a Socket and connects it to a endpoint that is bound to a Pipe
+        ///     Creates a Socket and connects it to a endpoint that is bound to a Pipe
         /// </summary>
         /// <param name="context">The ZeroMQ context required to create the receivers</param>
         private void SetUpReceivers(ZmqContext context)
@@ -513,9 +554,14 @@ namespace Daytona
             this.subscriber = context.CreateSocket(SocketType.SUB);
             this.subscriber.Connect(Pipe.SubscribeAddressClient);
             this.subscriber.Subscribe(this.Serializer.GetBuffer(this.InRoute));
-            this.MonitorChannel.Send("Set up Receive channel on " + Pipe.SubscribeAddressClient + " listening on: " + this.InRoute, Pipe.ControlChannelEncoding);
+            this.MonitorChannel.Send(
+                "Set up Receive channel on " + Pipe.SubscribeAddressClient + " listening on: " + this.InRoute, 
+                Pipe.ControlChannelEncoding);
             var signal = this.MonitorChannel.Receive(Pipe.ControlChannelEncoding);
-            this.SendMessage(Pipe.ControlChannelEncoding.GetBytes(Pipe.SubscriberCountAddress), Pipe.ControlChannelEncoding.GetBytes("ADDSUBSCRIBER"), this.OutputChannel);
+            this.SendMessage(
+                Pipe.ControlChannelEncoding.GetBytes(Pipe.SubscriberCountAddress), 
+                Pipe.ControlChannelEncoding.GetBytes("ADDSUBSCRIBER"), 
+                this.OutputChannel);
         }
 
         private void SetUpReceivers(ZmqContext context, string route)

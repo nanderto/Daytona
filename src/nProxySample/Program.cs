@@ -12,6 +12,7 @@ namespace nProxySample
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Net.Configuration;
     using System.Text;
     using System.Threading.Tasks;
 
@@ -29,13 +30,15 @@ namespace nProxySample
         {
             var input = string.Empty;
             Console.CancelKeyPress += new ConsoleCancelEventHandler(ConsoleCancelHandler);
-
+            ////use while (!interrupted) {} to provide interruptable loop
             RunNProxyTest(input);
         }
 
         private static string RunNProxyTest(string input)
         {
             //todo register an actor and start program
+            ////start a actor<type we are using>
+            //using(var )
 
             Console.WriteLine("enter to exit=>");
             input = Console.ReadLine();

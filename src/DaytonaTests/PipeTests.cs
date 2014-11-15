@@ -30,7 +30,6 @@ namespace DaytonaTests
                 {
                     using (var sub = Helper.GetConnectedSubscribeSocket(context))
                     {
-
                         Helper.SendOneSimpleMessage(expectedAddress, message, pub);
 
                         var zmqMessage = Helper.ReceiveMessage(sub);

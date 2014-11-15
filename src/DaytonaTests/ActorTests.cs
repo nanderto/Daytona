@@ -1,4 +1,6 @@
-﻿
+﻿using Daytona;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+
 namespace Daytona.Tests
 {
     using System;
@@ -49,6 +51,17 @@ namespace Daytona.Tests
                     Assert.IsInstanceOfType(customer, typeof(ICustomer));
                     customer.UpdateName("XXX"); //called without exception
                 }
+            }
+        }
+
+        [TestMethod()]
+        public void RegisterActorTest()
+        {
+            using (var context = ZmqContext.Create())
+            {
+                var actor = new Actor(context);
+                var actorCustomer = actor.RegisterActor<Customer>(new Customer());
+                Assert.IsInstanceOfType(actorCustomer, typeof(Actor<Customer>));
             }
         }
     }
