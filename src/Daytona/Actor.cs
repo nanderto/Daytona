@@ -141,6 +141,29 @@ namespace Daytona
             this.SetUpReceivers(context, inRoute);
         }
 
+        /// <summary>
+        ///  Initializes a new instance of the <see cref="Actor"/> class.
+        ///  this should be a generic method to replace all others
+        /// </summary>
+        /// <param name="context">The ZmqContext for creating message channels</param>
+        /// <param name="inRoute">the input address that this actor will listen to</param>
+        /// <param name="serializer">The serializer, used to serialize and deserialize the payload</param>
+        /// <param name="workload">The Lambda expression that is the work that this Actor does. this expression Must be single threaded. In this case the Lambda has access
+        /// to the Payload and to the Actor and data contained within the Actor, the Send socket is available in the actor</param>
+        public Actor(ZmqContext context, string inRoute, ISerializer serializer, Action<IPayload, byte[], Actor> workload)
+        {
+            this.IsRunning = false;
+            this.Serializer = serializer;
+            this.context = context;
+            this.InRoute = inRoute;
+            //this.OutRoute = outRoute;
+            this.Workload = workload;
+            this.PropertyBag = new Dictionary<string, string>();
+            this.SetUpMonitorChannel(context);
+            this.SetUpOutputChannel(context);
+            this.SetUpReceivers(context, inRoute);
+        }
+
         public Actor(ZmqContext context, string inRoute, string outRoute, ISerializer serializer, Action<IPayload, string, string, ZmqSocket, Actor> workload, Action<IPayload, string, ZmqSocket, Actor> executeAction)
         {
             this.IsRunning = false;
