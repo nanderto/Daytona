@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using ZeroMQ;
+using NetMQ;
 
 namespace WeatherServer
 {
@@ -11,9 +11,9 @@ namespace WeatherServer
     {
         static void Main(string[] args)
         {
-            using (var context =  ZmqContext.Create())
+            using (var context = NetMQ.NetMQContext.Create())
             {
-                using (ZmqSocket publisher = context.CreateSocket(SocketType.PUB))
+                using (var publisher = context.CreatePublisherSocket())
                 {
                     publisher.Connect("tcp://localhost:5550");
 
@@ -33,8 +33,6 @@ namespace WeatherServer
                     }
                 }
             }
-
-
         }
     }
 }

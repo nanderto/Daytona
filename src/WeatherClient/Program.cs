@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using ZeroMQ;
+using NetMQ;
 
 namespace WeatherClient
 {
@@ -19,12 +19,12 @@ namespace WeatherClient
             if (args.Length > 0)
                 zipcode = args[1] + " ";
 
-            using (var context = ZmqContext.Create())
+            using (var context = NetMQContext.Create())
             {
-                using (ZmqSocket subscriber = context.CreateSocket(SocketType.SUB))
+                using (var subscriber = context.CreateSubscriberSocket())
                 {
                     //subscriber.Subscribe(Encoding.Unicode.GetBytes(zipcode));
-                    subscriber.SubscribeAll();
+                    subscriber.Subscribe("");
                     subscriber.Connect("tcp://localhost:5553");
 
                     const int updatesToCollect = 100;
@@ -32,7 +32,7 @@ namespace WeatherClient
 
                     for (int updateNumber = 0; updateNumber < updatesToCollect; updateNumber++)
                     {
-                        string update = subscriber.Receive(Encoding.Unicode);
+                        string update = subscriber.Receive().ToString();
                         totalTemperature += Convert.ToInt32(update.Split()[1]);
                     }
 

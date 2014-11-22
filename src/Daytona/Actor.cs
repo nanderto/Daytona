@@ -13,7 +13,7 @@ namespace Daytona
     using System.IO;
     using System.Linq;
     using System.Threading.Tasks;
-    using ZeroMQ;
+    using NetMQ;
 
     /// <summary>
     /// The Actor is the coe object of the Actor framework, it is self configuring to listen for messages that come in and execute what ever 
@@ -25,18 +25,18 @@ namespace Daytona
 
         private readonly Dictionary<string, Action> actorTypes = new Dictionary<string, Action>();
 
-        private readonly ZmqContext context;
+        private readonly NetMQContext context;
 
         private bool disposed;
 
-        private ZmqSocket subscriber;
+        private NetMQSocket subscriber;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Actor"/> class.
         /// This is generally used when creating a actor to act as a Actor factory.
         /// </summary>
         /// <param name="context">The context.</param>
-        public Actor(ZmqContext context)
+        public Actor(NetMQContext context)
         {
             this.IsRunning = false;
             this.context = context;
@@ -46,10 +46,10 @@ namespace Daytona
         /// Initializes a new instance of the <see cref="Actor"/> class.
         /// Use this constructor when the actor does not need to send messages to other actors.
         /// </summary>
-        /// <param name="context">The ZmqContext for creating message channels</param>
+        /// <param name="context">The NetMQContext for creating message channels</param>
         /// <param name="inRoute">the input address that this actor will listen to</param>
         /// <param name="workload">the Lambda expression that is the work that this Actor does. This expression <b>Must</b> be single threaded</param>
-        public Actor(ZmqContext context, string inRoute, Action<string, string> workload)
+        public Actor(NetMQContext context, string inRoute, Action<string, string> workload)
         {
             this.IsRunning = false;
             this.context = context;
@@ -64,11 +64,11 @@ namespace Daytona
         /// Initializes a new instance of the <see cref="Actor"/> class.
         /// Use this constructor when the actor needs to send messages to other actors, and it needs data from the actor work with.
         /// </summary>
-        /// <param name="context">The ZmqContext for creating message channels</param>
+        /// <param name="context">The NetMQContext for creating message channels</param>
         /// <param name="inRoute">the input address that this actor will listen to</param>
         /// <param name="outRoute">the address that the actor will send messages to, Currently a little limited because we should be able to send to any address</param>
         /// <param name="workload">the Lambda expression that is the work that this Actor does. this expression Must be single threaded</param>
-        public Actor(ZmqContext context, string inRoute, string outRoute, Action<string, string, string, ZmqSocket> workload)
+        public Actor(NetMQContext context, string inRoute, string outRoute, Action<string, string, string, NetMQContext> workload)
         {
             this.IsRunning = false;
             this.OutRoute = outRoute;
@@ -84,12 +84,12 @@ namespace Daytona
         /// Initializes a new instance of the <see cref="Actor"/> class.
         /// Use this constructor when the actor needs to send messages to other actors, and it needs data from the actor work with.
         /// </summary>
-        /// <param name="context">The ZmqContext for creating message channels</param>
+        /// <param name="context">The NetMQContext for creating message channels</param>
         /// <param name="inRoute">the input address that this actor will listen to</param>
         /// <param name="outRoute">the address that the actor will send messages to, Currently a little limited because we should be able to send to any address</param>
         /// <param name="workload">the Lambda expression that is the work that this Actor does. this expression Must be single threaded. In this case the Lambda has access
         /// to the Actor and data contained within the Actor</param>
-        public Actor(ZmqContext context, string inRoute, string outRoute, Action<string, string, string, ZmqSocket, Actor> workload)
+        public Actor(NetMQContext context, string inRoute, string outRoute, Action<string, string, string, NetMQSocket, Actor> workload)
         {
             this.IsRunning = false;
             this.context = context;
@@ -107,13 +107,13 @@ namespace Daytona
         /// Use this constructor when the actor needs to send messages to other actors, it needs data from the actor work with, and it needs the serializer 
         /// to deserialize the data.
         /// </summary>
-        /// <param name="context">The ZmqContext for creating message channels</param>
+        /// <param name="context">The NetMQContext for creating message channels</param>
         /// <param name="inRoute">the input address that this actor will listen to</param>
         /// <param name="outRoute">the address that the actor will send messages to, Currently a little limited because we should be able to send to any address</param>
         /// <param name="serializer">The serializer, used to serialize and deserialize the payload</param>
         /// <param name="workload">The Lambda expression that is the work that this Actor does. this expression Must be single threaded. In this case the Lambda has access
         /// to the Payload and to the Actor and data contained within the Actor, in addition to the Send socket</param>
-        public Actor(ZmqContext context, string inRoute, string outRoute, ISerializer serializer, Action<IPayload, string, string, ZmqSocket, Actor> workload)
+        public Actor(NetMQContext context, string inRoute, string outRoute, ISerializer serializer, Action<IPayload, string, string, NetMQSocket, Actor> workload)
         {
             this.IsRunning = false;
             this.Serializer = serializer;
@@ -127,7 +127,7 @@ namespace Daytona
             this.SetUpReceivers(context, inRoute);
         }
 
-        public Actor(ZmqContext context, string inRoute, string outRoute, ISerializer serializer, Action<IPayload, byte[], string, string, ZmqSocket, Actor> workload)
+        public Actor(NetMQContext context, string inRoute, string outRoute, ISerializer serializer, Action<IPayload, byte[], string, string, NetMQSocket, Actor> workload)
         {
             this.IsRunning = false;
             this.Serializer = serializer;
@@ -141,7 +141,7 @@ namespace Daytona
             this.SetUpReceivers(context, inRoute);
         }
 
-        public Actor(ZmqContext context, string inRoute, string outRoute, ISerializer serializer, Action<IPayload, string, string, ZmqSocket, Actor> workload, Action<IPayload, string, ZmqSocket, Actor> executeAction)
+        public Actor(NetMQContext context, string inRoute, string outRoute, ISerializer serializer, Action<IPayload, string, string, NetMQSocket, Actor> workload, Action<IPayload, string, NetMQSocket, Actor> executeAction)
         {
             this.IsRunning = false;
             this.ExecuteAction = executeAction;
@@ -156,7 +156,7 @@ namespace Daytona
             this.SetUpReceivers(context, inRoute);
         }
 
-        public Actor(ZmqContext context, string inRoute, string outRoute, ISerializer serializer)
+        public Actor(NetMQContext context, string inRoute, string outRoute, ISerializer serializer)
         {
             this.IsRunning = false;
             this.Serializer = serializer;
@@ -169,7 +169,7 @@ namespace Daytona
             this.SetUpReceivers(context, inRoute);
         }
 
-        public Actor(ZmqContext context, string outRoute, ISerializer serializer)
+        public Actor(NetMQContext context, string outRoute, ISerializer serializer)
         {
             this.IsRunning = false;
             this.Serializer = serializer;
@@ -180,7 +180,7 @@ namespace Daytona
             this.SetUpOutputChannel(this.context);
         }
 
-        public Actor(ZmqContext context, string inRoute, Action<Actor> workload)
+        public Actor(NetMQContext context, string inRoute, Action<Actor> workload)
         {
             this.IsRunning = false;
             this.context = context;
@@ -193,7 +193,9 @@ namespace Daytona
         }
 
         public event EventHandler<CallBackEventArgs> SaveCompletedEvent;
+        
         private bool monitorChannelDisposed = false;
+        
         private bool subscriberDisposed = false;
        
         public bool OutputChannelDisposed
@@ -204,7 +206,7 @@ namespace Daytona
 
         public Delegate Callback { get; set; }
 
-        public Action<IPayload, string, ZmqSocket, Actor> ExecuteAction { get; set; }
+        public Action<IPayload, string, NetMQSocket, Actor> ExecuteAction { get; set; }
 
         public int Id { get; set; }
 
@@ -212,9 +214,9 @@ namespace Daytona
 
         public bool IsRunning { get; set; }
 
-        public ZmqSocket MonitorChannel { get; set; }
+        public NetMQSocket MonitorChannel { get; set; }
         
-        public ZmqSocket OutputChannel { get; set; }
+        public NetMQSocket OutputChannel { get; set; }
 
         public string OutRoute { get; set; }
 
@@ -284,7 +286,7 @@ namespace Daytona
         /// <param name="outRoute">Address that this actor send its output messages to</param>
         /// <param name="workload">The workload that the Actor will perform</param>
         /// <returns>it's self</returns>
-        public Actor RegisterActor(string name, string inRoute, string outRoute, Action<string, string, string, ZmqSocket> workload)
+        public Actor RegisterActor(string name, string inRoute, string outRoute, Action<string, string, string, NetMQSocket> workload)
         {
             this.actorTypes.Add(
                 name,
@@ -298,7 +300,7 @@ namespace Daytona
             return this;
         }
 
-        public Actor RegisterActor<T>(string name, string inRoute, string outRoute, ISerializer serializer, Action<IPayload, string, string, ZmqSocket, Actor> workload) where T : IPayload
+        public Actor RegisterActor<T>(string name, string inRoute, string outRoute, ISerializer serializer, Action<IPayload, string, string, NetMQSocket, Actor> workload) where T : IPayload
         {
             this.actorTypes.Add(
                 name,
@@ -312,7 +314,7 @@ namespace Daytona
             return this;
         }
 
-        public Actor RegisterActor<T>(string name, string inRoute, string outRoute, ISerializer serializer, Action<IPayload, byte[], string, string, ZmqSocket, Actor> workload) where T : IPayload
+        public Actor RegisterActor<T>(string name, string inRoute, string outRoute, ISerializer serializer, Action<IPayload, byte[], string, string, NetMQSocket, Actor> workload) where T : IPayload
         {
             this.actorTypes.Add(
                 name, 
@@ -340,26 +342,26 @@ namespace Daytona
             return this;
         }
 
-        public void SendMessage(string address, byte[] message, ISerializer serializer, ZmqSocket socket)
+        public void SendMessage(string address, byte[] message, ISerializer serializer, NetMQSocket socket)
         {
             SendMessage(serializer.Encoding.GetBytes(address), message, socket);
         }
 
-        public void SendMessage(byte[] address, byte[] message, ZmqSocket socket)
+        public void SendMessage(byte[] address, byte[] message, NetMQSocket socket)
         {
-            ZmqMessage zmqMessage = new ZmqMessage();
-            zmqMessage.Append(new Frame(address));
-            zmqMessage.Append(new Frame(message));
-            socket.SendMessage(zmqMessage);
+            NetMQMessage netMQMessage = new NetMQMessage();
+            netMQMessage.Append(new NetMQFrame(address));
+            netMQMessage.Append(new NetMQFrame(message));
+            socket.SendMessage(netMQMessage);
         }
 
-        public void SendOneMessageOfType<T>(string address, T message, ISerializer serializer, ZmqSocket socket) where T : IPayload
+        public void SendOneMessageOfType<T>(string address, T message, ISerializer serializer, NetMQSocket socket) where T : IPayload
         {
-            ZmqMessage zmqMessage = new ZmqMessage();
-            zmqMessage.Append(new Frame(serializer.GetBuffer(address)));
-            zmqMessage.Append(new Frame(serializer.GetBuffer(message)));
+            NetMQMessage netMQMessage = new NetMQMessage();
+            netMQMessage.Append(new NetMQFrame(serializer.GetBuffer(address)));
+            netMQMessage.Append(new NetMQFrame(serializer.GetBuffer(message)));
             ////var replySignal = this.sendControlChannel.Receive(Pipe.ControlChannelEncoding);
-            socket.SendMessage(zmqMessage);
+            socket.SendMessage(netMQMessage);
             ////this.sendControlChannel.Send("Just sent message to " + address + " Message is: " + message, Pipe.ControlChannelEncoding);
             ////replySignal = this.sendControlChannel.Receive(Pipe.ControlChannelEncoding);
             ////Actor.Writeline(replySignal);
@@ -430,7 +432,7 @@ namespace Daytona
             {
                 this.IsRunning = true;
                 string address = string.Empty;
-                ZmqMessage zmqmessage = null;
+                NetMQMessage zmqmessage = null;
                 
                 this.WriteLineToMonitor("Waiting for message");
                 
@@ -515,18 +517,18 @@ namespace Daytona
             this.disposed = true;
         }
 
-        private T ReceiveMessage<T>(ZmqSocket subscriber, out ZmqMessage zmqMessage, out string address, out bool stopSignal, out byte[] messageAsBytes, ISerializer serializer)
+        private T ReceiveMessage<T>(NetMQSocket subscriber, out NetMQMessage netMQMessage, out string address, out bool stopSignal, out byte[] messageAsBytes, ISerializer serializer)
         {
             stopSignal = false;
             T result = default(T);
-            ZmqMessage zmqOut = new ZmqMessage();
+            NetMQMessage zmqOut = new NetMQMessage();
             bool hasMore = true;
             address = string.Empty;
             messageAsBytes = null;
             int i = 0;
             while (hasMore)
             {
-                Frame frame = subscriber.ReceiveFrame();
+                NetMQFrame frame = subscriber.re .ReceiveFrame();
                 if (i == 0)
                 {
                     address = serializer.GetString(frame.Buffer);
@@ -550,23 +552,23 @@ namespace Daytona
                 }
 
                 i++;
-                zmqOut.Append(new Frame(frame.Buffer));
+                zmqOut.Append(new NetMQFrame(frame.Buffer));
                 hasMore = subscriber.ReceiveMore;
             }
 
-            zmqMessage = zmqOut;
+            netMQMessage = zmqOut;
             return result;
         }
 
-        private void SetUpMonitorChannel(ZmqContext context)
+        private void SetUpMonitorChannel(NetMQContext context)
         {
-            this.MonitorChannel = context.CreateSocket(SocketType.REQ);
+            this.MonitorChannel = context.CreateRequestSocket();
             this.MonitorChannel.Connect(Pipe.MonitorAddressClient);
         }
 
-        private void SetUpOutputChannel(ZmqContext context)
+        private void SetUpOutputChannel(NetMQContext context)
         {
-            this.OutputChannel = context.CreateSocket(SocketType.PUB);
+            this.OutputChannel = context.CreatePublisherSocket();
             this.OutputChannel.Connect(Pipe.PublishAddressClient);
 
             this.WriteLineToMonitor("Set up output channel on " + Pipe.PublishAddressClient + " Default sending on: " + this.OutRoute);
@@ -584,17 +586,17 @@ namespace Daytona
         /// Creates a Socket and connects it to a endpoint that is bound to a Pipe
         /// </summary>
         /// <param name="context">The ZeroMQ context required to create the receivers</param>
-        private void SetUpReceivers(ZmqContext context)
+        private void SetUpReceivers(NetMQContext context)
         {
-            this.subscriber = context.CreateSocket(SocketType.SUB);
+            this.subscriber = context.CreateSubscriberSocket();
             this.subscriber.Connect(Pipe.SubscribeAddressClient);
             this.subscriber.Subscribe(this.Serializer.GetBuffer(this.InRoute));
             this.MonitorChannel.Send("Set up Receive channel on " + Pipe.SubscribeAddressClient + " listening on: " + this.InRoute, Pipe.ControlChannelEncoding);
-            var signal = this.MonitorChannel.Receive(Pipe.ControlChannelEncoding);
+            var signal = this.MonitorChannel.Receive();
             this.SendMessage(Pipe.ControlChannelEncoding.GetBytes(Pipe.SubscriberCountAddress), Pipe.ControlChannelEncoding.GetBytes("ADDSUBSCRIBER"), this.OutputChannel);
         }
 
-        private void SetUpReceivers(ZmqContext context, string route)
+        private void SetUpReceivers(NetMQContext context, string route)
         {
             this.InRoute = route;
             this.SetUpReceivers(context);
