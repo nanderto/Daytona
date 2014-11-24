@@ -38,5 +38,8 @@
     <FixtureTestSelector>
       <FixtureName>Daytona.Tests.BinarySerializerTests</FixtureName>
     </FixtureTestSelector>
+    <NamedTestSelector>
+      <TestName>Daytona.Tests.ActorTests.ReceiveMessageTest</TestName>
+    </NamedTestSelector>
   </IgnoredTests>
 </ProjectConfiguration>

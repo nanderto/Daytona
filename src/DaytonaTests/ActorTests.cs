@@ -6,6 +6,7 @@ namespace Daytona.Tests
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Reflection;
     using System.Text;
     using System.Threading.Tasks;
     using Daytona;
@@ -54,14 +55,37 @@ namespace Daytona.Tests
             }
         }
 
+        //[TestMethod()]
+        //public void RegisterActorTest()
+        //{
+        //    using (var context = ZmqContext.Create())
+        //    {
+        //        var actor = new Actor<Customer>(context);
+        //        var actorCustomer = actor.RegisterActor<Customer>(new Customer());
+        //        Assert.IsInstanceOfType(actorCustomer, typeof(Actor<Customer>));
+        //    }
+        //}
+
         [TestMethod()]
-        public void RegisterActorTest()
+        public void ReceiveMessageTest()
         {
             using (var context = ZmqContext.Create())
             {
-                var actor = new Actor(context);
-                var actorCustomer = actor.RegisterActor<Customer>(new Customer());
-                Assert.IsInstanceOfType(actorCustomer, typeof(Actor<Customer>));
+                using (var actor = new Actor<Customer>(context, new BinarySerializer()))
+                {
+                    actor.Start();
+                    var customer = actor.CreateInstance<ICustomer>();
+                    Assert.IsInstanceOfType(customer, typeof(ICustomer));
+                    var x = customer.GetType();
+                    var methodInfo = x.GetMethod("UpdateName");
+                    object[] parmeters = new object[1];
+                    parmeters[0] = "XXX"; 
+                    actor.SendMessage(parmeters, methodInfo);
+                    var stopSignal = false;
+                    actor.ReceiveMessage(actor.subscriber, out stopSignal, new BinarySerializer());
+
+                    customer.UpdateName("XXX"); //called without exception
+                }
             }
         }
     }
