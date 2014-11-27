@@ -370,7 +370,7 @@ namespace Daytona
                 this.WriteLineToMonitor("Waiting for message");
 
                 byte[] messageAsBytes = null;
-                var message = this.ReceiveMessage(this.subscriber, out stop, this.Serializer);
+                stop = this.ReceiveMessage(this.subscriber);
                 if (stop)
                 {
                     this.IsRunning = false;
@@ -459,68 +459,94 @@ namespace Daytona
         }
 
 
-        public object ReceiveMessage(ZmqSocket subscriber, out bool stopSignal, ISerializer serializer)
+        public bool ReceiveMessage(ZmqSocket subscriber)
         {
-            stopSignal = false;
+            var stopSignal = false;
             var zmqOut = new ZmqMessage();
             bool hasMore = true;
-            var address = string.Empty;
-            byte[] messageAsBytes = null;
-            int i = 0;
-            int numberOfParameters = 0;
+            //var address = string.Empty;
+           // byte[] messageAsBytes = null;
+            int frameCount = 0;
             MethodInfo methodinfo = null;
-            List<object> methodParameters = new List<object>();
+            var methodParameters = new List<object>();
+            var serializer = new BinarySerializer();
+            var typeParameter = true;
+            Type type = null;
+            MethodInfo returnedMethodInfo = null;
 
             while (hasMore)
             {
                 Frame frame = subscriber.ReceiveFrame();
-                if (i == 0)
-                {
-                    address = serializer.GetString(frame.Buffer);
-                }
 
-                if (i == 1)
+                stopSignal = UnPackFrame(frameCount, serializer, frame, ref methodinfo, methodParameters, ref typeParameter, ref type);
+                if (frameCount == 2)
                 {
-                    messageAsBytes = frame.Buffer;
-                    string stopMessage = serializer.GetString(messageAsBytes);
-                    this.WriteLineToMonitor("Message: " + stopMessage);
-                    if (stopMessage.ToLower() == "stop")
-                    {
-                        Writeline("received stop");
-                        this.SendMessage(
-                            Pipe.ControlChannelEncoding.GetBytes(Pipe.SubscriberCountAddress),
-                            Pipe.ControlChannelEncoding.GetBytes("SHUTTINGDOWN"),
-                            this.OutputChannel);
-                        stopSignal = true;
-                    }
-                    //else //do nothing there will alwys be a message in this frame
-                    //{
-                    //    result = serializer.Deserializer<T>(stopMessage);
-                    //}
+                    returnedMethodInfo = methodinfo;
                 }
-
-                if (i == 2)
-                {
-                    methodinfo = (MethodInfo)serializer.Deserializer(frame.Buffer, typeof(MethodInfo));
-                }
-
-                if (i == 3)
-                {
-                    numberOfParameters = int.Parse(serializer.GetString(frame.Buffer).Replace("ParameterCount", string.Empty));
-                }
-
-                if (i > 3)
-                {
-                    var parameter = serializer.Deserializer(frame.Buffer, methodinfo.GetParameters()[i - 3].GetType());
-                    methodParameters.Add(parameter);
-                }
-                i++;
+                frameCount++;
                 zmqOut.Append(new Frame(frame.Buffer));
                 hasMore = subscriber.ReceiveMore;
             }
 
-            var result = methodinfo.Invoke((T)Activator.CreateInstance(typeof(T)), methodParameters.ToArray());
-            return result;
+            var target = (T)Activator.CreateInstance(typeof(T));
+            var result = returnedMethodInfo.Invoke(target, methodParameters.ToArray());
+            return stopSignal;
+        }
+
+        public static bool UnPackFrame(
+            int frameCount,
+            BinarySerializer serializer,
+            Frame frame,
+            ref MethodInfo methodinfo,
+            List<object> methodParameters,
+            ref bool typeParameter,
+            ref Type type)
+        {
+            bool stopSignal = false;
+            string address;
+            byte[] messageAsBytes;
+            int numberOfParameters;
+            
+            if (frameCount == 0)
+            {
+                address = serializer.GetString(frame.Buffer);
+            }
+
+            if (frameCount == 1)
+            {
+                messageAsBytes = frame.Buffer;
+                string stopMessage = serializer.GetString(messageAsBytes);
+                if (stopMessage.ToLower() == "stop")
+                {
+                    stopSignal = true;
+                }
+            }
+
+            if (frameCount == 2)
+            {
+                methodinfo = (MethodInfo)serializer.Deserializer(frame.Buffer, typeof(MethodInfo));
+            }
+
+            if (frameCount == 3)
+            {
+                numberOfParameters = int.Parse(serializer.GetString(frame.Buffer).Replace("ParameterCount:", string.Empty));
+            }
+
+            if (frameCount > 3)
+            {
+                if (typeParameter)
+                {
+                    type = (Type)serializer.Deserializer(frame.Buffer, typeof(Type));
+                    typeParameter = false;
+                }
+                else
+                {
+                    var parameter = serializer.Deserializer(frame.Buffer, type);
+                    methodParameters.Add(parameter);
+                    typeParameter = true;
+                }
+            }
+            return stopSignal;
         }
 
 

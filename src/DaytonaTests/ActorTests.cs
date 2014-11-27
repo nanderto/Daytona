@@ -117,68 +117,92 @@ namespace Daytona.Tests
             //    zmqMessage.Append(new BinarySerializer().GetBuffer(parameter.GetType()));
             //    zmqMessage.Append(new BinarySerializer().GetBuffer(parameter));
             //}
+            int frameCount = 0;
             var stopSignal = false;
             var zmqOut = new ZmqMessage();
             bool hasMore = true;
             //var address = string.Empty;
             byte[] messageAsBytes = null;
-            int i = 0;
+            
             int numberOfParameters = 0;
             MethodInfo methodinfo = null;
             List<object> methodParameters = new List<object>();
             var serializer = new BinarySerializer();
             var typeParameter = true;
             Type type = null;
-
-            foreach (var parmeter in zmqMessage)
+            MethodInfo returnedMethodInfo = null;
+            
+            foreach (var frame in zmqMessage)
             {
-                if (i == 0)
+                stopSignal = Actor<Customer>.UnPackFrame(frameCount, serializer, frame, ref methodinfo, methodParameters, ref typeParameter, ref type);
+                if (frameCount == 2)
                 {
-                    address = serializer.GetString(parmeter.Buffer);
+                    returnedMethodInfo = methodinfo;
                 }
+                frameCount++;
+                zmqOut.Append(new Frame(frame.Buffer));
+               // hasMore = subscriber.ReceiveMore;
+            }
+            
+            var target = (Customer)Activator.CreateInstance(typeof(Customer));
+            var result = (Customer)returnedMethodInfo.Invoke(target, methodParameters.ToArray());
+            Assert.AreEqual("XXX", target.Lastname);
 
-                if (i == 1)
-                {
-                    messageAsBytes = parmeter.Buffer;
-                    string stopMessage = serializer.GetString(messageAsBytes);
-                    if (stopMessage.ToLower() == "stop")
-                    {
-                        stopSignal = true;
-                    }
-                }
+        }
 
-                if (i == 2)
-                {
-                    methodinfo = (MethodInfo)serializer.Deserializer(parmeter.Buffer, typeof(MethodInfo));
-                }
-
-                if (i == 3)
-                {
-                    numberOfParameters = int.Parse(serializer.GetString(parmeter.Buffer).Replace("ParameterCount:", string.Empty));
-                }
-
-                if (i > 3)
-                {
-                    if (typeParameter)
-                    {
-                        type = (Type)serializer.Deserializer(parmeter.Buffer, typeof(Type));
-                        typeParameter = false;
-                    }
-                    else
-                    {
-                        var parameter = serializer.Deserializer(parmeter.Buffer, type);
-                        methodParameters.Add(parameter);
-                        typeParameter = true;
-                    }                 
-                }
-
-                i++;
-                zmqOut.Append(new Frame(parmeter.Buffer));
+        private static MethodInfo UnPackFrame(
+            int FrameCount,
+            ref bool stopSignal,
+            BinarySerializer serializer,
+            Frame frame,
+            MethodInfo methodinfo,
+            List<object> methodParameters,
+            ref bool typeParameter,
+            ref Type type)
+        {
+            string address;
+            byte[] messageAsBytes;
+            int numberOfParameters;
+            if (FrameCount == 0)
+            {
+                address = serializer.GetString(frame.Buffer);
             }
 
-            var result = methodinfo.Invoke((Customer)Activator.CreateInstance(typeof(Customer)), methodParameters.ToArray());
-            //return result;
+            if (FrameCount == 1)
+            {
+                messageAsBytes = frame.Buffer;
+                string stopMessage = serializer.GetString(messageAsBytes);
+                if (stopMessage.ToLower() == "stop")
+                {
+                    stopSignal = true;
+                }
+            }
 
+            if (FrameCount == 2)
+            {
+                methodinfo = (MethodInfo)serializer.Deserializer(frame.Buffer, typeof(MethodInfo));
+            }
+
+            if (FrameCount == 3)
+            {
+                numberOfParameters = int.Parse(serializer.GetString(frame.Buffer).Replace("ParameterCount:", string.Empty));
+            }
+
+            if (FrameCount > 3)
+            {
+                if (typeParameter)
+                {
+                    type = (Type)serializer.Deserializer(frame.Buffer, typeof(Type));
+                    typeParameter = false;
+                }
+                else
+                {
+                    var parameter = serializer.Deserializer(frame.Buffer, type);
+                    methodParameters.Add(parameter);
+                    typeParameter = true;
+                }
+            }
+            return methodinfo;
         }
     }
 }
