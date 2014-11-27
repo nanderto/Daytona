@@ -30,9 +30,6 @@
       <TestName>Daytona.Tests.ActorTests.CallMethod</TestName>
     </NamedTestSelector>
     <NamedTestSelector>
-      <TestName>Daytona.Tests.ActorTests.CallMethod_usingBinarySerializer</TestName>
-    </NamedTestSelector>
-    <NamedTestSelector>
       <TestName>Daytona.Tests.ActorTests.CreateInstanceTest</TestName>
     </NamedTestSelector>
     <FixtureTestSelector>
