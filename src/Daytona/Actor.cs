@@ -17,56 +17,18 @@ namespace Daytona
 
     using ZeroMQ;
 
-    //public class Actor : Actor<T>
-    //{
-    //    #region Fields
+   
 
-    //    private ZmqContext context;
-
-    //    #endregion
-
-    //    #region Constructors and Destructors
-
-    //    public Actor(ZmqContext context)
-    //    {
-    //        // TODO: Complete member initialization
-    //        this.context = context;
-    //    }
-
-    //    #endregion
-
-    //    #region Public Methods and Operators
-
-    //    public virtual Actor<TObject> RegisterActor<TObject>(TObject objectToRun) where TObject : class
-    //    {
-    //        throw new NotImplementedException();
-    //    }
-
-    //    #endregion
-    //}
-
-    /// <summary>
-    ///     The Actor is the coe object of the Actor framework, it is self configuring to listen for messages that come in and
-    ///     execute what ever
-    ///     workload that is configured for it.
-    /// </summary>
-    /// <typeparam name="T">
-    ///     The object to compose with this actor
-    /// </typeparam>
-    [Serializable]
-    public class Actor<T> : IDisposable
-        where T : class
+    public class Actor : IDisposable
     {
         private static readonly object SynchLock = new object();
-        
+
         private readonly Dictionary<string, Action> actorTypes = new Dictionary<string, Action>();
 
         [NonSerialized]
-        private readonly ZmqContext context;
+        protected ZmqContext context;
 
         private bool disposed;
-
-        private T model;
 
         [NonSerialized]
         private ZmqSocket monitorChannel;
@@ -83,9 +45,9 @@ namespace Daytona
         public ZmqSocket subscriber;
 
         private bool subscriberDisposed = false;
-        
+
         /// <summary>
-        ///     Initializes a new instance of the <see cref="Actor" /> class.
+        ///     Initializes a new instance of the <see cref="Actor{T}" /> class.
         ///     This is generally used when creating a actor to act as a Actor factory.
         /// </summary>
         /// <param name="context">The context.</param>
@@ -96,6 +58,7 @@ namespace Daytona
             this.Serializer = new DefaultSerializer(Encoding.Unicode);
             this.SetUpMonitorChannel(context);
             this.SetUpOutputChannel(context);
+            this.PropertyBag = new Dictionary<string, string>();
         }
 
         public Actor(ZmqContext context, ISerializer serializer)
@@ -104,40 +67,11 @@ namespace Daytona
             this.context = context;
             this.Serializer = serializer;
             this.SetUpMonitorChannel(context);
-            this.SetUpOutputChannel(context);
-            var inRoute = typeof(T)
-                .FullName.Replace("{", string.Empty)
-                .Replace("}", string.Empty)
-                .Replace("_", string.Empty)
-                .Replace(".", string.Empty);
-            this.SetUpReceivers(context, inRoute);
+            this.SetUpOutputChannel(context); 
         }
 
-        public Actor(ZmqContext context, T model)
-        {
-            this.IsRunning = false;
-            this.context = context;
-            this.model = model;
-            this.Serializer = new DefaultSerializer(Encoding.Unicode);
-            this.SetUpMonitorChannel(context);
-            this.SetUpOutputChannel(context);
-            var inRoute =
-                typeof(T).Name.Replace("{", string.Empty)
-                    .Replace("}", string.Empty)
-                    .Replace("_", string.Empty)
-                    .Replace(".", string.Empty);
-            this.SetUpReceivers(context, inRoute);
-            this.PropertyBag = new Dictionary<string, string>();
-        }
+        public virtual event EventHandler<CallBackEventArgs> SaveCompletedEvent;
 
-        public Actor(ZmqContext context, T model, ISerializer serializer)
-            : this(context, model)
-        {
-            this.Serializer = serializer;
-        }
-
-        public event EventHandler<CallBackEventArgs> SaveCompletedEvent;
-        
         public Delegate Callback { get; set; }
 
         public int Id { get; set; }
@@ -203,7 +137,7 @@ namespace Daytona
         }
 
         public Delegate Workload { get; set; }
-         
+
         public static void Writeline(string line)
         {
             lock (SynchLock)
@@ -223,12 +157,7 @@ namespace Daytona
             this.SaveCompletedEvent(this, eventArgs);
         }
 
-        public TInterface CreateInstance<TInterface>() where TInterface : class
-        {
-            var invocationHandler = new MessageSenderProxy<T>(this);
-            var proxyFactory = new ProxyFactory();
-            return proxyFactory.CreateProxy<TInterface>(Type.EmptyTypes, invocationHandler);
-        }
+        
 
         /// <summary>
         ///     Create and start a new actor by invoking the Lambda registered with the name provided. This new actor is
@@ -249,27 +178,6 @@ namespace Daytona
             this.Dispose(true);
             GC.SuppressFinalize(this);
         }
-
-        //public Actor<T> RegisterActor<TObject>(TObject objectToRun) where TObject : class
-        //{
-        //    var nameIndex =
-        //        typeof(TObject).ToString()
-        //            .Replace("{", string.Empty)
-        //            .Replace("}", string.Empty)
-        //            .Replace("_", string.Empty)
-        //            .Replace(".", string.Empty);
-        //    this.actorTypes.Add(
-        //        nameIndex, 
-        //        () =>
-        //            {
-        //                using (var actorToRun = new Actor<TObject>(this.context, objectToRun))
-        //                {
-        //                    actorToRun.Start();
-        //                }
-        //            });
-
-        //    return this;
-        //}
 
         public void SendMessage(string address, byte[] message, ISerializer serializer, ZmqSocket socket)
         {
@@ -298,6 +206,182 @@ namespace Daytona
             ////replySignal = this.sendControlChannel.Receive(Pipe.ControlChannelEncoding);
             ////Actor.Writeline(replySignal);
         }
+
+        /// <summary>
+        ///     Create and start all actors that are registered in the collection of subActors. this
+        ///     is done by invoking the Lambda registered in the collection.
+        ///     Each actor is started on its own thread
+        /// </summary>
+        public void StartAllActors()
+        {
+            foreach (var item in this.actorTypes)
+            {
+                Task.Run(() => { item.Value.DynamicInvoke(); });
+            }
+        }
+
+        public void WriteLineToMonitor(string line)
+        {
+            if (this.monitorChannelDisposed == false)
+            {
+                this.MonitorChannel.Send(line, Pipe.ControlChannelEncoding);
+                var signal = this.MonitorChannel.Receive(Pipe.ControlChannelEncoding);
+            }
+        }
+
+        private void Dispose(bool disposing)
+        {
+            if (!this.disposed)
+            {
+                if (disposing)
+                {
+                    if (this.subscriber != null)
+                    {
+                        this.subscriberDisposed = true;
+                        this.subscriber.Dispose();
+                    }
+
+                    if (this.OutputChannel != null)
+                    {
+                        this.OutputChannelDisposed = true;
+                        this.OutputChannel.Dispose();
+                    }
+
+                    if (this.MonitorChannel != null)
+                    {
+                        this.monitorChannelDisposed = true;
+                        this.MonitorChannel.Dispose();
+                    }
+                }
+
+                //// There are no unmanaged resources to release, but
+                //// if we add them, they need to be released here.
+            }
+
+            this.disposed = true;
+        }
+
+        protected void SetUpMonitorChannel(ZmqContext context)
+        {
+            this.MonitorChannel = context.CreateSocket(SocketType.REQ);
+            this.MonitorChannel.Connect(Pipe.MonitorAddressClient);
+        }
+
+        protected void SetUpOutputChannel(ZmqContext context)
+        {
+            this.OutputChannel = context.CreateSocket(SocketType.PUB);
+            this.OutputChannel.Connect(Pipe.PublishAddressClient);
+
+            this.WriteLineToMonitor(
+                "Set up output channel on " + Pipe.PublishAddressClient + " Default sending on: " + this.OutRoute);
+
+            ////if(this.sendControlChannel == null)
+            ////{
+            ////    this.sendControlChannel = context.CreateSocket(SocketType.REQ);
+            ////    this.sendControlChannel.Connect(Pipe.PubSubControlBackAddressClient);
+            ////}
+            ////this.sendControlChannel.Send("Actor OutputChannel connected, Sending on " + Pipe.PublishAddressClient, Pipe.ControlChannelEncoding);
+            ////var replySignal = this.sendControlChannel.Receive(Pipe.ControlChannelEncoding);
+            ////Actor.Writeline(replySignal);
+        }
+
+        /// <summary>
+        ///     Creates a Socket and connects it to a endpoint that is bound to a Pipe
+        /// </summary>
+        /// <param name="context">The ZeroMQ context required to create the receivers</param>
+        private void SetUpReceivers(ZmqContext context)
+        {
+            this.subscriber = context.CreateSocket(SocketType.SUB);
+            this.subscriber.Connect(Pipe.SubscribeAddressClient);
+            this.subscriber.Subscribe(this.Serializer.GetBuffer(this.InRoute));
+            this.MonitorChannel.Send(
+                "Set up Receive channel on " + Pipe.SubscribeAddressClient + " listening on: " + this.InRoute, 
+                Pipe.ControlChannelEncoding);
+            var signal = this.MonitorChannel.Receive(Pipe.ControlChannelEncoding);
+            this.SendMessage(
+                Pipe.ControlChannelEncoding.GetBytes(Pipe.SubscriberCountAddress), 
+                Pipe.ControlChannelEncoding.GetBytes("ADDSUBSCRIBER"), 
+                this.OutputChannel);
+        }
+
+        protected void SetUpReceivers(ZmqContext context, string route)
+        {
+            this.InRoute = route;
+            this.SetUpReceivers(context);
+        }
+    }
+
+    /// <summary>
+    ///     The Actor is the coe object of the Actor framework, it is self configuring to listen for messages that come in and
+    ///     execute what ever
+    ///     workload that is configured for it.
+    /// </summary>
+    /// <typeparam name="T">
+    ///     The object to compose with this actor
+    /// </typeparam>
+    [Serializable]
+    public class Actor<T> : Actor where T : class
+    {
+        private T model;
+
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="Actor" /> class.
+        ///     This is generally used when creating a actor to act as a Actor factory.
+        /// </summary>
+        /// <param name="context">The context.</param>
+        public Actor(ZmqContext context) : base(context)
+        {
+        }
+
+        public Actor(ZmqContext context, ISerializer serializer) : base(context, serializer)
+        {
+            var inRoute = typeof(T)
+                .FullName.Replace("{", string.Empty)
+                .Replace("}", string.Empty)
+                .Replace("_", string.Empty)
+                .Replace(".", string.Empty);
+            this.SetUpReceivers(context, inRoute);
+        }
+
+        public Actor(ZmqContext context, T model) : base (context)
+        {
+            this.model = model;
+            var inRoute =
+                typeof(T).Name.Replace("{", string.Empty)
+                    .Replace("}", string.Empty)
+                    .Replace("_", string.Empty)
+                    .Replace(".", string.Empty);
+            this.SetUpReceivers(context, inRoute);
+        }
+
+        public Actor(ZmqContext context, T model, ISerializer serializer)
+            : this(context, model)
+        {
+            this.Serializer = serializer;
+        }
+
+        public override event EventHandler<CallBackEventArgs> SaveCompletedEvent;
+
+        //public Actor<T> RegisterActor<TObject>(TObject objectToRun) where TObject : class
+        //{
+        //    var nameIndex =
+        //        typeof(TObject).ToString()
+        //            .Replace("{", string.Empty)
+        //            .Replace("}", string.Empty)
+        //            .Replace("_", string.Empty)
+        //            .Replace(".", string.Empty);
+        //    this.actorTypes.Add(
+        //        nameIndex, 
+        //        () =>
+        //            {
+        //                using (var actorToRun = new Actor<TObject>(this.context, objectToRun))
+        //                {
+        //                    actorToRun.Start();
+        //                }
+        //            });
+
+        //    return this;
+        //}
 
         /// <summary>
         ///     Start is called on all actors to have them listen for messages, they will receive and process one message
@@ -357,6 +441,12 @@ namespace Daytona
         //    }
         //}
 
+        public TInterface CreateInstance<TInterface>() where TInterface : class
+        {
+            var invocationHandler = new MessageSenderProxy<T>(this);
+            var proxyFactory = new ProxyFactory();
+            return proxyFactory.CreateProxy<TInterface>(Type.EmptyTypes, invocationHandler);
+        }
 
         public void Start()
         {
@@ -382,28 +472,6 @@ namespace Daytona
             this.WriteLineToMonitor("Exiting actor");
         }
 
-        /// <summary>
-        ///     Create and start all actors that are registered in the collection of subActors. this
-        ///     is done by invoking the Lambda registered in the collection.
-        ///     Each actor is started on its own thread
-        /// </summary>
-        public void StartAllActors()
-        {
-            foreach (var item in this.actorTypes)
-            {
-                Task.Run(() => { item.Value.DynamicInvoke(); });
-            }
-        }
-
-        public void WriteLineToMonitor(string line)
-        {
-            if (this.monitorChannelDisposed == false)
-            {
-                this.MonitorChannel.Send(line, Pipe.ControlChannelEncoding);
-                var signal = this.MonitorChannel.Receive(Pipe.ControlChannelEncoding);
-            }
-        }
-        
         public void SendMessage(object[] parameters, MethodInfo methodInfo)
         {
             var zmqMessage = new ZmqMessage();
@@ -425,39 +493,6 @@ namespace Daytona
 
             this.OutputChannel.SendMessage(zmqMessage);
         }
-
-        private void Dispose(bool disposing)
-        {
-            if (!this.disposed)
-            {
-                if (disposing)
-                {
-                    if (this.subscriber != null)
-                    {
-                        this.subscriberDisposed = true;
-                        this.subscriber.Dispose();
-                    }
-
-                    if (this.OutputChannel != null)
-                    {
-                        this.OutputChannelDisposed = true;
-                        this.OutputChannel.Dispose();
-                    }
-
-                    if (this.MonitorChannel != null)
-                    {
-                        this.monitorChannelDisposed = true;
-                        this.MonitorChannel.Dispose();
-                    }
-                }
-
-                //// There are no unmanaged resources to release, but
-                //// if we add them, they need to be released here.
-            }
-
-            this.disposed = true;
-        }
-
 
         public bool ReceiveMessage(ZmqSocket subscriber)
         {
@@ -547,56 +582,6 @@ namespace Daytona
                 }
             }
             return stopSignal;
-        }
-
-
-        private void SetUpMonitorChannel(ZmqContext context)
-        {
-            this.MonitorChannel = context.CreateSocket(SocketType.REQ);
-            this.MonitorChannel.Connect(Pipe.MonitorAddressClient);
-        }
-
-        private void SetUpOutputChannel(ZmqContext context)
-        {
-            this.OutputChannel = context.CreateSocket(SocketType.PUB);
-            this.OutputChannel.Connect(Pipe.PublishAddressClient);
-
-            this.WriteLineToMonitor(
-                "Set up output channel on " + Pipe.PublishAddressClient + " Default sending on: " + this.OutRoute);
-
-            ////if(this.sendControlChannel == null)
-            ////{
-            ////    this.sendControlChannel = context.CreateSocket(SocketType.REQ);
-            ////    this.sendControlChannel.Connect(Pipe.PubSubControlBackAddressClient);
-            ////}
-            ////this.sendControlChannel.Send("Actor OutputChannel connected, Sending on " + Pipe.PublishAddressClient, Pipe.ControlChannelEncoding);
-            ////var replySignal = this.sendControlChannel.Receive(Pipe.ControlChannelEncoding);
-            ////Actor.Writeline(replySignal);
-        }
-
-        /// <summary>
-        ///     Creates a Socket and connects it to a endpoint that is bound to a Pipe
-        /// </summary>
-        /// <param name="context">The ZeroMQ context required to create the receivers</param>
-        private void SetUpReceivers(ZmqContext context)
-        {
-            this.subscriber = context.CreateSocket(SocketType.SUB);
-            this.subscriber.Connect(Pipe.SubscribeAddressClient);
-            this.subscriber.Subscribe(this.Serializer.GetBuffer(this.InRoute));
-            this.MonitorChannel.Send(
-                "Set up Receive channel on " + Pipe.SubscribeAddressClient + " listening on: " + this.InRoute, 
-                Pipe.ControlChannelEncoding);
-            var signal = this.MonitorChannel.Receive(Pipe.ControlChannelEncoding);
-            this.SendMessage(
-                Pipe.ControlChannelEncoding.GetBytes(Pipe.SubscriberCountAddress), 
-                Pipe.ControlChannelEncoding.GetBytes("ADDSUBSCRIBER"), 
-                this.OutputChannel);
-        }
-
-        private void SetUpReceivers(ZmqContext context, string route)
-        {
-            this.InRoute = route;
-            this.SetUpReceivers(context);
         }
     }
 }
