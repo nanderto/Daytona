@@ -18,7 +18,7 @@ namespace Daytona
     using ZeroMQ;
 
    
-
+    [Serializable]
     public class Actor : IDisposable
     {
         private static readonly object SynchLock = new object();
@@ -59,6 +59,12 @@ namespace Daytona
             this.SetUpMonitorChannel(context);
             this.SetUpOutputChannel(context);
             this.PropertyBag = new Dictionary<string, string>();
+        }
+
+        public Actor(ISerializer serializer)
+        {
+            this.IsRunning = false;
+            this.Serializer = serializer;
         }
 
         public Actor(ZmqContext context, ISerializer serializer)
@@ -333,7 +339,7 @@ namespace Daytona
         {
         }
 
-        public Actor(ZmqContext context, ISerializer serializer) : base(context, serializer)
+        public Actor(ZmqContext context, ISerializer serializer) : base (context, serializer)
         {
             var inRoute = typeof(T)
                 .FullName.Replace("{", string.Empty)
@@ -360,7 +366,12 @@ namespace Daytona
             this.Serializer = serializer;
         }
 
+        public Actor(ISerializer serializer) : base(serializer)
+        {
+        }
+        
         public override event EventHandler<CallBackEventArgs> SaveCompletedEvent;
+        private BinarySerializer binarySerializer;
 
         //public Actor<T> RegisterActor<TObject>(TObject objectToRun) where TObject : class
         //{
@@ -474,24 +485,27 @@ namespace Daytona
 
         public void SendMessage(object[] parameters, MethodInfo methodInfo)
         {
-            var zmqMessage = new ZmqMessage();
-            var address = typeof(T).FullName;
-            zmqMessage.Append(new Frame(this.Serializer.GetBuffer(address)));
-            zmqMessage.Append(new Frame(this.Serializer.GetBuffer("Process")));
-
-            // var binarySerializer = new BinarySerializer();
-            // var buffer = binarySerializer.GetBuffer(methodInfo);
-            var serializedMethodInfo = this.Serializer.GetBuffer(methodInfo);
-            zmqMessage.Append(new Frame(serializedMethodInfo));
-            zmqMessage.Append(
-                new Frame(this.Serializer.GetBuffer(string.Format("ParameterCount:{0}", parameters.Length))));
-            foreach (var parameter in parameters)
-            {
-                zmqMessage.Append(this.Serializer.GetBuffer(parameter.GetType()));
-                zmqMessage.Append(this.Serializer.GetBuffer(parameter));
-            }
+            var zmqMessage = PackZmqMessage(parameters, methodInfo, this.Serializer);
 
             this.OutputChannel.SendMessage(zmqMessage);
+        }
+
+        public static ZmqMessage PackZmqMessage(object[] parameters, MethodInfo methodInfo, ISerializer serializer)
+        {
+            var zmqMessage = new ZmqMessage();
+            var address = typeof(T).FullName;
+            zmqMessage.Append(new Frame(serializer.GetBuffer(address)));
+            zmqMessage.Append(new Frame(serializer.GetBuffer("Process")));
+            
+            var serializedMethodInfo = serializer.GetBuffer(methodInfo);
+            zmqMessage.Append(new Frame(serializedMethodInfo));
+            zmqMessage.Append(new Frame(serializer.GetBuffer(string.Format("ParameterCount:{0}", parameters.Length))));
+            foreach (var parameter in parameters)
+            {
+                zmqMessage.Append(serializer.GetBuffer(parameter.GetType()));
+                zmqMessage.Append(serializer.GetBuffer(parameter));
+            }
+            return zmqMessage;
         }
 
         public bool ReceiveMessage(ZmqSocket subscriber)

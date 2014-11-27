@@ -96,27 +96,12 @@ namespace Daytona.Tests
             var methodInfo = x.GetMethod("UpdateName");
             object[] parmeters = new object[1];
             parmeters[0] = "XXX";
-            
-            var zmqMessage = new ZmqMessage();
-            var address = x.FullName;
-            zmqMessage.Append(new Frame(new BinarySerializer().GetBuffer(address)));
-            zmqMessage.Append(new Frame(new BinarySerializer().GetBuffer("Process")));
 
-            // var binarySerializer = new BinarySerializer();
-            // var buffer = binarySerializer.GetBuffer(methodInfo);
-            var serializedMethodInfo = new BinarySerializer().GetBuffer(methodInfo);
-            zmqMessage.Append(new Frame(serializedMethodInfo));
-            zmqMessage.Append(
-                new Frame(new BinarySerializer().GetBuffer(string.Format("ParameterCount:{0}", parmeters.Length))));
-            zmqMessage.Append(new BinarySerializer().GetBuffer("XXX".GetType()));
-            zmqMessage.Append(new BinarySerializer().GetBuffer("XXX"));
+            //var customer = new Actor<Customer>(new BinarySerializer());
 
-            
-            //foreach (var parameter in parameters)
-            //{
-            //    zmqMessage.Append(new BinarySerializer().GetBuffer(parameter.GetType()));
-            //    zmqMessage.Append(new BinarySerializer().GetBuffer(parameter));
-            //}
+            var zmqMessage = Actor<Customer>.PackZmqMessage(parmeters, methodInfo, new BinarySerializer());
+
+
             int frameCount = 0;
             var stopSignal = false;
             var zmqOut = new ZmqMessage();
