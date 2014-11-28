@@ -26,6 +26,30 @@ namespace TestHelpers
         {
             this.Lastname = name;
         }
+    }
 
+    public interface IOrder
+    {
+        string Description { get; set; }
+
+        Guid Id { get; }
+
+        void UpdateDescription(string description);
+    }
+
+    public class Order : IOrder
+    {
+        public Order()
+        {
+            this.Id = new Guid();
+        }
+
+        public void UpdateDescription(string description)
+        {
+            this.Description = description;
+        }
+        public string Description { get; set; }
+
+        public Guid Id { get; private set; }
     }
 }

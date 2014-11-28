@@ -19,26 +19,17 @@ namespace Daytona.Tests
     public class ActorTests
     {
         [TestMethod]
-        public void CreateInstanceTest()
+        public void CallMethod_usingDefaultSerializer()
         {
             using (var context = ZmqContext.Create())
             {
-                var actor = new Actor<Customer>(context);
-                var customer = actor.CreateInstance<Customer>();
-                Assert.IsInstanceOfType(customer, typeof(Customer));
+                using (var actor = new Actor<Customer>(context))
+                {
+                    var customer = actor.CreateInstance<ICustomer>(typeof(Customer));
+                    Assert.IsInstanceOfType(customer, typeof(ICustomer));
+                    customer.UpdateName("XXX"); //called without exception
+                }
             }
-        }
-
-        [TestMethod]
-        public void CallMethod()
-        {
-            //using (var context = ZmqContext.Create())
-            //{
-            //    var actor = new Actor<Customer>(context);
-            //    var customer = actor.CreateInstance<ICustomer>();
-            //    Assert.IsInstanceOfType(customer, typeof(ICustomer));
-            //    customer.UpdateName("XXX"); //called without exception
-            //}
         }
 
         [TestMethod]   
@@ -48,9 +39,29 @@ namespace Daytona.Tests
             {
                 using (var actor = new Actor<Customer>(context, new BinarySerializer()))
                 {
-                    var customer = actor.CreateInstance<ICustomer>();
+                    var customer = actor.CreateInstance<ICustomer>(typeof(Customer));
                     Assert.IsInstanceOfType(customer, typeof(ICustomer));
                     customer.UpdateName("XXX"); //called without exception
+                }
+            }
+        }
+
+        [TestMethod]
+        public void CallMethod_Multiple_ObjectsBinarySerializer()
+        {
+            using (var context = ZmqContext.Create())
+            {
+                using (var actor = new Actor<Customer>(context, new BinarySerializer()))
+                {
+                    var customer = actor.CreateInstance<ICustomer>(typeof(Customer));
+                    Assert.IsInstanceOfType(customer, typeof(ICustomer));
+                    customer.UpdateName("XXX"); //called without exception
+
+                    var order = actor.CreateInstance<IOrder>(typeof(Order));
+                    Assert.IsInstanceOfType(order, typeof(IOrder));
+                    order.UpdateDescription("XXX"); //called without exception
+
+                    //Assert.AreEqual("XXX", order.Description);
                 }
             }
         }
@@ -69,24 +80,24 @@ namespace Daytona.Tests
         [TestMethod()]
         public async Task ReceiveMessageTest()
         {
-            using (var context = ZmqContext.Create())
-            {
-                using (var actor = new Actor<Customer>(context, new BinarySerializer()))
-                {
-                   // await Task.Run(async () => actor.Start());
-                    var customer = actor.CreateInstance<ICustomer>();
-                    Assert.IsInstanceOfType(customer, typeof(ICustomer));
-                    var x = typeof(Customer);
-                    var methodInfo = x.GetMethod("UpdateName");
-                    object[] parmeters = new object[1];
-                    parmeters[0] = "XXX"; 
-                    actor.SendMessage(parmeters, methodInfo);
-                    var stopSignal = false;
-                    //actor.ReceiveMessage(actor.subscriber, out stopSignal, new BinarySerializer());
+            //using (var context = ZmqContext.Create())
+            //{
+            //    using (var actor = new Actor<Customer>(context, new BinarySerializer()))
+            //    {
+            //       // await Task.Run(async () => actor.Start());
+            //        var customer = actor.CreateInstance<ICustomer>();
+            //        Assert.IsInstanceOfType(customer, typeof(ICustomer));
+            //        var x = typeof(Customer);
+            //        var methodInfo = x.GetMethod("UpdateName");
+            //        object[] parmeters = new object[1];
+            //        parmeters[0] = "XXX"; 
+            //        actor.SendMessage(parmeters, methodInfo);
+            //        var stopSignal = false;
+            //        //actor.ReceiveMessage(actor.subscriber, out stopSignal, new BinarySerializer());
 
-                    customer.UpdateName("XXX"); //called without exception
-                }
-            }
+            //        customer.UpdateName("XXX"); //called without exception
+            //    }
+            //}
         }
 
         [TestMethod]
@@ -99,7 +110,7 @@ namespace Daytona.Tests
 
             //var customer = new Actor<Customer>(new BinarySerializer());
 
-            var zmqMessage = Actor<Customer>.PackZmqMessage(parmeters, methodInfo, new BinarySerializer());
+            var zmqMessage = Actor<Customer>.PackZmqMessage(parmeters, methodInfo, new BinarySerializer(), x.FullName);
 
 
             int frameCount = 0;
@@ -132,7 +143,6 @@ namespace Daytona.Tests
             var target = (Customer)Activator.CreateInstance(typeof(Customer));
             var result = (Customer)returnedMethodInfo.Invoke(target, methodParameters.ToArray());
             Assert.AreEqual("XXX", target.Lastname);
-
         }
 
         private static MethodInfo UnPackFrame(
