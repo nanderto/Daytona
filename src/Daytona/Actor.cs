@@ -35,11 +35,14 @@
         public Actor(ZmqContext context, ISerializer serializer)
             : base(context, serializer)
         {
-            var inRoute =
-                typeof(T).FullName.Replace("{", string.Empty)
-                    .Replace("}", string.Empty)
-                    .Replace("_", string.Empty)
-                    .Replace(".", string.Empty);
+            var inRoute = typeof(T).FullName;
+
+            this.SetUpReceivers(context, inRoute);
+        }
+
+        public Actor(ZmqContext context, ISerializer serializer, string inRoute)
+            : base(context, serializer)
+        {
             this.SetUpReceivers(context, inRoute);
         }
 
@@ -47,11 +50,11 @@
             : base(context)
         {
             this.model = model;
-            var inRoute =
-                typeof(T).Name.Replace("{", string.Empty)
-                    .Replace("}", string.Empty)
-                    .Replace("_", string.Empty)
-                    .Replace(".", string.Empty);
+            var inRoute = typeof(T).FullName;
+            //Name.Replace("{", string.Empty)
+            //        .Replace("}", string.Empty)
+            //        .Replace("_", string.Empty)
+            //        .Replace(".", string.Empty);
             this.SetUpReceivers(context, inRoute);
         }
 
@@ -86,17 +89,11 @@
             return zmqMessage;
         }
 
-        public static bool UnPackFrame(
-            int frameCount, 
-            BinarySerializer serializer, 
-            Frame frame, 
-            ref MethodInfo methodinfo, 
-            List<object> methodParameters, 
-            ref bool typeParameter, 
-            ref Type type)
+        public static bool UnPackFrame(int frameCount, BinarySerializer serializer, Frame frame, out string address, ref MethodInfo methodinfo, List<object> methodParameters, ref bool typeParameter, ref Type type, out string messageType)
         {
+            messageType = string.Empty;
             bool stopSignal = false;
-            string address;
+            address = string.Empty;
             byte[] messageAsBytes;
             int numberOfParameters;
 
@@ -108,8 +105,8 @@
             if (frameCount == 1)
             {
                 messageAsBytes = frame.Buffer;
-                string stopMessage = serializer.GetString(messageAsBytes);
-                if (stopMessage.ToLower() == "stop")
+                messageType = serializer.GetString(messageAsBytes);
+                if (messageType.ToLower() == "stop")
                 {
                     stopSignal = true;
                 }
@@ -237,19 +234,24 @@
             var typeParameter = true;
             Type type = null;
             MethodInfo returnedMethodInfo = null;
+            string messageType, returnedMessageType = string.Empty;
+            string address, returnedAddress = string.Empty;
 
             while (hasMore)
             {
                 Frame frame = subscriber.ReceiveFrame();
 
-                stopSignal = UnPackFrame(
-                    frameCount, 
-                    serializer, 
-                    frame, 
-                    ref methodinfo, 
-                    methodParameters, 
-                    ref typeParameter, 
-                    ref type);
+                stopSignal = UnPackFrame(frameCount, serializer, frame, out address, ref methodinfo, methodParameters, ref typeParameter, ref type, out messageType);
+                if (frameCount == 0)
+                {
+                    returnedAddress = address;
+                } 
+                
+                if (frameCount == 1)
+                {
+                    returnedMessageType = messageType;
+                }
+
                 if (frameCount == 2)
                 {
                     returnedMethodInfo = methodinfo;
@@ -260,8 +262,19 @@
                 hasMore = subscriber.ReceiveMore;
             }
 
-            var target = (T)Activator.CreateInstance(typeof(T));
-            var result = returnedMethodInfo.Invoke(target, methodParameters.ToArray());
+            if (returnedMessageType.ToLower() == "raw")
+            {
+                var inputParameters = new object[4];
+                inputParameters[0] = returnedAddress;
+                inputParameters[1] = methodParameters;
+                inputParameters[3] = this;
+                this.Workload.DynamicInvoke(inputParameters);
+            }
+            else
+            {
+                var target = (T)Activator.CreateInstance(typeof(T));
+                var result = returnedMethodInfo.Invoke(target, methodParameters.ToArray());
+            }
             return stopSignal;
         }
 
@@ -272,7 +285,7 @@
             this.OutputChannel.SendMessage(zmqMessage);
         }
 
-        public void Start()
+        public override void Start()
         {
             bool stop = false;
             while (stop == false)
@@ -294,6 +307,20 @@
             }
 
             this.WriteLineToMonitor("Exiting actor");
+        }
+
+        public Actor RegisterActor(string name, string inRoute, ISerializer serializer, Action<string, List<object>, Actor> workload)
+        {
+            this.actorTypes.Add(
+                name,
+                () =>
+                {
+                    using (var actor = new Actor(this.context, serializer, inRoute, workload))
+                    {
+                        actor.Start();
+                    }
+                });
+            return this;
         }
     }
 }

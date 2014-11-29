@@ -129,14 +129,26 @@ namespace Daytona.Tests
             var typeParameter = true;
             Type type = null;
             MethodInfo returnedMethodInfo = null;
-            
+            string address, returnedAddress, messageType, returnedMessageType = string.Empty;
+
             foreach (var frame in zmqMessage)
             {
-                stopSignal = Actor<Customer>.UnPackFrame(frameCount, serializer, frame, ref methodinfo, methodParameters, ref typeParameter, ref type);
+                stopSignal = Actor<Customer>.UnPackFrame(frameCount, serializer, frame, out address, ref methodinfo, methodParameters, ref typeParameter, ref type, out messageType);
+                if (frameCount == 0)
+                {
+                    returnedAddress = address;
+                }
+
+                if (frameCount == 1)
+                {
+                    returnedMessageType = messageType;
+                }
+
                 if (frameCount == 2)
                 {
                     returnedMethodInfo = methodinfo;
                 }
+
                 frameCount++;
                 zmqOut.Append(new Frame(frame.Buffer));
                // hasMore = subscriber.ReceiveMore;

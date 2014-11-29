@@ -9,6 +9,7 @@ namespace Daytona
     using System;
     using System.Collections.Generic;
     using System.IO;
+    using System.Reflection;
     using System.Text;
     using System.Threading.Tasks;
 
@@ -23,7 +24,7 @@ namespace Daytona
         [NonSerialized]
         protected ZmqContext context;
 
-        private readonly Dictionary<string, Action> actorTypes = new Dictionary<string, Action>();
+        public readonly Dictionary<string, Action> actorTypes = new Dictionary<string, Action>();
 
         private static readonly object SynchLock = new object();
 
@@ -73,6 +74,20 @@ namespace Daytona
         }
 
         public Actor(ZmqContext context, ISerializer serializer, string inRoute, Action<Actor> workload)
+        {
+            this.IsRunning = false;
+            this.context = context;
+            this.Serializer = serializer;
+            this.InRoute = inRoute;
+            this.Workload = workload;
+            this.PropertyBag = new Dictionary<string, string>();
+            this.SetUpMonitorChannel(context);
+            this.SetUpOutputChannel(context);
+            this.SetUpReceivers(context, inRoute);
+        }
+
+
+        public Actor(ZmqContext context, ISerializer serializer, string inRoute, Action<string, List<object>,  Actor> workload)
         {
             this.IsRunning = false;
             this.context = context;
@@ -192,12 +207,7 @@ namespace Daytona
             GC.SuppressFinalize(this);
         }
 
-        public Actor RegisterActor<T>(
-            string name, 
-            string inRoute, 
-            string outRoute, 
-            ISerializer serializer, 
-            Action<Actor> workload) where T : IPayload
+        public Actor RegisterActor<T>(string name, string inRoute, string outRoute, ISerializer serializer, Action<Actor> workload) where T : IPayload
         {
             this.actorTypes.Add(
                 name, 
@@ -208,6 +218,20 @@ namespace Daytona
                             actor.Start<T>();
                         }
                     });
+            return this;
+        }
+
+        public Actor RegisterActor(string name, string inRoute, string outRoute, ISerializer serializer, Action<string, List<object>, Actor> workload) 
+        {
+            this.actorTypes.Add(
+                name,
+                () =>
+                {
+                    using (var actor = new Actor(this.context, serializer, inRoute, workload))
+                    {
+                        actor.Start();
+                    }
+                });
             return this;
         }
 
@@ -239,6 +263,140 @@ namespace Daytona
             ////Actor.Writeline(replySignal);
         }
 
+        public virtual void Start()
+        {
+            bool stop = false;
+            while (stop == false)
+            {
+                this.IsRunning = true;
+                string address = string.Empty;
+                ZmqMessage zmqmessage = null;
+
+                this.WriteLineToMonitor("Waiting for message");
+
+                byte[] messageAsBytes = null;
+                stop = this.ReceiveMessage(this.subscriber);
+                if (stop)
+                {
+                    this.IsRunning = false;
+                }
+
+                this.WriteLineToMonitor("Received message");
+            }
+
+            this.WriteLineToMonitor("Exiting actor");
+        }
+
+        public virtual bool ReceiveMessage(ZmqSocket subscriber)
+        {
+            var stopSignal = false;
+            var zmqOut = new ZmqMessage();
+            bool hasMore = true;
+
+            // var address = string.Empty;
+            // byte[] messageAsBytes = null;
+            int frameCount = 0;
+            MethodInfo methodinfo = null;
+            var methodParameters = new List<object>();
+            var serializer = new BinarySerializer();
+            var typeParameter = true;
+            Type type = null;
+            MethodInfo returnedMethodInfo = null;
+            string messageType, returnedMessageType = string.Empty;
+            string address, returnedAddress = string.Empty;
+
+            while (hasMore)
+            {
+                Frame frame = subscriber.ReceiveFrame();
+
+                stopSignal = UnPackFrame(frameCount, serializer, frame, out address, ref methodinfo, methodParameters, ref typeParameter, ref type, out messageType);
+                if (frameCount == 0)
+                {
+                    returnedAddress = address;
+                }
+
+                if (frameCount == 1)
+                {
+                    returnedMessageType = messageType;
+                }
+
+                if (frameCount == 2)
+                {
+                    returnedMethodInfo = methodinfo;
+                }
+
+                frameCount++;
+                zmqOut.Append(new Frame(frame.Buffer));
+                hasMore = subscriber.ReceiveMore;
+            }
+
+            //if (returnedMessageType.ToLower() == "raw")
+            //{
+                var inputParameters = new object[4];
+                inputParameters[0] = returnedAddress;
+                inputParameters[1] = methodParameters;
+                inputParameters[3] = this;
+                this.Workload.DynamicInvoke(inputParameters);
+            //}
+            //else
+            //{
+            //    var target = (T)Activator.CreateInstance(typeof(T));
+            //    var result = returnedMethodInfo.Invoke(target, methodParameters.ToArray());
+            //}
+            return stopSignal;
+        }
+
+        public static bool UnPackFrame(int frameCount, BinarySerializer serializer, Frame frame, out string address, ref MethodInfo methodinfo, List<object> methodParameters, ref bool typeParameter, ref Type type, out string messageType)
+        {
+            messageType = string.Empty;
+            bool stopSignal = false;
+            address = string.Empty;
+            byte[] messageAsBytes;
+            int numberOfParameters;
+
+            if (frameCount == 0)
+            {
+                address = serializer.GetString(frame.Buffer);
+            }
+
+            if (frameCount == 1)
+            {
+                messageAsBytes = frame.Buffer;
+                messageType = serializer.GetString(messageAsBytes);
+                if (messageType.ToLower() == "stop")
+                {
+                    stopSignal = true;
+                }
+            }
+
+            if (frameCount == 2)
+            {
+                methodinfo = (MethodInfo)serializer.Deserializer(frame.Buffer, typeof(MethodInfo));
+            }
+
+            if (frameCount == 3)
+            {
+                numberOfParameters =
+                    int.Parse(serializer.GetString(frame.Buffer).Replace("ParameterCount:", string.Empty));
+            }
+
+            if (frameCount > 3)
+            {
+                if (typeParameter)
+                {
+                    type = (Type)serializer.Deserializer(frame.Buffer, typeof(Type));
+                    typeParameter = false;
+                }
+                else
+                {
+                    var parameter = serializer.Deserializer(frame.Buffer, type);
+                    methodParameters.Add(parameter);
+                    typeParameter = true;
+                }
+            }
+
+            return stopSignal;
+        }
         public void Start<T>() where T : IPayload
         {
             bool stop = false;
@@ -425,7 +583,15 @@ namespace Daytona
         {
             this.subscriber = context.CreateSocket(SocketType.SUB);
             this.subscriber.Connect(Pipe.SubscribeAddressClient);
-            this.subscriber.Subscribe(this.Serializer.GetBuffer(this.InRoute));
+            if (string.IsNullOrEmpty(this.InRoute))
+            {
+                this.subscriber.SubscribeAll();
+            }
+            else
+            {
+                this.subscriber.Subscribe(this.Serializer.GetBuffer(this.InRoute));
+            }
+
             this.MonitorChannel.Send(
                 "Set up Receive channel on " + Pipe.SubscribeAddressClient + " listening on: " + this.InRoute, 
                 Pipe.ControlChannelEncoding);
