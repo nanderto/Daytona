@@ -20,7 +20,6 @@
         public bool WasCalled = false;
 
         private Type actorType;
-        private Type actoryType;
         private long Id = 0;
         private Guid? uniqueGuid;
 
@@ -37,17 +36,17 @@
             this.actor = actor;
         }
 
-        public MessageSenderProxy(Actor<T> actor, Type actoryType, long Id)
+        public MessageSenderProxy(Actor<T> actor, Type actorType, long Id)
         {
             this.actor = actor;
-            this.actoryType = actoryType;
+            this.actorType = actorType;
             this.Id = Id;
         }
 
-        public MessageSenderProxy(Actor<T> actor, Type actoryType, Guid uniqueGuid)
+        public MessageSenderProxy(Actor<T> actor, Type actorType, Guid uniqueGuid)
         {
             this.actor = actor;
-            this.actoryType = actoryType;
+            this.actorType = actorType;
             this.uniqueGuid = uniqueGuid;
         }
 

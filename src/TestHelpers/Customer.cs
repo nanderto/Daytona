@@ -37,6 +37,7 @@ namespace TestHelpers
         void UpdateDescription(string description);
     }
 
+    [Serializable]
     public class Order : IOrder
     {
         public Order()

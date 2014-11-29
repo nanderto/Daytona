@@ -33,11 +33,11 @@ namespace Daytona.Tests
         }
 
         [TestMethod]   
-        public void CallMethod_usingBinarySerializer()
+        public void CallMethod_UsingBinarySerializer()
         {
             using (var context = ZmqContext.Create())
             {
-                using (var actor = new Actor<Customer>(context, new BinarySerializer()))
+                using (var actor = new Actor<Order>(context, new BinarySerializer()))
                 {
                     var customer = actor.CreateInstance<ICustomer>(typeof(Customer));
                     Assert.IsInstanceOfType(customer, typeof(ICustomer));
@@ -53,7 +53,7 @@ namespace Daytona.Tests
             {
                 using (var actor = new Actor<Customer>(context, new BinarySerializer()))
                 {
-                    var customer = actor.CreateInstance<ICustomer>(typeof(Customer));
+                    var customer = actor.CreateInstance<ICustomer>(typeof(Customer), 33);
                     Assert.IsInstanceOfType(customer, typeof(ICustomer));
                     customer.UpdateName("XXX"); //called without exception
 
@@ -61,7 +61,9 @@ namespace Daytona.Tests
                     Assert.IsInstanceOfType(order, typeof(IOrder));
                     order.UpdateDescription("XXX"); //called without exception
 
-                    //Assert.AreEqual("XXX", order.Description);
+                    var order2 = actor.CreateInstance<IOrder>(typeof(Order), Guid.NewGuid());
+                    Assert.IsInstanceOfType(order2, typeof(IOrder));
+                    order2.UpdateDescription("ZZZ"); //called without exception
                 }
             }
         }
