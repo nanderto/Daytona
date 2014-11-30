@@ -30,6 +30,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MonitorNetMq", "MonitorNetM
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Displaymessages", "Displaymessages\Displaymessages.csproj", "{5CFFEE8F-BBB6-460B-86D9-F0601FC35F80}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Silo", "Silo\Silo.csproj", "{68F6F93C-266C-4786-A284-4BA335CF2CCC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -148,6 +150,14 @@ Global
 		{5CFFEE8F-BBB6-460B-86D9-F0601FC35F80}.Release|Any CPU.Build.0 = Release|Any CPU
 		{5CFFEE8F-BBB6-460B-86D9-F0601FC35F80}.Release|x64.ActiveCfg = Release|Any CPU
 		{5CFFEE8F-BBB6-460B-86D9-F0601FC35F80}.Release|x86.ActiveCfg = Release|Any CPU
+		{68F6F93C-266C-4786-A284-4BA335CF2CCC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{68F6F93C-266C-4786-A284-4BA335CF2CCC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{68F6F93C-266C-4786-A284-4BA335CF2CCC}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{68F6F93C-266C-4786-A284-4BA335CF2CCC}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{68F6F93C-266C-4786-A284-4BA335CF2CCC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{68F6F93C-266C-4786-A284-4BA335CF2CCC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{68F6F93C-266C-4786-A284-4BA335CF2CCC}.Release|x64.ActiveCfg = Release|Any CPU
+		{68F6F93C-266C-4786-A284-4BA335CF2CCC}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
