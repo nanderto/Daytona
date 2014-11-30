@@ -32,5 +32,8 @@
     <NamedTestSelector>
       <TestName>Daytona.Tests.ActorTests.ReceiveMessageTest</TestName>
     </NamedTestSelector>
+    <NamedTestSelector>
+      <TestName>Daytona.Tests.ActorTests.CallMethod_usingDefaultSerializer</TestName>
+    </NamedTestSelector>
   </IgnoredTests>
 </ProjectConfiguration>

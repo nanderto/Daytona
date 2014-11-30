@@ -10,6 +10,7 @@ namespace Daytona
     using System.Collections.Generic;
     using System.IO;
     using System.Reflection;
+    using System.Runtime.Serialization;
     using System.Text;
     using System.Threading.Tasks;
 
@@ -275,13 +276,25 @@ namespace Daytona
                 this.WriteLineToMonitor("Waiting for message");
 
                 byte[] messageAsBytes = null;
-                stop = this.ReceiveMessage(this.subscriber);
+                try
+                {
+                    stop = this.ReceiveMessage(this.subscriber);
+                    this.WriteLineToMonitor("Received message");
+                }
+                catch (SerializationException se)
+                {
+                    this.WriteLineToMonitor(string.Format("Serialization Error: {0}", se.ToString()));
+                    ////skip to end of message
+                    while (this.subscriber.ReceiveMore)
+                    {
+                        Frame frame = subscriber.ReceiveFrame();
+                    }
+                }
+                
                 if (stop)
                 {
                     this.IsRunning = false;
                 }
-
-                this.WriteLineToMonitor("Received message");
             }
 
             this.WriteLineToMonitor("Exiting actor");
@@ -302,14 +315,22 @@ namespace Daytona
             var typeParameter = true;
             Type type = null;
             MethodInfo returnedMethodInfo = null;
-            string messageType, returnedMessageType = string.Empty;
-            string address, returnedAddress = string.Empty;
+            string messageType = string.Empty, returnedMessageType = string.Empty;
+            string address = string.Empty;
+            var returnedAddress = string.Empty;
 
             while (hasMore)
             {
                 Frame frame = subscriber.ReceiveFrame();
+                try
+                {
+                    stopSignal = UnPackFrame(frameCount, serializer, frame, out address, ref methodinfo, methodParameters, ref typeParameter, ref type, out messageType);
+                }
+                catch (SerializationException se)
+                {
+                    this.WriteLineToMonitor(string.Format("Serialization Error: {0}", se.Message));
+                }
 
-                stopSignal = UnPackFrame(frameCount, serializer, frame, out address, ref methodinfo, methodParameters, ref typeParameter, ref type, out messageType);
                 if (frameCount == 0)
                 {
                     returnedAddress = address;
@@ -332,10 +353,10 @@ namespace Daytona
 
             //if (returnedMessageType.ToLower() == "raw")
             //{
-                var inputParameters = new object[4];
+                var inputParameters = new object[3];
                 inputParameters[0] = returnedAddress;
                 inputParameters[1] = methodParameters;
-                inputParameters[3] = this;
+                inputParameters[2] = this;
                 this.Workload.DynamicInvoke(inputParameters);
             //}
             //else
@@ -397,6 +418,7 @@ namespace Daytona
 
             return stopSignal;
         }
+
         public void Start<T>() where T : IPayload
         {
             bool stop = false;
@@ -583,6 +605,7 @@ namespace Daytona
         {
             this.subscriber = context.CreateSocket(SocketType.SUB);
             this.subscriber.Connect(Pipe.SubscribeAddressClient);
+            
             if (string.IsNullOrEmpty(this.InRoute))
             {
                 this.subscriber.SubscribeAll();
