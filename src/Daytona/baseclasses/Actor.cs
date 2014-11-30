@@ -56,7 +56,7 @@ namespace Daytona
             this.Serializer = new DefaultSerializer(Encoding.Unicode);
             this.SetUpMonitorChannel(context);
             this.SetUpOutputChannel(context);
-            this.PropertyBag = new Dictionary<string, string>();
+            this.PropertyBag = new Dictionary<string, object>();
         }
 
         public Actor(ISerializer serializer)
@@ -70,8 +70,20 @@ namespace Daytona
             this.IsRunning = false;
             this.context = context;
             this.Serializer = serializer;
+            this.PropertyBag = new Dictionary<string, object>();
             this.SetUpMonitorChannel(context);
             this.SetUpOutputChannel(context);
+        }
+
+        public Actor(ZmqContext context, ISerializer serializer, string inRoute)
+        {
+            this.IsRunning = false;
+            this.context = context;
+            this.Serializer = serializer;
+            this.PropertyBag = new Dictionary<string, object>();
+            this.SetUpMonitorChannel(context);
+            this.SetUpOutputChannel(context);
+            this.SetUpReceivers(context, inRoute);
         }
 
         public Actor(ZmqContext context, ISerializer serializer, string inRoute, Action<Actor> workload)
@@ -81,7 +93,7 @@ namespace Daytona
             this.Serializer = serializer;
             this.InRoute = inRoute;
             this.Workload = workload;
-            this.PropertyBag = new Dictionary<string, string>();
+            this.PropertyBag = new Dictionary<string, object>();
             this.SetUpMonitorChannel(context);
             this.SetUpOutputChannel(context);
             this.SetUpReceivers(context, inRoute);
@@ -95,7 +107,7 @@ namespace Daytona
             this.Serializer = serializer;
             this.InRoute = inRoute;
             this.Workload = workload;
-            this.PropertyBag = new Dictionary<string, string>();
+            this.PropertyBag = new Dictionary<string, object>();
             this.SetUpMonitorChannel(context);
             this.SetUpOutputChannel(context);
             this.SetUpReceivers(context, inRoute);
@@ -152,7 +164,7 @@ namespace Daytona
             }
         }
 
-        public Dictionary<string, string> PropertyBag { get; set; }
+        public Dictionary<string, object> PropertyBag { get; set; }
 
         public ISerializer Serializer
         {

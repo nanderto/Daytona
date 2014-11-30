@@ -14,7 +14,7 @@ namespace Silo
 
     class Program
     {
-        static void Main(string[] args)
+        public static void Main(string[] args)
         {
             Console.CancelKeyPress += new ConsoleCancelEventHandler(ConsoleCancelHandler);
             var binarySerializer = new BinarySerializer();
@@ -22,7 +22,7 @@ namespace Silo
 
             using (var context = ZmqContext.Create())
             {
-                using (var actorFactory = new Actor<Daytona.Silo>(context, new BinarySerializer(), string.Empty))
+                using (var actorFactory = new Actor(context, new BinarySerializer(), string.Empty))
                 {
                     actorFactory.RegisterActor(
                         "Silo",
@@ -31,6 +31,22 @@ namespace Silo
                         new BinarySerializer(),
                         (address, parameters, actor) =>
                             {
+                                object returnedObject = null;
+                                List<RunningActors> runningActors = null;
+                                
+                                if (actor.PropertyBag.TryGetValue("RunningActors", out returnedObject))
+                                {
+                                   runningActors = (List<RunningActors>)returnedObject;
+                                   var returnedActor = runningActors.FirstOrDefault(ra => ra.Address == address);
+                                   if (returnedActor == null)
+                                   {
+                                       ////start actor
+                                       /// 
+                                       
+                                       runningActors.Add(new RunningActors(address));
+                                   }
+                                }                        
+                                
                                 var firstParameter = string.Empty;
                                 try
                                 {

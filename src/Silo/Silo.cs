@@ -6,7 +6,13 @@ using System.Threading.Tasks;
 
 namespace Daytona
 {
-    class Silo
+    using ZeroMQ;
+
+    public class Silo : Actor
     {
+        public Silo(ZmqContext context, ISerializer serializer, string inRoute) : base(context, serializer, inRoute)
+        {
+            
+        }
     }
 }
