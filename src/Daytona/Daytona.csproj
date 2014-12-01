@@ -98,6 +98,7 @@
     <Compile Include="MessageSenderProxy.cs" />
     <Compile Include="Pipe.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Silo.cs" />
     <Compile Include="ZeroMQExtensionMethods.cs" />
   </ItemGroup>
   <ItemGroup>

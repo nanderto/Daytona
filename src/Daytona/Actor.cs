@@ -320,7 +320,7 @@
                 name,
                 () =>
                 {
-                    using (var actor = new Actor(this.context, serializer, inRoute, workload))
+                    using (var actor = new Actor(this.context, serializer, name, inRoute, workload))
                     {
                         actor.Start();
                     }

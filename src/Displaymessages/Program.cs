@@ -55,11 +55,11 @@ namespace Monitor
                     using (var actorFactory = new Actor<Silo>(context, new BinarySerializer(), string.Empty))
                     {
                         actorFactory.RegisterActor(
-                            "Publisher",
+                            "Display",
                             "",
                             "outRoute",
                             new BinarySerializer(),
-                            (address, parameters, actor) =>
+                            (address, methodinfo, parameters, actor) =>
                                 {
                                     var firstParameter = string.Empty;
                                     try

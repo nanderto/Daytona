@@ -23,7 +23,7 @@ namespace Daytona
         public ZmqSocket subscriber;
 
         [NonSerialized]
-        protected ZmqContext context;
+        public ZmqContext context;
 
         public readonly Dictionary<string, Action> actorTypes = new Dictionary<string, Action>();
 
@@ -86,11 +86,12 @@ namespace Daytona
             this.SetUpReceivers(context, inRoute);
         }
 
-        public Actor(ZmqContext context, ISerializer serializer, string inRoute, Action<Actor> workload)
+        public Actor(ZmqContext context, ISerializer serializer, string name, string inRoute, Action<Actor> workload)
         {
             this.IsRunning = false;
             this.context = context;
             this.Serializer = serializer;
+            this.Name = name;
             this.InRoute = inRoute;
             this.Workload = workload;
             this.PropertyBag = new Dictionary<string, object>();
@@ -100,11 +101,12 @@ namespace Daytona
         }
 
 
-        public Actor(ZmqContext context, ISerializer serializer, string inRoute, Action<string, List<object>,  Actor> workload)
+        public Actor(ZmqContext context, ISerializer serializer, string name, string inRoute, Action<string, List<object>, Actor> workload)
         {
             this.IsRunning = false;
             this.context = context;
             this.Serializer = serializer;
+            this.Name = name;
             this.InRoute = inRoute;
             this.Workload = workload;
             this.PropertyBag = new Dictionary<string, object>();
@@ -113,11 +115,12 @@ namespace Daytona
             this.SetUpReceivers(context, inRoute);
         }
 
-        public Actor(ZmqContext context, ISerializer serializer, string inRoute, Action<string, MethodInfo, List<object>, Actor> workload)
+        public Actor(ZmqContext context, ISerializer serializer, string name, string inRoute, Action<string, MethodInfo, List<object>, Actor> workload)
         {
             this.IsRunning = false;
             this.context = context;
             this.Serializer = serializer;
+            this.Name = name;
             this.InRoute = inRoute;
             this.Workload = workload;
             this.PropertyBag = new Dictionary<string, object>();
@@ -148,6 +151,8 @@ namespace Daytona
                 this.monitorChannel = value;
             }
         }
+
+        public string Name { get; set; }
 
         public string OutRoute { get; set; }
 
@@ -239,7 +244,7 @@ namespace Daytona
                 name, 
                 () =>
                     {
-                        using (var actor = new Actor(this.context, serializer, inRoute, workload))
+                        using (var actor = new Actor(this.context, serializer, name, inRoute, workload))
                         {
                             actor.Start<T>();
                         }
@@ -254,7 +259,7 @@ namespace Daytona
                 name,
                 () =>
                 {
-                    using (var actor = new Actor(this.context, serializer, inRoute, workload))
+                    using (var actor = new Actor(this.context, serializer, name, inRoute, workload))
                     {
                         actor.Start();
                     }
@@ -269,7 +274,7 @@ namespace Daytona
                 name,
                 () =>
                 {
-                    using (var actor = new Actor(this.context, serializer, inRoute, workload))
+                    using (var actor = new Actor(this.context, serializer, name, inRoute, workload))
                     {
                         actor.Start();
                     }
@@ -359,6 +364,7 @@ namespace Daytona
             string messageType = string.Empty, returnedMessageType = string.Empty;
             string address = string.Empty;
             var returnedAddress = string.Empty;
+            var exceptionThrown = false;
 
             while (hasMore)
             {
@@ -370,6 +376,7 @@ namespace Daytona
                 catch (SerializationException se)
                 {
                     this.WriteLineToMonitor(string.Format("Serialization Error: {0}", se.Message));
+                    exceptionThrown = true;
                 }
 
                 if (frameCount == 0)
@@ -392,12 +399,14 @@ namespace Daytona
                 hasMore = subscriber.ReceiveMore;
             }
 
-            //if (returnedMessageType.ToLower() == "raw")
+            //if (!exceptionThrown)
             //{
-                var inputParameters = new object[3];
+                var inputParameters = new object[4];
                 inputParameters[0] = returnedAddress;
-                inputParameters[1] = methodParameters;
-                inputParameters[2] = this;
+                inputParameters[1] = returnedMethodInfo;
+                inputParameters[2] = methodParameters;
+                inputParameters[3] = this;
+
                 this.Workload.DynamicInvoke(inputParameters);
             //}
             //else
@@ -665,7 +674,5 @@ namespace Daytona
                 Pipe.ControlChannelEncoding.GetBytes("ADDSUBSCRIBER"), 
                 this.OutputChannel);
         }
-
-        public ZmqContext Context { get; set; }
     }
 }
