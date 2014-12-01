@@ -8,11 +8,19 @@ namespace Daytona
 {
     using ZeroMQ;
 
-    public class Silo : Actor
+    public class Silo
     {
-        public Silo(ZmqContext context, ISerializer serializer, string inRoute) : base(context, serializer, inRoute)
-        {
+        //public Silo(ZmqContext context, ISerializer serializer, string inRoute) : base(context, serializer, inRoute)
+        //{
             
+        //}
+
+        public Silo(Actor starter)
+        {
+            this.Starter = starter;
         }
+
+
+        public Actor Starter { get; set; }
     }
 }

@@ -113,6 +113,19 @@ namespace Daytona
             this.SetUpReceivers(context, inRoute);
         }
 
+        public Actor(ZmqContext context, ISerializer serializer, string inRoute, Action<string, MethodInfo, List<object>, Actor> workload)
+        {
+            this.IsRunning = false;
+            this.context = context;
+            this.Serializer = serializer;
+            this.InRoute = inRoute;
+            this.Workload = workload;
+            this.PropertyBag = new Dictionary<string, object>();
+            this.SetUpMonitorChannel(context);
+            this.SetUpOutputChannel(context);
+            this.SetUpReceivers(context, inRoute);
+        }
+
         public virtual event EventHandler<CallBackEventArgs> SaveCompletedEvent;
         
         public Delegate Callback { get; set; }
@@ -234,7 +247,23 @@ namespace Daytona
             return this;
         }
 
+
         public Actor RegisterActor(string name, string inRoute, string outRoute, ISerializer serializer, Action<string, List<object>, Actor> workload) 
+        {
+            this.actorTypes.Add(
+                name,
+                () =>
+                {
+                    using (var actor = new Actor(this.context, serializer, inRoute, workload))
+                    {
+                        actor.Start();
+                    }
+                });
+            return this;
+        }
+
+
+        public Actor RegisterActor(string name, string inRoute, string outRoute, ISerializer serializer, Action<string, MethodInfo, List<object>, Actor> workload)
         {
             this.actorTypes.Add(
                 name,
@@ -636,5 +665,7 @@ namespace Daytona
                 Pipe.ControlChannelEncoding.GetBytes("ADDSUBSCRIBER"), 
                 this.OutputChannel);
         }
+
+        public ZmqContext Context { get; set; }
     }
 }

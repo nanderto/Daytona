@@ -219,7 +219,7 @@
             return proxyFactory.CreateProxy<TInterface>(Type.EmptyTypes, invocationHandler);
         }
 
-        public bool ReceiveMessage(ZmqSocket subscriber)
+        public override bool ReceiveMessage(ZmqSocket subscriber)
         {
             var stopSignal = false;
             var zmqOut = new ZmqMessage();
@@ -262,19 +262,19 @@
                 hasMore = subscriber.ReceiveMore;
             }
 
-            if (returnedMessageType.ToLower() == "raw")
-            {
-                var inputParameters = new object[4];
-                inputParameters[0] = returnedAddress;
-                inputParameters[1] = methodParameters;
-                inputParameters[3] = this;
-                this.Workload.DynamicInvoke(inputParameters);
-            }
-            else
-            {
+            //if (returnedMessageType.ToLower() == "raw")
+            //{
+            //    var inputParameters = new object[4];
+            //    inputParameters[0] = returnedAddress;
+            //    inputParameters[1] = methodParameters;
+            //    inputParameters[3] = this;
+            //    this.Workload.DynamicInvoke(inputParameters);
+            //}
+            //else
+            //{
                 var target = (T)Activator.CreateInstance(typeof(T));
                 var result = returnedMethodInfo.Invoke(target, methodParameters.ToArray());
-            }
+            //}
             return stopSignal;
         }
 
@@ -309,6 +309,11 @@
             this.WriteLineToMonitor("Exiting actor");
         }
 
+         public void StartWithIdandMessage(string address, ZmqMessage zmqMessage)
+        {
+            throw new NotImplementedException();
+        }
+
         public Actor RegisterActor(string name, string inRoute, ISerializer serializer, Action<string, List<object>, Actor> workload)
         {
             this.actorTypes.Add(
@@ -321,6 +326,14 @@
                     }
                 });
             return this;
+        }
+
+
+        public void StartWithIdAndMethod(string address, MethodInfo methodInfo, List<object> parameters)
+        {
+            var target = (T)Activator.CreateInstance(typeof(T));
+            var result = methodInfo.Invoke(target, parameters.ToArray());
+            this.Start();
         }
     }
 }

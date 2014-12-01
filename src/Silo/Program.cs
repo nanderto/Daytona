@@ -29,7 +29,7 @@ namespace Silo
                         "",
                         "outRoute",
                         new BinarySerializer(),
-                        (address, parameters, actor) =>
+                        (address, methodInfo, parameters, actor) =>
                             {
                                 object returnedObject = null;
                                 List<RunningActors> runningActors = null;
@@ -40,6 +40,8 @@ namespace Silo
                                    var returnedActor = runningActors.FirstOrDefault(ra => ra.Address == address);
                                    if (returnedActor == null)
                                    {
+                                       var customer = new Actor<Customer>(actor.Context, new BinarySerializer());
+                                       customer.StartWithIdAndMethod(address, methodInfo, parameters);
                                        ////start actor
                                        /// 
                                        
