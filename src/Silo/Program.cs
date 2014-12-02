@@ -26,7 +26,7 @@ namespace SiloConsole
                 //{
 
                 //}               
-                 using (var pipe = new Pipe())
+                using (var pipe = new Pipe())
                 {
                     pipe.Start(context);
                     using (var actorFactory = new Actor(context, new BinarySerializer(), string.Empty))
@@ -45,24 +45,31 @@ namespace SiloConsole
                                     {
                                         runningActors = (List<RunningActors>)returnedObject;
                                         var returnedActor = runningActors.FirstOrDefault(ra => ra.Address == address);
+
+                                        Console.WriteLine("Hey we found an actor");
                                         if (returnedActor == null)
                                         {
                                             var customer = new Actor<Customer>(actor.context, new BinarySerializer());
-                                            customer.StartWithIdAndMethod(address, methodInfo, parameters);
+                                            //customer.StartWithIdAndMethod(address, methodInfo, parameters);
+                                            Console.WriteLine("I wish I could start a method");
                                             ////start actor
                                             /// 
 
                                             runningActors.Add(new RunningActors(address));
                                         }
+
+                                        Console.WriteLine("We found a running actor so er did nothing");
                                     }
                                     else
                                     {
                                         var customer = new Actor<Customer>(actor.context, new BinarySerializer());
-                                        customer.StartWithIdAndMethod(address, methodInfo, parameters);
+                                       // customer.StartWithIdAndMethod(address, methodInfo, parameters);
+                                        Console.WriteLine("no collection of running actors, So I am creating one and starting a new runner");
                                         ////start actor
                                         /// 
-
+                                        runningActors = new List<RunningActors>();
                                         runningActors.Add(new RunningActors(address));
+                                        actor.PropertyBag.Add("RunningActors", runningActors);
                                     }
 
                                     var firstParameter = string.Empty;
