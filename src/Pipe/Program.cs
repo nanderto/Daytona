@@ -5,18 +5,18 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using ZeroMQ;
-using ZeroMQ.Devices;
 
 namespace PipeRunner
 {
+    using NetMQ;
+
     class Program
     {
         static long msgCptr = 0;
         static int msgIndex = 0;
         static bool interrupted = false;
         private static int nbSubscribersConnected;
-        static ZmqSocket frontend, backend;
+        static NetMQSocket frontend, backend;
 
         static void ConsoleCancelHandler(object sender, ConsoleCancelEventArgs e)
         {
@@ -29,7 +29,7 @@ namespace PipeRunner
             var input = string.Empty;
             Console.CancelKeyPress += new ConsoleCancelEventHandler(ConsoleCancelHandler);
 
-            using (var context = ZmqContext.Create())
+            using (var context = NetMQContext.Create())
             {
                 using (var pipe = new Pipe())
                 {

@@ -26,9 +26,9 @@ namespace SiloConsole
                 //{
 
                 //}               
-                using (var pipe = new Pipe())
-                {
-                    pipe.Start(context);
+                //using (var pipe = new Pipe())
+                //{
+                //    pipe.Start(context);
                     using (var actorFactory = new Actor(context, new BinarySerializer(), string.Empty))
                     {
                         actorFactory.RegisterActor(
@@ -104,7 +104,7 @@ namespace SiloConsole
 
                         Console.ReadLine();
                     }
-                }
+                //}
             }
         }
 

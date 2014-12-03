@@ -16,7 +16,7 @@ namespace Daytona
 
     public class Pipe : IDisposable
     {
-        public static ForwarderDevice ForwarderDevice = null;
+        public static ForwarderDevice forwarderDevice = null;
 
         public static string MonitorAddressClient = "tcp://localhost:5560";  ////"inproc://pubsubcontrol";//
 
@@ -99,76 +99,107 @@ namespace Daytona
             this.SetUpAddSubscriberCountChannel(context);
 
             //this should work but the forwarder device appears to be broken - it does not use XSUb and XPUB sockets
-            ForwarderDevice = new ForwarderDevice(context, PublishAddressServer, SubscribeAddressServer, DeviceMode.Threaded);
-            ForwarderDevice.Start();
-            while (!ForwarderDevice.IsRunning)
-            { }
+            //forwarderDevice = new ForwarderDevice(context, PublishAddressServer, SubscribeAddressServer, DeviceMode.Threaded);
+            //forwarderDevice.FrontendSetup.Subscribe(string.Empty);
+            //forwarderDevice.Start();
+            //while (!forwarderDevice.IsRunning)
+            //{ }
 
             QueueDevce = new QueueDevice(context, PubSubControlBackAddressServer, PubSubControlFrontAddress, DeviceMode.Threaded);
             QueueDevce.Start();
-            while (!QueueDevce.IsRunning)
-            {
-            }
+            //while (!QueueDevce.IsRunning)
+            //{
+            //}
 
             this.Writeline("Control channel started");
 
-            ////long count = 0;
-            ////this.cancellationTokenSource = new CancellationTokenSource();
-            ////var token = this.cancellationTokenSource.Token;
-            ////Task.Run(() =>
-            ////{
-            ////    using (frontend = context.CreateXSubscriberSocket())
-            ////    {
-            ////        using (backend = context.CreateXPublisherSocket())
-            ////        {
-            ////            frontend.Bind(Pipe.PublishAddressServer); ////"tcp://*:5550");
-            ////            backend.Bind(Pipe.SubscribeAddressServer); ////"tcp://*:5553");
-            ////            frontend.ReceiveReady += frontend_ReceiveReady;
-            ////            frontend.ReceiveReady += new EventHandler<NetMQSocketEventArgs>(FrontendReceiveReady);
-            ////            backend.ReceiveReady += new EventHandler<NetMQSocketEventArgs>(BackendReceiveReady);
-            ////            this.AddSubscriberCountChannel.ReceiveReady += new EventHandler<NetMQSocketEventArgs>(AddSubscriberCountChannelReceiveReady);
-            ////            using (this.poller = new Poller(new NetMQSocket[] { frontend, backend, this.AddSubscriberCountChannel }))
-            ////            {
-            ////                Writeline("About to start polling");
+            long count = 0;
+            this.cancellationTokenSource = new CancellationTokenSource();
+            var token = this.cancellationTokenSource.Token;
+            Task.Run(() =>
+            {
+                using (frontend = context.CreateXSubscriberSocket())
+                {
+                    using (backend = context.CreateXPublisherSocket())
+                    {
+                        frontend.Bind(Pipe.PublishAddressServer); ////"tcp://*:5550");
+                        backend.Bind(Pipe.SubscribeAddressServer); ////"tcp://*:5553");
+                       // frontend.ReceiveReady += frontend_ReceiveReady;
+                        frontend.ReceiveReady += new EventHandler<NetMQSocketEventArgs>(FrontendReceiveReady);
+                        backend.ReceiveReady += new EventHandler<NetMQSocketEventArgs>(BackendReceiveReady);
+                       // this.AddSubscriberCountChannel.ReceiveReady += new EventHandler<NetMQSocketEventArgs>(AddSubscriberCountChannelReceiveReady);
+                        using (this.poller = new Poller(new NetMQSocket[] { frontend, backend, this.AddSubscriberCountChannel }))
+                        {
+                            Writeline("About to start polling");
 
-            ////                while (true)
-            ////                {
-            ////                    poller.Start(); // .PollOnce(); .Poll(new TimeSpan(0,0,0,0,5));
-            ////                    Writeline("polling" + count);
-            ////                    count++;
-            ////                    if (token.IsCancellationRequested)
-            ////                    {
-            ////                        Writeline("break");
-            ////                        break;
-            ////                    }
-            ////                }
-            ////            }
+                            while (true)
+                            {
+                                poller.Start(); // .PollOnce(); .Poll(new TimeSpan(0,0,0,0,5));
+                                Writeline("polling" + count);
+                                count++;
+                                if (token.IsCancellationRequested)
+                                {
+                                    Writeline("break");
+                                    break;
+                                }
+                            }
+                        }
 
-            ////            Writeline("stopped polling and exiting");
-            ////        }
-            ////    }
-            ////},
-            ////token);
+                        Writeline("stopped polling and exiting");
+                    }
+                }
+            },
+            token);
         }
-        
+
         //private static void AddSubscriberCountChannelReceiveReady(object sender, NetMQSocketEventArgs e)
         //{
         //    WritelineToLogFile("AddSubscriberCountChannelReceiveReady");
         //    var messageReceiver = new MessageReceiver();
-        //    SubscriberCount = SubscriberCount + messageReceiver.ReceiveMessage((ZmqSocket)sender);
+        //    SubscriberCount = SubscriberCount + messageReceiver.ReceiveMessage((NetMQSocket)sender);
         //}
 
-        //private static void BackendReceiveReady(object sender, NetMQSocketEventArgs e)
-        //{
-        //    WritelineToLogFile("BackendReceiveReady");
-        //    e.Socket.SendMessage(); .Forward(frontend);
-        //}
+        private static void BackendReceiveReady(object sender, NetMQSocketEventArgs e)
+        {
+            WritelineToLogFile("BackendReceiveReady");
+           // e.Socket.Send(frontend,);
 
-        //private static void FrontendReceiveReady(object sender, NetMQSocketEventArgs e)
-        //{
-        //    WritelineToLogFile("FrontendReceiveReady");
-        //    e.Socket.Forward(backend);
-        //}
+            bool more;
+
+            do
+            {
+                var data = e.Socket.Receive(out more);
+
+                if (more)
+                    frontend.SendMore(data);
+                else
+                {
+                    frontend.Send(data);
+                }
+
+            } while (more);
+        }
+
+        private static void FrontendReceiveReady(object sender, NetMQSocketEventArgs e)
+        {
+            WritelineToLogFile("FrontendReceiveReady");
+            //e.Socket.Forward(backend);
+
+            bool more;
+
+            do
+            {
+                var data = e.Socket.Receive(out more);
+
+                if (more)
+                    backend.SendMore(data);
+                else
+                {
+                    backend.Send(data);
+                }
+
+            } while (more);
+        }
 
         private void CleanUpDevices()
         {
@@ -183,16 +214,16 @@ namespace Daytona
                 //QueueDevce.Dispose();
             }
 
-            if (ForwarderDevice != null)
-            {
-                if (ForwarderDevice.IsRunning)
-                {
-                    ForwarderDevice.Stop(true);
-                    //ForwarderDevice. .Close();
-                }
+            //if (ForwarderDevice != null)
+            //{
+            //    if (ForwarderDevice.IsRunning)
+            //    {
+            //        ForwarderDevice.Stop(true);
+            //        //ForwarderDevice. .Close();
+            //    }
 
-                //ForwarderDevice. .Dispose();
-            }
+            //    //ForwarderDevice. .Dispose();
+            //}
 
             if (this.MonitorChannel != null)
             {
