@@ -8,6 +8,11 @@ using System.Threading.Tasks;
 
 namespace Daytona.Store
 {
+    /// <summary>
+    /// Defines the scope of access for a specified type of object. Provides both synchronos and asynchronos access to the operations.
+    /// use async where possible
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
     public class Scope<T> : IScope, IDisposable
     {
         private bool disposed;
@@ -35,6 +40,14 @@ namespace Daytona.Store
             //return 1;
         }
 
+        /// <summary>
+        /// Save Async will send the save message, 
+        /// ensure that the actor that is listening for the retun message is started and if not then starts it
+        /// it returns a task that can be awaited  that will return the message received  
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="input"></param>
+        /// <returns></returns>
         public Task<int> SaveAsync<T>(T input) where T : IPayload
         {
             var tcs = new TaskCompletionSource<int>();
@@ -66,6 +79,7 @@ namespace Daytona.Store
 
                 this.actor.SendOneMessageOfType<DBPayload<T>>(this.actor.OutRoute, dbPayload, this.actor.Serializer, this.actor.OutputChannel);
                 
+                ////Start the actor that is listening for return messages.
                 if (this.actor.IsRunning == false)
                 {
                     Task.Run(() =>

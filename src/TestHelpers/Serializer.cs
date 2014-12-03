@@ -28,7 +28,12 @@ namespace TestHelpers
 
         public T Deserializer<T>(byte[] input)
         {
-            return JsonConvert.DeserializeObject<T>(encoding.GetString(input));
+            return JsonConvert.DeserializeObject<T>(this.encoding.GetString(input));
+        }
+
+        public object Deserializer(byte[] input, Type type)
+        {
+            return JsonConvert.DeserializeObject(this.encoding.GetString(input), type);
         }
 
         public string GetString(byte[] buffer)

@@ -1,0 +1,1173 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Spackle</name>
+    </assembly>
+    <members>
+        <member name="T:Spackle.Extensions.IEnumerableOfTExtensions">
+            <summary>
+            Provides extension methods for <see cref="T:System.Collections.Generic.IEnumerable`1"/>-based objects.
+            </summary>
+        </member>
+        <member name="M:Spackle.Extensions.IEnumerableOfTExtensions.AsReadOnly``1(System.Collections.Generic.IEnumerable{``0})">
+            <summary>
+            Transforms the given enumeration into a <see cref="T:System.Collections.ObjectModel.ReadOnlyCollection`1"/>.
+            </summary>
+            <typeparam name="T">The type of the members in <paramref name="this"/>.</typeparam>
+            <param name="this">The enumeration to transform.</param>
+            <returns>A <see cref="T:System.Collections.ObjectModel.ReadOnlyCollection`1"/> object.</returns>
+            <exception cref="T:System.ArgumentNullException">Thrown if <paramref name="this"/> is <c>null</c>.</exception>
+        </member>
+        <member name="T:Spackle.SecureRandom">
+            <summary>
+            Combines the security of <see cref="T:System.Security.Cryptography.RandomNumberGenerator"/>
+            with the simple interface of <see cref="T:System.Random"/>.
+            </summary>
+        </member>
+        <member name="M:Spackle.SecureRandom.#ctor">
+            <summary>
+            Creates a new <see cref="T:Spackle.SecureRandom"/> instance.
+            </summary>
+        </member>
+        <member name="M:Spackle.SecureRandom.#ctor(System.Security.Cryptography.RandomNumberGenerator)">
+            <summary>
+            Creates a new <see cref="T:Spackle.SecureRandom"/> instance
+            based on the given <see cref="T:System.Security.Cryptography.RandomNumberGenerator"/>.
+            </summary>
+            <param name="generator">The <see cref="T:System.Security.Cryptography.RandomNumberGenerator"/> to use.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown if <paramref name="generator"/> is <c>null</c>.</exception>
+        </member>
+        <member name="M:Spackle.SecureRandom.Dispose">
+            <summary>
+            Disposes the current object (i.e. dispose the wrapped <see cref="T:System.Security.Cryptography.RandomNumberGenerator">generator</see>.
+            </summary>
+        </member>
+        <member name="M:Spackle.SecureRandom.GetBigInteger(System.UInt64)">
+            <summary>
+            Generates a <see cref="T:System.Numerics.BigInteger"/> value with the specified number of digits.
+            </summary>
+            <param name="numberOfDigits">The number of digits in the generated number.</param>
+            <returns>A new <see cref="T:System.Numerics.BigInteger"/> value.</returns>
+            <exception cref="T:System.ArgumentException">Thrown if <paramref name="numberOfDigits"/> is zero.</exception>
+        </member>
+        <member name="M:Spackle.SecureRandom.GetByteValues(System.UInt32,Spackle.ValueGeneration)">
+            <summary>
+            Gets an array of random <see cref="T:System.Byte"/> values.
+            </summary>
+            <param name="numberOfElements">
+            The number of random elements to get.
+            </param>
+            <param name="values">
+            Specifies if the values should be unique.
+            </param>
+            <returns>
+            Returns an array of random <see cref="T:System.Byte"/> values.
+            </returns>
+            <exception cref="T:System.ArgumentException">
+            Thrown if <paramref name="numberOfElements"/> exceeds the maximum value of a <see cref="T:System.Byte"/>
+            and <paramref name="values"/> is equal to <c>Unique</c>.
+            </exception>
+            <remarks>
+            If <paramref name="values"/> is equal to <see cref="F:Spackle.ValueGeneration.UniqueValuesOnly"/>,
+            then the value of <paramref name="numberOfElements"/> should be small relative to 
+            <see cref="F:System.Byte.MaxValue"/>. The closer the ratio of <c>numberOfElements/byte.MaxValue</c> is to 1, 
+            the longer it will take for <c>GetByteValues</c> to produce a unique random set of values.
+            </remarks>
+        </member>
+        <member name="M:Spackle.SecureRandom.GetDoubleValues(System.UInt32)">
+            <summary>
+            Gets an array of random <see cref="T:System.Double"/> values.
+            </summary>
+            <param name="numberOfElements">
+            The number of random elements to get.
+            </param>
+            <returns>
+            Returns an array of random <see cref="T:System.Double"/> values.
+            </returns>
+        </member>
+        <member name="M:Spackle.SecureRandom.GetInt32Values(System.UInt32,Spackle.ValueGeneration)">
+            <summary>
+            Gets an array of random <see cref="T:System.Int32"/> values.
+            </summary>
+            <param name="numberOfElements">
+            The number of random elements to get.
+            </param>
+            <param name="values">
+            Specifies if the values should be unique.
+            </param>
+            <returns>
+            Returns an array of random <see cref="T:System.Int32"/> values.
+            </returns>
+            <exception cref="T:System.ArgumentException">
+            Thrown if <paramref name="numberOfElements"/> exceeds the maximum value of an <see cref="T:System.Int32"/>
+            and <paramref name="values"/> is equal to <c>Unique</c>.
+            </exception>
+            <remarks>
+            If <paramref name="values"/> is equal to <see cref="F:Spackle.ValueGeneration.UniqueValuesOnly"/>,
+            then the value of <paramref name="numberOfElements"/> should be small relative to 
+            <see cref="F:System.Int32.MaxValue"/>. The closer the ratio of <c>numberOfElements/int.MaxValue</c> is to 1, 
+            the longer it will take for <c>GetInt32Values</c> to produce a unique random set of values.
+            </remarks>
+        </member>
+        <member name="M:Spackle.SecureRandom.GetInt32Values(System.UInt32,Spackle.Range{System.Int32},Spackle.ValueGeneration)">
+            <summary>
+            Gets an array of random <see cref="T:System.Int32"/> values between a given range.
+            </summary>
+            <param name="numberOfElements">
+            The number of random elements to get.
+            </param>
+            <param name="range">
+            Specifies a range to get values between.
+            </param>
+            <param name="values">
+            Specifies if the values should be unique.
+            </param>
+            <returns>
+            Returns an array of random <see cref="T:System.Int32"/> values.
+            </returns>
+            <exception cref="T:System.ArgumentException">
+            Thrown if <paramref name="numberOfElements"/> exceeds the difference between <c>range.End - range.Start</c>
+            and <paramref name="values"/> is equal to <c>Unique</c>.
+            </exception>
+            <remarks>
+            If <paramref name="values"/> is equal to <see cref="F:Spackle.ValueGeneration.UniqueValuesOnly"/>,
+            then the value of <paramref name="numberOfElements"/> should be small relative to 
+            the size of the range. The closer the ratio of <c>numberOfElements/(range.End - range.Start)</c> is to 1, 
+            the longer it will take for <c>GetInt32Values</c> to produce a unique random set of values.
+            </remarks>
+        </member>
+        <member name="M:Spackle.SecureRandom.Next">
+            <summary>
+            Gets a random <see cref="T:System.Int32"/> value.
+            </summary>
+            <returns>
+            Returns a new random <see cref="T:System.Int32"/> value between 0 (inclusive) 
+            and <c>Int32.MaxValue</c> (exclusive).
+            </returns>
+        </member>
+        <member name="M:Spackle.SecureRandom.Next(System.Int32)">
+            <summary>
+            Gets a random <see cref="T:System.Int32"/> value.
+            </summary>
+            <param name="maxValue">The upper bound of the generated random number.</param>
+            <returns>
+            Returns a new random <see cref="T:System.Int32"/> value between 0 (inclusive) 
+            and <paramref name="maxValue"/> (exclusive).
+            </returns>
+            <exception cref="T:System.ArgumentException">Thrown if <paramref name="maxValue"/> is less than zero.</exception>
+        </member>
+        <member name="M:Spackle.SecureRandom.Next(System.Int32,System.Int32)">
+            <summary>
+            Gets a random <see cref="T:System.Int32"/> value.
+            </summary>
+            <param name="minValue">The lower bound of the generated random number.</param>
+            <param name="maxValue">The upper bound of the generated random number.</param>
+            <returns>
+            Returns a new random <see cref="T:System.Int32"/> value between <paramref name="minValue"/> (inclusive) 
+            and <paramref name="maxValue"/> (exclusive).
+            </returns>
+            <exception cref="T:System.ArgumentException">
+            Thrown if <paramref name="maxValue"/> is less than <paramref name="minValue"/>.
+            </exception>
+        </member>
+        <member name="M:Spackle.SecureRandom.NextBoolean">
+            <summary>
+            Gets a random <see cref="T:System.Boolean"/> value.
+            </summary>
+            <returns>
+            Returns a new random <see cref="T:System.Boolean"/> value.
+            </returns>
+        </member>
+        <member name="M:Spackle.SecureRandom.NextBytes(System.Byte[])">
+            <summary>
+            Fills the given buffer with random bits.
+            </summary>
+            <param name="buffer">The buffer to populate.</param>
+        </member>
+        <member name="M:Spackle.SecureRandom.NextDouble">
+            <summary>
+            Gets a random <see cref="T:System.Double"/> number.
+            </summary>
+            <returns>A <see cref="T:System.Double"/> number.</returns>
+        </member>
+        <member name="P:Spackle.SecureRandom.Generator">
+            <summary>
+            Gets the underlying <see cref="T:System.Security.Cryptography.RandomNumberGenerator"/>.
+            </summary>
+        </member>
+        <member name="T:Spackle.Extensions.StringExtensions">
+            <summary>
+            Provides extension methods for the <see cref="T:System.String"/> type.
+            </summary>
+        </member>
+        <member name="M:Spackle.Extensions.StringExtensions.AsUri(System.String)">
+            <summary>
+            Changes a <see cref="T:System.String"/> into a <see cref="T:System.Uri"/>
+            </summary>
+            <param name="this">The <see cref="T:System.String"/> to transform.</param>
+            <returns>A new <see cref="T:System.Uri"/>.</returns>
+            <exception cref="T:System.ArgumentNullException">Thrown if <paramref name="this"/> is <c>null</c>.</exception>
+        </member>
+        <member name="T:Spackle.ThreadHelpers">
+            <summary>
+            Provides helper methods to the <see cref="T:System.Threading.Thread"/> class.
+            </summary>
+        </member>
+        <member name="M:Spackle.ThreadHelpers.GetNamedData``1(System.String)">
+            <summary>
+            Gets the value of a named TLS slot.
+            </summary>
+            <typeparam name="T">The type of the data.</typeparam>
+            <param name="name">The name of the TLS.</param>
+            <returns>The value stored in the TLS.</returns>
+        </member>
+        <member name="M:Spackle.ThreadHelpers.SetNamedData``1(System.String,``0)">
+            <summary>
+            Sets the value of a named TLS slot.
+            </summary>
+            <typeparam name="T">The type of the data.</typeparam>
+            <param name="name">The name of the TLS.</param>
+            <param name="value">The value of the TLS.</param>
+        </member>
+        <member name="T:Spackle.Range`1">
+            <summary>
+            Defines a generic range class.
+            </summary>
+            <typeparam name="T">The type of the range.</typeparam>
+        </member>
+        <member name="M:Spackle.Range`1.#ctor(`0,`0)">
+            <summary>
+            Creates a new <see cref="T:Spackle.Range`1"/> instance.
+            </summary>
+            <param name="start">The start of the range.</param>
+            <param name="end">The end of the range.</param>
+            <remarks>
+            If <paramref name="end"/> is less than <paramref name="start"/>,
+            the values are reversed.
+            </remarks>
+        </member>
+        <member name="M:Spackle.Range`1.op_Equality(Spackle.Range{`0},Spackle.Range{`0})">
+            <summary>
+            Determines whether two specified <see cref="T:Spackle.Range`1"/> objects have the same value. 
+            </summary>
+            <param name="a">A <see cref="T:Spackle.Range`1"/> or a null reference.</param>
+            <param name="b">A <see cref="T:Spackle.Range`1"/> or a null reference.</param>
+            <returns><b>true</b> if the value of <paramref name="a"/> is the same as the value of <paramref name="b"/>; otherwise, <b>false</b>. </returns>
+        </member>
+        <member name="M:Spackle.Range`1.op_Inequality(Spackle.Range{`0},Spackle.Range{`0})">
+            <summary>
+            Determines whether two specified <see cref="T:Spackle.Range`1"/> objects have different value. 
+            </summary>
+            <param name="a">A <see cref="T:Spackle.Range`1"/> or a null reference.</param>
+            <param name="b">A <see cref="T:Spackle.Range`1"/> or a null reference.</param>
+            <returns><b>true</b> if the value of <paramref name="a"/> is different from the value of <paramref name="b"/>; otherwise, <b>false</b>. </returns>
+        </member>
+        <member name="M:Spackle.Range`1.Contains(`0)">
+            <summary>
+            Checks to see if the given value is within the current range (inclusive).
+            </summary>
+            <param name="value">The value to check.</param>
+            <returns>Returns <c>true</c> if <paramref name="value"/> is in the range; otherwise, <c>false</c>.</returns>
+        </member>
+        <member name="M:Spackle.Range`1.Equals(Spackle.Range{`0})">
+            <summary>
+            Determines whether this instance of <see cref="T:Spackle.Range`1"/> and a 
+            specified <see cref="T:Spackle.Range`1"/> object have the same value. 
+            </summary>
+            <param name="other">A <see cref="T:Spackle.Range`1"/>.</param>
+            <returns><b>true</b> if <paramref name="other"/> is a <see cref="T:Spackle.Range`1"/> and its value 
+            is the same as this instance; otherwise, <b>false</b>.</returns>
+        </member>
+        <member name="M:Spackle.Range`1.Equals(System.Object)">
+            <summary>
+            Determines whether this instance of <see cref="T:Spackle.Range`1"/> and a specified object, 
+            which must also be a <see cref="T:Spackle.Range`1"/> object, have the same value. 
+            </summary>
+            <param name="obj">An <see cref="T:System.Object"/>.</param>
+            <returns><b>true</b> if <paramref name="obj"/> is a <see cref="T:Spackle.Range`1"/> and its value 
+            is the same as this instance; otherwise, <b>false</b>.</returns>
+        </member>
+        <member name="M:Spackle.Range`1.GetHashCode">
+            <summary>
+            Returns the hash code for this <see cref="T:Spackle.Range`1"/>.
+            </summary>
+            <returns>A 32-bit signed integer hash code.</returns>		
+        </member>
+        <member name="M:Spackle.Range`1.Intersect(Spackle.Range{`0})">
+            <summary>
+            Gets the intersection of the current <see cref="T:Spackle.Range`1"/> 
+            and the target <see cref="T:Spackle.Range`1"/>.
+            </summary>
+            <param name="target">The target <see cref="T:Spackle.Range`1"/>.</param>
+            <returns>A new <see cref="T:Spackle.Range`1"/> instance that is the intersection, 
+            or <c>null</c> if there is no intersection.</returns>
+            <exception cref="T:System.ArgumentNullException">Thrown if <paramref name="target"/> is <c>null</c>.</exception>
+        </member>
+        <member name="M:Spackle.Range`1.ToString">
+            <summary>
+            Provides a string representation of the current <see cref="T:Spackle.Range`1"/>.
+            </summary>
+            <returns>Returns a string in the format "(start,end)".</returns>
+        </member>
+        <member name="M:Spackle.Range`1.Union(Spackle.Range{`0})">
+            <summary>
+            Gets the union of the current <see cref="T:Spackle.Range`1"/> 
+            and the target <see cref="T:Spackle.Range`1"/>.
+            </summary>
+            <param name="target">The target <see cref="T:Spackle.Range`1"/>.</param>
+            <returns>A new <see cref="T:Spackle.Range`1"/> instance that is the union, 
+            or <c>null</c> if there is no intersection.</returns>
+            <exception cref="T:System.ArgumentNullException">Thrown if <paramref name="target"/> is <c>null</c>.</exception>
+        </member>
+        <member name="P:Spackle.Range`1.End">
+            <summary>
+            Gets the end of the range.
+            </summary>
+        </member>
+        <member name="P:Spackle.Range`1.Start">
+            <summary>
+            Gets the start of the range.
+            </summary>
+        </member>
+        <member name="T:Spackle.RandomObjectGenerator">
+            <summary>
+            Allows a user to create random values of a specified type.
+            This class provides default implementations for a number of types.
+            The user can also provide a hook to handle the generation of any time -
+            this also allows the user to override the default implementations.
+            </summary>
+        </member>
+        <member name="M:Spackle.RandomObjectGenerator.#ctor">
+            <summary>
+            Creates a new <see cref="T:Spackle.RandomObjectGenerator"/> instance.
+            </summary>
+        </member>
+        <member name="M:Spackle.RandomObjectGenerator.#ctor(System.Random)">
+            <summary>
+            Creates a new <see cref="T:Spackle.RandomObjectGenerator"/> instance
+            that uses a specific <see cref="F:Spackle.RandomObjectGenerator.Random"/> instance.
+            </summary>
+            <param name="random">The <see cref="F:Spackle.RandomObjectGenerator.Random"/> instance to use.</param>
+            <exception cref="T:System.ArgumentNullException">
+            Thrown if <paramref name="random"/> 
+            is <c>null</c>.
+            </exception>
+        </member>
+        <member name="M:Spackle.RandomObjectGenerator.#ctor(System.Collections.Generic.Dictionary{System.Type,System.Func{Spackle.RandomObjectGeneratorResults}})">
+            <summary>
+            Creates a new <see cref="T:Spackle.RandomObjectGenerator"/> instance
+            that specifies a number of custom generators to use.
+            </summary>
+            <param name="generators">The generators to use.</param>
+            <exception cref="T:System.ArgumentNullException">
+            Thrown if <paramref name="generators"/>
+            is <c>null</c>.
+            </exception>
+        </member>
+        <member name="M:Spackle.RandomObjectGenerator.#ctor(System.Random,System.Collections.Generic.Dictionary{System.Type,System.Func{Spackle.RandomObjectGeneratorResults}})">
+            <summary>
+            Creates a new <see cref="T:Spackle.RandomObjectGenerator"/> instance
+            that uses a specific <see cref="F:Spackle.RandomObjectGenerator.Random"/> instance
+            and specifies a number of custom generators to use.
+            </summary>
+            <param name="random">The <see cref="F:Spackle.RandomObjectGenerator.Random"/> instance to use.</param>
+            <param name="generators">The generators to use.</param>
+            <exception cref="T:System.ArgumentNullException">
+            Thrown if <paramref name="random"/> or <paramref name="generators"/>
+            is <c>null</c>.
+            </exception>
+        </member>
+        <member name="M:Spackle.RandomObjectGenerator.Generate``1">
+            <summary>
+            Generates a value for the specified type.
+            </summary>
+            <typeparam name="T">The type to generate a value for.</typeparam>
+            <returns>Returns a random value of type <typeparamref name="T" />.</returns>
+        </member>
+        <member name="M:Spackle.RandomObjectGenerator.Generate``1(System.Collections.Generic.ISet{``0})">
+            <summary>
+            Generates a value for the specified type
+            that is not in a specified list of values.
+            </summary>
+            <typeparam name="T">The type to generate a value for.</typeparam>
+            <param name="excludedValues">A set of values that should not be generated.</param>
+            <returns>Returns a random value of type <typeparamref name="T"/>.</returns>
+            <exception cref="T:System.ArgumentNullException">Thrown if <paramref name="excludedValues"/> is <c>null</c>.</exception>
+        </member>
+        <member name="T:Spackle.Extensions.ICommunicationObjectExtensions">
+            <summary>
+            Provides extension methods to close/abort a <see cref="T:System.ServiceModel.ICommunicationObject"/>-based reference correctly.
+            </summary>
+            <remarks>
+            The following two links provide a wealth of detail on the issue and why these <c>Use</c> extension methods are provided:
+            http://www.infoq.com/news/2009/03/WCF-Dispose and 
+            http://social.msdn.microsoft.com/forums/en-US/wcf/thread/b95b91c7-d498-446c-b38f-ef132989c154/
+            </remarks>
+        </member>
+        <member name="M:Spackle.Extensions.ICommunicationObjectExtensions.Use(System.Object,System.Action)">
+            <summary>
+            Allows a user to run a unit of work that would use a <see cref="T:System.ServiceModel.ICommunicationObject"/>-based reference
+            and close or abort the channel correctly.
+            </summary>
+            <param name="this">A reference that implements <see cref="T:System.ServiceModel.ICommunicationObject"/>.</param>
+            <param name="work">The <see cref="T:System.Action"/> that will use the channel.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown if <paramref name="work"/> is <c>null</c>.</exception>
+            <exception cref="T:System.NotSupportedException">Thrown if <paramref name="this"/> does not implement <see cref="T:System.ServiceModel.ICommunicationObject"/>.</exception>
+        </member>
+        <member name="M:Spackle.Extensions.ICommunicationObjectExtensions.Use``1(System.Object,System.Func{``0})">
+            <summary>
+            Allows a user to run a unit of work that returns a value that would use a <see cref="T:System.ServiceModel.ICommunicationObject"/>-based reference
+            and close or abort the channel correctly.
+            </summary>
+            <param name="this">A reference that implements <see cref="T:System.ServiceModel.ICommunicationObject"/>.</param>
+            <param name="work">The <see cref="T:System.Func`1"/> that will use the channel.</param>
+            <typeparam name="TResult">The type of the return value.</typeparam>
+            <returns>A value returned from <paramref name="work"/>.</returns>
+            <exception cref="T:System.ArgumentNullException">Thrown if <paramref name="work"/> is <c>null</c>.</exception>
+            <exception cref="T:System.NotSupportedException">Thrown if <paramref name="this"/> does not implement <see cref="T:System.ServiceModel.ICommunicationObject"/>.</exception>
+        </member>
+        <member name="T:Spackle.ValueGeneration">
+            <summary>
+            Used by <see cref="T:Spackle.SecureRandom"/> when generating arrays of random numbers.
+            </summary>
+        </member>
+        <member name="F:Spackle.ValueGeneration.UniqueValuesOnly">
+            <summary>
+            Generate only unique random numbers.
+            </summary>
+        </member>
+        <member name="F:Spackle.ValueGeneration.DuplicatesAllowed">
+            <summary>
+            Generate random numbers - duplicates are allowed.
+            </summary>
+        </member>
+        <member name="T:Spackle.Extensions.TypeExtensions">
+            <summary>
+            Provides extension methods for <see cref="T:System.Type"/>-based objects.
+            </summary>
+        </member>
+        <member name="M:Spackle.Extensions.TypeExtensions.GetRootElementType(System.Type)">
+            <summary>
+            Gets the root element type for a given <see cref="T:System.Type"/>.
+            </summary>
+            <param name="this">The <see cref="T:System.Type"/> to check.</param>
+            <returns>Returns the root element <see cref="T:System.Type"/>.</returns>
+            <exception cref="T:System.ArgumentNullException">Thrown if <paramref name="this"/> is <c>null</c>.</exception>
+            <remarks>
+            Certain types (e.g. arrays and byrefs) have an element type. For example,
+            a byref array of integers ("int[]&amp;") has an element type of "int[]",
+            which in turn has an element type of "int". This method makes it easier
+            to find the root element type for any given <see cref="T:System.Type"/>.
+            </remarks>
+        </member>
+        <member name="T:Spackle.Extensions.RotateDirection">
+            <summary>
+            Specifies the rotational direction for the <seealso cref="M:Spackle.Extensions.IListOfTExtensions.Rotate``1(System.Collections.Generic.IList{``0},System.Int32,Spackle.Extensions.RotateDirection)"/> method.
+            </summary>
+        </member>
+        <member name="F:Spackle.Extensions.RotateDirection.Positive">
+            <summary>
+            Move the values in the positive direction.
+            </summary>
+        </member>
+        <member name="F:Spackle.Extensions.RotateDirection.Negative">
+            <summary>
+            Move the values in the negative direction.
+            </summary>
+        </member>
+        <member name="T:Spackle.Reflection.Extensions.ICustomAttributeProviderExtensions">
+            <summary>
+            Provides extension methods for <see cref="T:System.Reflection.ICustomAttributeProvider"/>-based objects.
+            </summary>
+        </member>
+        <member name="M:Spackle.Reflection.Extensions.ICustomAttributeProviderExtensions.HasAttribute(System.Reflection.ICustomAttributeProvider,System.Type,System.Boolean)">
+            <summary>
+            Checks to see if the given provider has an attribute of a specific type.
+            </summary>
+            <param name="this">The <see cref="T:System.Reflection.ICustomAttributeProvider"/> to check.</param>
+            <param name="attributeType">The type of the custom attribute.</param>
+            <param name="inherit">When <c>true</c>, look up the hierarchy chain for the inherited custom attribute.</param>
+            <returns>Returns <c>true</c> if the provider has the attribute, otherwise <c>false</c>.</returns>
+            <exception cref="T:System.ArgumentNullException">
+            Thrown if either <paramref name="this"/> or <paramref name="attributeType"/> is <c>null</c>.
+            </exception>
+        </member>
+        <member name="T:Spackle.Extensions.EnumExtensions">
+            <summary>
+            Provides extension methods for enumerations.
+            </summary>
+        </member>
+        <member name="M:Spackle.Extensions.EnumExtensions.GetDescription``1(``0)">
+            <summary>
+            Gets the description for a enumeration value if the value has been attributed with <see cref="T:System.ComponentModel.DescriptionAttribute"/>.
+            </summary>
+            <typeparam name="T">The type of the enumeration.</typeparam>
+            <param name="this">The value of the enumeration.</param>
+            <returns>A description for the enumeration value, or <code>string.Empty</code> if none exists.</returns>
+            <exception cref="T:System.ArgumentException">Thrown if <typeparamref name="T"/> is not an enumeration.</exception>
+        </member>
+        <member name="M:Spackle.Extensions.EnumExtensions.GetName``1(``0)">
+            <summary>
+            Gets the name for a enumeration value.
+            </summary>
+            <typeparam name="T">The type of the enumeration.</typeparam>
+            <param name="this">The value of the enumeration.</param>
+            <returns>The name for the enumeration value.</returns>
+            <exception cref="T:System.ArgumentException">Thrown if <typeparamref name="T"/> is not an enumeration.</exception>
+        </member>
+        <member name="T:Spackle.RandomObjectGeneratorResults">
+            <summary>
+            Used by callback handlers in <see cref="T:Spackle.RandomObjectGenerator"/> 
+            to specify if a value was generated for a type.
+            </summary>
+        </member>
+        <member name="M:Spackle.RandomObjectGeneratorResults.#ctor(System.Boolean,System.Object)">
+            <summary>
+            Creates a new <see cref="T:Spackle.RandomObjectGeneratorResults"/> instance
+            specifying the <paramref name="handled"/> and <paramref name="value"/> values.
+            </summary>
+            <param name="handled">Specifies if a type was handled.</param>
+            <param name="value">The generated value.</param>
+        </member>
+        <member name="P:Spackle.RandomObjectGeneratorResults.Handled">
+            <summary>
+            Gets an indicator if a value was generated by the callback.
+            </summary>
+        </member>
+        <member name="P:Spackle.RandomObjectGeneratorResults.Value">
+            <summary>
+            Gets the value.
+            </summary>
+        </member>
+        <member name="T:Spackle.Extensions.ExceptionExtensions">
+            <summary>
+            Provides extension methods for <see cref="T:System.Exception"/>-based objects.
+            </summary>
+        </member>
+        <member name="M:Spackle.Extensions.ExceptionExtensions.Print(System.Exception)">
+            <summary>
+            Prints the contents of <paramref name="this"/> to the console's output stream.
+            </summary>
+            <param name="this">The <see cref="T:System.Exception"/> to print.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown if <paramref name="this"/> is <c>null</c>.</exception>
+        </member>
+        <member name="M:Spackle.Extensions.ExceptionExtensions.Print(System.Exception,System.IO.TextWriter)">
+            <summary>
+            Prints the contents of <paramref name="this"/> to the given <see cref="T:System.IO.TextWriter"/>.
+            </summary>
+            <param name="this">The <see cref="T:System.Exception"/> to print.</param>
+            <param name="writer">The <see cref="T:System.IO.TextWriter"/> to write exception information to.</param>
+            <exception cref="T:System.ArgumentNullException">
+            Thrown if either <paramref name="this"/> or <paramref name="writer"/> is <c>null</c>.
+            </exception>
+        </member>
+        <member name="T:Spackle.Extensions.DynamicBindingExtensions">
+            <summary>
+            Provides a number of extension methods to support dynamic binding.
+            </summary>
+            <remarks>
+            This code is based on the work done by leppie: http://www.twitter.com/leppie
+            The original code can be found here. http://www.codeproject.com/KB/cs/dynamicbindingincsharp.aspx.
+            Note that this implementation has been modified slightly.
+            The author has graciously allowed the code to be included in Spackle.
+            </remarks>
+        </member>
+        <member name="M:Spackle.Extensions.DynamicBindingExtensions.Bind``1(``0,System.Func{``0},System.Action{``0})">
+            <summary>
+            Binds newvalue with getter and setter delegates
+            </summary>
+            <typeparam name="T">Inferred</typeparam>
+            <param name="newValue">the newvalue to bind</param>
+            <param name="getter">delegate to get the value</param>
+            <param name="setter">delegate to set the value</param>
+            <returns>an instance to wrap use in a using construct</returns>
+        </member>
+        <member name="M:Spackle.Extensions.DynamicBindingExtensions.Bind``1(``0,System.Linq.Expressions.Expression{System.Func{``0}})">
+            <summary>
+            Binds newvalue with get/set property
+            </summary>
+            <typeparam name="T">Inferred</typeparam>
+            <param name="newValue">the newvalue to bind</param>
+            <param name="locator">the locator, must be in the form () =&gt; instance.Property or () =&gt; Type.Property</param>
+            <returns>an instance to wrap use in a using construct</returns>
+        </member>
+        <member name="M:Spackle.Extensions.DynamicBindingExtensions.With``1(``0,System.Func{``0},System.Action{``0})">
+            <summary>
+            Binds <paramref name="newValue"/> with getter and setter delegates and disposes the value when exiting the <c>using</c> construct.
+            </summary>
+            <typeparam name="T">Inferred, must be <c>IDisposable</c>.</typeparam>
+            <param name="newValue">The new value to bind.</param>
+            <param name="getter">A method to get the original value.</param>
+            <param name="setter">A method to set the set the value.</param>
+            <returns>An instance to wrap use in a <c>using</c> construct.</returns>
+        </member>
+        <member name="M:Spackle.Extensions.DynamicBindingExtensions.With``1(``0,System.Linq.Expressions.Expression{System.Func{``0}})">
+            <summary>
+            Binds <paramref name="newValue"/> with get/set property and disposes the value when exiting the <c>using</c> construct.
+            </summary>
+            <typeparam name="T">Inferred, must be <c>IDisposable</c>.</typeparam>
+            <param name="newValue">The new value to bind.</param>
+            <param name="locator">The locator, must be in the form <c>() =&gt; instance.Property</c>, or <c>() =&gt; Type.Property</c>.</param>
+            <returns>An instance to wrap use in a <c>using</c> construct.</returns>
+        </member>
+        <member name="T:Spackle.EventArgs`1">
+            <summary>
+            Defines a generic version of <see cref="T:System.EventArgs"/>, which is useful with
+            <see cref="T:System.EventHandler`1"/>
+            </summary>
+            <typeparam name="T">The type of the event data.</typeparam>
+        </member>
+        <member name="M:Spackle.EventArgs`1.#ctor(`0)">
+            <summary>
+            Creates a new <see cref="T:Spackle.EventArgs`1"/> instance.
+            </summary>
+            <param name="value">The value of the event data.</param>
+        </member>
+        <member name="P:Spackle.EventArgs`1.Value">
+            <summary>
+            Gets the event data.
+            </summary>
+        </member>
+        <member name="T:Spackle.Extensions.ObjectExtensions">
+            <summary>
+            Provides extension methods for objects.
+            </summary>
+        </member>
+        <member name="M:Spackle.Extensions.ObjectExtensions.CheckParameterForNull(System.Object,System.String)">
+            <summary>
+            Throws an <see cref="T:System.ArgumentNullException"/> if the given object is <c>null</c>.
+            </summary>
+            <param name="this">The object to check.</param>
+            <param name="parameterName">The name of the parameter in the method where <paramref name="this"/> came from.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown if <paramref name="this"/> is <c>null</c>.</exception>
+            <remarks>
+            This method is primarily used to ensure a parameter to a method is not null.
+            </remarks>
+        </member>
+        <member name="M:Spackle.Extensions.ObjectExtensions.CheckParameterForNull(System.Object,System.String,System.String)">
+            <summary>
+            Throws an <see cref="T:System.ArgumentNullException"/> with the specified message if the given object is <c>null</c>.
+            </summary>
+            <param name="this">The object to check.</param>
+            <param name="parameterName">The name of the parameter in the method where <paramref name="this"/> came from.</param>
+            <param name="message">The exception message.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown if <paramref name="this"/> is <c>null</c>.</exception>
+            <remarks>
+            This method is primarily used to ensure a parameter to a method is not null.
+            </remarks>
+        </member>
+        <member name="M:Spackle.Extensions.ObjectExtensions.IsNull(System.Object)">
+            <summary>
+            Checks to see if an object is null.
+            </summary>
+            <param name="this">The object to check.</param>
+            <returns>Returns <c>true</c> if <paramref name="this"/> is <c>null</c>, otherwise <c>false</c>.</returns>
+        </member>
+        <member name="M:Spackle.Extensions.ObjectExtensions.HasAttribute(System.Object,System.Type,System.Boolean)">
+            <summary>
+            Checks to see if the object has a specific attribute.
+            </summary>
+            <param name="this">The object to check.</param>
+            <param name="attributeType">The type of the custom attribute.</param>
+            <param name="inherit">When <c>true</c>, look up the hierarchy chain for the inherited custom attribute.</param>
+            <returns>Returns <c>true</c> if the object has the attribute, otherwise <c>false</c>.</returns>
+            <exception cref="T:System.ArgumentNullException">
+            Thrown if <paramref name="this"/> is <c>null</c>.
+            </exception>
+        </member>
+        <member name="T:Spackle.Extensions.IListOfTExtensions">
+            <summary>
+            Provides extension methods for <see cref="T:System.Collections.Generic.IList`1"/>-based objects.
+            </summary>
+        </member>
+        <member name="M:Spackle.Extensions.IListOfTExtensions.Rotate``1(System.Collections.Generic.IList{``0},System.Int32,Spackle.Extensions.RotateDirection)">
+            <summary>
+            Moves all of the elements in <paramref name="this"/> in a certain direction.
+            </summary>
+            <typeparam name="T">The type of the members in <paramref name="this"/>.</typeparam>
+            <param name="this">The list to rotate elements in.</param>
+            <param name="positions">The delta value for rotation.</param>
+            <param name="direction">The direction in which the values should rotate.</param>
+            <exception cref="T:System.ArgumentNullException">
+            Thrown if <paramref name="this"/> is <c>null</c>.
+            </exception>
+            <exception cref="T:System.ArgumentException">
+            Thrown if <paramref name="positions"/> is negative or larger than the number 
+            of elements in <paramref name="this"/>.
+            </exception>
+            <remarks>
+            This code is based on the work presented here: http://eli.thegreenplace.net/2008/08/29/space-efficient-list-rotation/.
+            </remarks>
+        </member>
+        <member name="M:Spackle.Extensions.IListOfTExtensions.Shuffle``1(System.Collections.Generic.IList{``0})">
+            <summary>
+            Shuffles the given list.
+            </summary>
+            <typeparam name="T">The type of the members in <paramref name="this"/>.</typeparam>
+            <param name="this">The list to shuffle.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown if <paramref name="this"/> is <c>null</c>.</exception>
+            <remarks>
+            The implementation of <c>Shuffle</c> uses the Fisher–Yates shuffle, as implemented by Durstenfeld - 
+            see http://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle for details on this implementation.
+            </remarks>
+        </member>
+        <member name="M:Spackle.Extensions.IListOfTExtensions.Shuffle``1(System.Collections.Generic.IList{``0},System.Random)">
+            <summary>
+            Shuffles the given list using the given <see cref="T:Spackle.SecureRandom"/> generator.
+            </summary>
+            <typeparam name="T">The type of the members in <paramref name="this"/>.</typeparam>
+            <param name="this">The list to shuffle.</param>
+            <param name="random">The random number generator to use.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown if <paramref name="this"/> or <paramref name="random"/> is <c>null</c>.</exception>
+            <remarks>
+            The implementation of <c>Shuffle</c> uses the Fisher–Yates shuffle, as implemented by Durstenfeld - 
+            see http://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle for details on this implementation.
+            </remarks>
+        </member>
+        <member name="M:Spackle.Extensions.IListOfTExtensions.Swap``1(System.Collections.Generic.IList{``0},System.Int32,System.Int32)">
+            <summary>
+            Swaps two values.
+            </summary>
+            <typeparam name="T">The type of the members in <paramref name="this"/>.</typeparam>
+            <param name="this">The list to swap elements in.</param>
+            <param name="x">An index value into the given list.</param>
+            <param name="y">An index value into the given list.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown if <paramref name="this"/> is <c>null</c>.</exception>
+            <exception cref="T:System.IndexOutOfRangeException">Throw if <paramref name="x"/> and/or <paramref name="y"/> 
+            are outside the bounds of the given list.</exception>
+            <remarks>
+            If <paramref name="x"/> and <paramref name="y"/> are equal, nothing is done to the given list.
+            </remarks>
+        </member>
+        <member name="T:Spackle.Extensions.ActionExtensions">
+            <summary>
+            Provides a number of extension methods for the <see cref="T:System.Action"/> delegate.
+            </summary>
+        </member>
+        <member name="M:Spackle.Extensions.ActionExtensions.Time(System.Action)">
+            <summary>
+            Calculates the time it takes to run a given <see cref="T:System.Action"/>.
+            </summary>
+            <param name="this">The <see cref="T:System.Action"/> to time.</param>
+            <returns>A <see cref="T:System.TimeSpan"/> object that contains the time it took to run <paramref name="this"/>.</returns>
+            <exception cref="T:System.ArgumentNullException">Thrown if <paramref name="this"/> is <c>null</c>.</exception>
+        </member>
+        <member name="M:Spackle.Extensions.ActionExtensions.Time``1(System.Action{``0},``0)">
+            <summary>
+            Calculates the time it takes to run a given <see cref="T:System.Action"/> with one parameter.
+            </summary>
+            <typeparam name="T">The type of the parameter to <paramref name="this"/>.</typeparam>
+            <param name="this">The <see cref="T:System.Action"/> to time.</param>
+            <param name="obj">The parameter for <paramref name="this"/>.</param>
+            <returns>A <see cref="T:System.TimeSpan"/> object that contains the time it took to run <paramref name="this"/>.</returns>
+            <exception cref="T:System.ArgumentNullException">Thrown if <paramref name="this"/> is <c>null</c>.</exception>
+        </member>
+        <member name="M:Spackle.Extensions.ActionExtensions.Time``2(System.Action{``0,``1},``0,``1)">
+            <summary>
+            Calculates the time it takes to run a given <see cref="T:System.Action"/> with two parameters.
+            </summary>
+            <typeparam name="T1">The type of the first parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T2">The type of the second parameter to <paramref name="this"/>.</typeparam>
+            <param name="this">The <see cref="T:System.Action"/> to time.</param>
+            <param name="arg1">The first parameter to <paramref name="this"/>.</param>
+            <param name="arg2">The second parameter to <paramref name="this"/>.</param>
+            <returns>A <see cref="T:System.TimeSpan"/> object that contains the time it took to run <paramref name="this"/>.</returns>
+            <exception cref="T:System.ArgumentNullException">Thrown if <paramref name="this"/> is <c>null</c>.</exception>
+        </member>
+        <member name="M:Spackle.Extensions.ActionExtensions.Time``3(System.Action{``0,``1,``2},``0,``1,``2)">
+            <summary>
+            Calculates the time it takes to run a given <see cref="T:System.Action"/> with three parameters.
+            </summary>
+            <typeparam name="T1">The type of the first parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T2">The type of the second parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T3">The type of the third parameter to <paramref name="this"/>.</typeparam>
+            <param name="this">The <see cref="T:System.Action"/> to time.</param>
+            <param name="arg1">The first parameter to <paramref name="this"/>.</param>
+            <param name="arg2">The second parameter to <paramref name="this"/>.</param>
+            <param name="arg3">The third parameter to <paramref name="this"/>.</param>
+            <returns>A <see cref="T:System.TimeSpan"/> object that contains the time it took to run <paramref name="this"/>.</returns>
+            <exception cref="T:System.ArgumentNullException">Thrown if <paramref name="this"/> is <c>null</c>.</exception>
+        </member>
+        <member name="M:Spackle.Extensions.ActionExtensions.Time``4(System.Action{``0,``1,``2,``3},``0,``1,``2,``3)">
+            <summary>
+            Calculates the time it takes to run a given <see cref="T:System.Action"/> with four parameters.
+            </summary>
+            <typeparam name="T1">The type of the first parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T2">The type of the second parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T3">The type of the third parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T4">The type of the fourth parameter to <paramref name="this"/>.</typeparam>
+            <param name="this">The <see cref="T:System.Action"/> to time.</param>
+            <param name="arg1">The first parameter to <paramref name="this"/>.</param>
+            <param name="arg2">The second parameter to <paramref name="this"/>.</param>
+            <param name="arg3">The third parameter to <paramref name="this"/>.</param>
+            <param name="arg4">The fourth parameter to <paramref name="this"/>.</param>
+            <returns>A <see cref="T:System.TimeSpan"/> object that contains the time it took to run <paramref name="this"/>.</returns>
+            <exception cref="T:System.ArgumentNullException">Thrown if <paramref name="this"/> is <c>null</c>.</exception>
+        </member>
+        <member name="M:Spackle.Extensions.ActionExtensions.Time``5(System.Action{``0,``1,``2,``3,``4},``0,``1,``2,``3,``4)">
+            <summary>
+            Calculates the time it takes to run a given <see cref="T:System.Action"/> with five parameters.
+            </summary>
+            <typeparam name="T1">The type of the first parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T2">The type of the second parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T3">The type of the third parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T4">The type of the fourth parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T5">The type of the fifth parameter to <paramref name="this"/>.</typeparam>
+            <param name="this">The <see cref="T:System.Action"/> to time.</param>
+            <param name="arg1">The first parameter to <paramref name="this"/>.</param>
+            <param name="arg2">The second parameter to <paramref name="this"/>.</param>
+            <param name="arg3">The third parameter to <paramref name="this"/>.</param>
+            <param name="arg4">The fourth parameter to <paramref name="this"/>.</param>
+            <param name="arg5">The fifth parameter to <paramref name="this"/>.</param>
+            <returns>A <see cref="T:System.TimeSpan"/> object that contains the time it took to run <paramref name="this"/>.</returns>
+            <exception cref="T:System.ArgumentNullException">Thrown if <paramref name="this"/> is <c>null</c>.</exception>
+        </member>
+        <member name="M:Spackle.Extensions.ActionExtensions.Time``6(System.Action{``0,``1,``2,``3,``4,``5},``0,``1,``2,``3,``4,``5)">
+            <summary>
+            Calculates the time it takes to run a given <see cref="T:System.Action"/> with six parameters.
+            </summary>
+            <typeparam name="T1">The type of the first parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T2">The type of the second parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T3">The type of the third parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T4">The type of the fourth parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T5">The type of the fifth parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T6">The type of the sixth parameter to <paramref name="this"/>.</typeparam>
+            <param name="this">The <see cref="T:System.Action"/> to time.</param>
+            <param name="arg1">The first parameter to <paramref name="this"/>.</param>
+            <param name="arg2">The second parameter to <paramref name="this"/>.</param>
+            <param name="arg3">The third parameter to <paramref name="this"/>.</param>
+            <param name="arg4">The fourth parameter to <paramref name="this"/>.</param>
+            <param name="arg5">The fifth parameter to <paramref name="this"/>.</param>
+            <param name="arg6">The sixth parameter to <paramref name="this"/>.</param>
+            <returns>A <see cref="T:System.TimeSpan"/> object that contains the time it took to run <paramref name="this"/>.</returns>
+            <exception cref="T:System.ArgumentNullException">Thrown if <paramref name="this"/> is <c>null</c>.</exception>
+        </member>
+        <member name="M:Spackle.Extensions.ActionExtensions.Time``7(System.Action{``0,``1,``2,``3,``4,``5,``6},``0,``1,``2,``3,``4,``5,``6)">
+            <summary>
+            Calculates the time it takes to run a given <see cref="T:System.Action"/> with seven parameters.
+            </summary>
+            <typeparam name="T1">The type of the first parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T2">The type of the second parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T3">The type of the third parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T4">The type of the fourth parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T5">The type of the fifth parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T6">The type of the sixth parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T7">The type of the seventh parameter to <paramref name="this"/>.</typeparam>
+            <param name="this">The <see cref="T:System.Action"/> to time.</param>
+            <param name="arg1">The first parameter to <paramref name="this"/>.</param>
+            <param name="arg2">The second parameter to <paramref name="this"/>.</param>
+            <param name="arg3">The third parameter to <paramref name="this"/>.</param>
+            <param name="arg4">The fourth parameter to <paramref name="this"/>.</param>
+            <param name="arg5">The fifth parameter to <paramref name="this"/>.</param>
+            <param name="arg6">The sixth parameter to <paramref name="this"/>.</param>
+            <param name="arg7">The seventh parameter to <paramref name="this"/>.</param>
+            <returns>A <see cref="T:System.TimeSpan"/> object that contains the time it took to run <paramref name="this"/>.</returns>
+            <exception cref="T:System.ArgumentNullException">Thrown if <paramref name="this"/> is <c>null</c>.</exception>
+        </member>
+        <member name="M:Spackle.Extensions.ActionExtensions.Time``8(System.Action{``0,``1,``2,``3,``4,``5,``6,``7},``0,``1,``2,``3,``4,``5,``6,``7)">
+            <summary>
+            Calculates the time it takes to run a given <see cref="T:System.Action"/> with eight parameters.
+            </summary>
+            <typeparam name="T1">The type of the first parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T2">The type of the second parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T3">The type of the third parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T4">The type of the fourth parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T5">The type of the fifth parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T6">The type of the sixth parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T7">The type of the seventh parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T8">The type of the eighth parameter to <paramref name="this"/>.</typeparam>
+            <param name="this">The <see cref="T:System.Action"/> to time.</param>
+            <param name="arg1">The first parameter to <paramref name="this"/>.</param>
+            <param name="arg2">The second parameter to <paramref name="this"/>.</param>
+            <param name="arg3">The third parameter to <paramref name="this"/>.</param>
+            <param name="arg4">The fourth parameter to <paramref name="this"/>.</param>
+            <param name="arg5">The fifth parameter to <paramref name="this"/>.</param>
+            <param name="arg6">The sixth parameter to <paramref name="this"/>.</param>
+            <param name="arg7">The seventh parameter to <paramref name="this"/>.</param>
+            <param name="arg8">The eighth parameter to <paramref name="this"/>.</param>
+            <returns>A <see cref="T:System.TimeSpan"/> object that contains the time it took to run <paramref name="this"/>.</returns>
+            <exception cref="T:System.ArgumentNullException">Thrown if <paramref name="this"/> is <c>null</c>.</exception>
+        </member>
+        <member name="M:Spackle.Extensions.ActionExtensions.Time``9(System.Action{``0,``1,``2,``3,``4,``5,``6,``7,``8},``0,``1,``2,``3,``4,``5,``6,``7,``8)">
+            <summary>
+            Calculates the time it takes to run a given <see cref="T:System.Action"/> with nine parameters.
+            </summary>
+            <typeparam name="T1">The type of the first parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T2">The type of the second parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T3">The type of the third parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T4">The type of the fourth parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T5">The type of the fifth parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T6">The type of the sixth parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T7">The type of the seventh parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T8">The type of the eighth parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T9">The type of the ninth parameter to <paramref name="this"/>.</typeparam>
+            <param name="this">The <see cref="T:System.Action"/> to time.</param>
+            <param name="arg1">The first parameter to <paramref name="this"/>.</param>
+            <param name="arg2">The second parameter to <paramref name="this"/>.</param>
+            <param name="arg3">The third parameter to <paramref name="this"/>.</param>
+            <param name="arg4">The fourth parameter to <paramref name="this"/>.</param>
+            <param name="arg5">The fifth parameter to <paramref name="this"/>.</param>
+            <param name="arg6">The sixth parameter to <paramref name="this"/>.</param>
+            <param name="arg7">The seventh parameter to <paramref name="this"/>.</param>
+            <param name="arg8">The eighth parameter to <paramref name="this"/>.</param>
+            <param name="arg9">The ninth parameter to <paramref name="this"/>.</param>
+            <returns>A <see cref="T:System.TimeSpan"/> object that contains the time it took to run <paramref name="this"/>.</returns>
+            <exception cref="T:System.ArgumentNullException">Thrown if <paramref name="this"/> is <c>null</c>.</exception>
+        </member>
+        <member name="M:Spackle.Extensions.ActionExtensions.Time``10(System.Action{``0,``1,``2,``3,``4,``5,``6,``7,``8,``9},``0,``1,``2,``3,``4,``5,``6,``7,``8,``9)">
+            <summary>
+            Calculates the time it takes to run a given <see cref="T:System.Action"/> with ten parameters.
+            </summary>
+            <typeparam name="T1">The type of the first parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T2">The type of the second parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T3">The type of the third parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T4">The type of the fourth parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T5">The type of the fifth parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T6">The type of the sixth parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T7">The type of the seventh parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T8">The type of the eighth parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T9">The type of the ninth parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T10">The type of the tenth parameter to <paramref name="this"/>.</typeparam>
+            <param name="this">The <see cref="T:System.Action"/> to time.</param>
+            <param name="arg1">The first parameter to <paramref name="this"/>.</param>
+            <param name="arg2">The second parameter to <paramref name="this"/>.</param>
+            <param name="arg3">The third parameter to <paramref name="this"/>.</param>
+            <param name="arg4">The fourth parameter to <paramref name="this"/>.</param>
+            <param name="arg5">The fifth parameter to <paramref name="this"/>.</param>
+            <param name="arg6">The sixth parameter to <paramref name="this"/>.</param>
+            <param name="arg7">The seventh parameter to <paramref name="this"/>.</param>
+            <param name="arg8">The eighth parameter to <paramref name="this"/>.</param>
+            <param name="arg9">The ninth parameter to <paramref name="this"/>.</param>
+            <param name="arg10">The tenth parameter to <paramref name="this"/>.</param>
+            <returns>A <see cref="T:System.TimeSpan"/> object that contains the time it took to run <paramref name="this"/>.</returns>
+            <exception cref="T:System.ArgumentNullException">Thrown if <paramref name="this"/> is <c>null</c>.</exception>
+        </member>
+        <member name="M:Spackle.Extensions.ActionExtensions.Time``11(System.Action{``0,``1,``2,``3,``4,``5,``6,``7,``8,``9,``10},``0,``1,``2,``3,``4,``5,``6,``7,``8,``9,``10)">
+            <summary>
+            Calculates the time it takes to run a given <see cref="T:System.Action"/> with eleven parameters.
+            </summary>
+            <typeparam name="T1">The type of the first parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T2">The type of the second parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T3">The type of the third parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T4">The type of the fourth parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T5">The type of the fifth parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T6">The type of the sixth parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T7">The type of the seventh parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T8">The type of the eighth parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T9">The type of the ninth parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T10">The type of the tenth parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T11">The type of the eleventh parameter to <paramref name="this"/>.</typeparam>
+            <param name="this">The <see cref="T:System.Action"/> to time.</param>
+            <param name="arg1">The first parameter to <paramref name="this"/>.</param>
+            <param name="arg2">The second parameter to <paramref name="this"/>.</param>
+            <param name="arg3">The third parameter to <paramref name="this"/>.</param>
+            <param name="arg4">The fourth parameter to <paramref name="this"/>.</param>
+            <param name="arg5">The fifth parameter to <paramref name="this"/>.</param>
+            <param name="arg6">The sixth parameter to <paramref name="this"/>.</param>
+            <param name="arg7">The seventh parameter to <paramref name="this"/>.</param>
+            <param name="arg8">The eighth parameter to <paramref name="this"/>.</param>
+            <param name="arg9">The ninth parameter to <paramref name="this"/>.</param>
+            <param name="arg10">The tenth parameter to <paramref name="this"/>.</param>
+            <param name="arg11">The eleventh parameter to <paramref name="this"/>.</param>
+            <returns>A <see cref="T:System.TimeSpan"/> object that contains the time it took to run <paramref name="this"/>.</returns>
+            <exception cref="T:System.ArgumentNullException">Thrown if <paramref name="this"/> is <c>null</c>.</exception>
+        </member>
+        <member name="M:Spackle.Extensions.ActionExtensions.Time``12(System.Action{``0,``1,``2,``3,``4,``5,``6,``7,``8,``9,``10,``11},``0,``1,``2,``3,``4,``5,``6,``7,``8,``9,``10,``11)">
+            <summary>
+            Calculates the time it takes to run a given <see cref="T:System.Action"/> with twelve parameters.
+            </summary>
+            <typeparam name="T1">The type of the first parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T2">The type of the second parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T3">The type of the third parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T4">The type of the fourth parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T5">The type of the fifth parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T6">The type of the sixth parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T7">The type of the seventh parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T8">The type of the eighth parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T9">The type of the ninth parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T10">The type of the tenth parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T11">The type of the eleventh parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T12">The type of the twelfth parameter to <paramref name="this"/>.</typeparam>
+            <param name="this">The <see cref="T:System.Action"/> to time.</param>
+            <param name="arg1">The first parameter to <paramref name="this"/>.</param>
+            <param name="arg2">The second parameter to <paramref name="this"/>.</param>
+            <param name="arg3">The third parameter to <paramref name="this"/>.</param>
+            <param name="arg4">The fourth parameter to <paramref name="this"/>.</param>
+            <param name="arg5">The fifth parameter to <paramref name="this"/>.</param>
+            <param name="arg6">The sixth parameter to <paramref name="this"/>.</param>
+            <param name="arg7">The seventh parameter to <paramref name="this"/>.</param>
+            <param name="arg8">The eighth parameter to <paramref name="this"/>.</param>
+            <param name="arg9">The ninth parameter to <paramref name="this"/>.</param>
+            <param name="arg10">The tenth parameter to <paramref name="this"/>.</param>
+            <param name="arg11">The eleventh parameter to <paramref name="this"/>.</param>
+            <param name="arg12">The twelfth parameter to <paramref name="this"/>.</param>
+            <returns>A <see cref="T:System.TimeSpan"/> object that contains the time it took to run <paramref name="this"/>.</returns>
+            <exception cref="T:System.ArgumentNullException">Thrown if <paramref name="this"/> is <c>null</c>.</exception>
+        </member>
+        <member name="M:Spackle.Extensions.ActionExtensions.Time``13(System.Action{``0,``1,``2,``3,``4,``5,``6,``7,``8,``9,``10,``11,``12},``0,``1,``2,``3,``4,``5,``6,``7,``8,``9,``10,``11,``12)">
+            <summary>
+            Calculates the time it takes to run a given <see cref="T:System.Action"/> with thirteen parameters.
+            </summary>
+            <typeparam name="T1">The type of the first parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T2">The type of the second parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T3">The type of the third parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T4">The type of the fourth parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T5">The type of the fifth parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T6">The type of the sixth parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T7">The type of the seventh parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T8">The type of the eighth parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T9">The type of the ninth parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T10">The type of the tenth parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T11">The type of the eleventh parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T12">The type of the twelfth parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T13">The type of the thirteenth parameter to <paramref name="this"/>.</typeparam>
+            <param name="this">The <see cref="T:System.Action"/> to time.</param>
+            <param name="arg1">The first parameter to <paramref name="this"/>.</param>
+            <param name="arg2">The second parameter to <paramref name="this"/>.</param>
+            <param name="arg3">The third parameter to <paramref name="this"/>.</param>
+            <param name="arg4">The fourth parameter to <paramref name="this"/>.</param>
+            <param name="arg5">The fifth parameter to <paramref name="this"/>.</param>
+            <param name="arg6">The sixth parameter to <paramref name="this"/>.</param>
+            <param name="arg7">The seventh parameter to <paramref name="this"/>.</param>
+            <param name="arg8">The eighth parameter to <paramref name="this"/>.</param>
+            <param name="arg9">The ninth parameter to <paramref name="this"/>.</param>
+            <param name="arg10">The tenth parameter to <paramref name="this"/>.</param>
+            <param name="arg11">The eleventh parameter to <paramref name="this"/>.</param>
+            <param name="arg12">The twelfth parameter to <paramref name="this"/>.</param>
+            <param name="arg13">The thirteenth parameter to <paramref name="this"/>.</param>
+            <returns>A <see cref="T:System.TimeSpan"/> object that contains the time it took to run <paramref name="this"/>.</returns>
+            <exception cref="T:System.ArgumentNullException">Thrown if <paramref name="this"/> is <c>null</c>.</exception>
+        </member>
+        <member name="M:Spackle.Extensions.ActionExtensions.Time``14(System.Action{``0,``1,``2,``3,``4,``5,``6,``7,``8,``9,``10,``11,``12,``13},``0,``1,``2,``3,``4,``5,``6,``7,``8,``9,``10,``11,``12,``13)">
+            <summary>
+            Calculates the time it takes to run a given <see cref="T:System.Action"/> with fourteen parameters.
+            </summary>
+            <typeparam name="T1">The type of the first parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T2">The type of the second parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T3">The type of the third parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T4">The type of the fourth parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T5">The type of the fifth parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T6">The type of the sixth parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T7">The type of the seventh parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T8">The type of the eighth parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T9">The type of the ninth parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T10">The type of the tenth parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T11">The type of the eleventh parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T12">The type of the twelfth parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T13">The type of the thirteenth parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T14">The type of the fourteenth parameter to <paramref name="this"/>.</typeparam>
+            <param name="this">The <see cref="T:System.Action"/> to time.</param>
+            <param name="arg1">The first parameter to <paramref name="this"/>.</param>
+            <param name="arg2">The second parameter to <paramref name="this"/>.</param>
+            <param name="arg3">The third parameter to <paramref name="this"/>.</param>
+            <param name="arg4">The fourth parameter to <paramref name="this"/>.</param>
+            <param name="arg5">The fifth parameter to <paramref name="this"/>.</param>
+            <param name="arg6">The sixth parameter to <paramref name="this"/>.</param>
+            <param name="arg7">The seventh parameter to <paramref name="this"/>.</param>
+            <param name="arg8">The eighth parameter to <paramref name="this"/>.</param>
+            <param name="arg9">The ninth parameter to <paramref name="this"/>.</param>
+            <param name="arg10">The tenth parameter to <paramref name="this"/>.</param>
+            <param name="arg11">The eleventh parameter to <paramref name="this"/>.</param>
+            <param name="arg12">The twelfth parameter to <paramref name="this"/>.</param>
+            <param name="arg13">The thirteenth parameter to <paramref name="this"/>.</param>
+            <param name="arg14">The fourteenth parameter to <paramref name="this"/>.</param>
+            <returns>A <see cref="T:System.TimeSpan"/> object that contains the time it took to run <paramref name="this"/>.</returns>
+            <exception cref="T:System.ArgumentNullException">Thrown if <paramref name="this"/> is <c>null</c>.</exception>
+        </member>
+        <member name="M:Spackle.Extensions.ActionExtensions.Time``15(System.Action{``0,``1,``2,``3,``4,``5,``6,``7,``8,``9,``10,``11,``12,``13,``14},``0,``1,``2,``3,``4,``5,``6,``7,``8,``9,``10,``11,``12,``13,``14)">
+            <summary>
+            Calculates the time it takes to run a given <see cref="T:System.Action"/> with fifteen parameters.
+            </summary>
+            <typeparam name="T1">The type of the first parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T2">The type of the second parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T3">The type of the third parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T4">The type of the fourth parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T5">The type of the fifth parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T6">The type of the sixth parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T7">The type of the seventh parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T8">The type of the eighth parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T9">The type of the ninth parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T10">The type of the tenth parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T11">The type of the eleventh parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T12">The type of the twelfth parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T13">The type of the thirteenth parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T14">The type of the fourteenth parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T15">The type of the fifteenth parameter to <paramref name="this"/>.</typeparam>
+            <param name="this">The <see cref="T:System.Action"/> to time.</param>
+            <param name="arg1">The first parameter to <paramref name="this"/>.</param>
+            <param name="arg2">The second parameter to <paramref name="this"/>.</param>
+            <param name="arg3">The third parameter to <paramref name="this"/>.</param>
+            <param name="arg4">The fourth parameter to <paramref name="this"/>.</param>
+            <param name="arg5">The fifth parameter to <paramref name="this"/>.</param>
+            <param name="arg6">The sixth parameter to <paramref name="this"/>.</param>
+            <param name="arg7">The seventh parameter to <paramref name="this"/>.</param>
+            <param name="arg8">The eighth parameter to <paramref name="this"/>.</param>
+            <param name="arg9">The ninth parameter to <paramref name="this"/>.</param>
+            <param name="arg10">The tenth parameter to <paramref name="this"/>.</param>
+            <param name="arg11">The eleventh parameter to <paramref name="this"/>.</param>
+            <param name="arg12">The twelfth parameter to <paramref name="this"/>.</param>
+            <param name="arg13">The thirteenth parameter to <paramref name="this"/>.</param>
+            <param name="arg14">The fourteenth parameter to <paramref name="this"/>.</param>
+            <param name="arg15">The fifteenth parameter to <paramref name="this"/>.</param>
+            <returns>A <see cref="T:System.TimeSpan"/> object that contains the time it took to run <paramref name="this"/>.</returns>
+            <exception cref="T:System.ArgumentNullException">Thrown if <paramref name="this"/> is <c>null</c>.</exception>
+        </member>
+        <member name="M:Spackle.Extensions.ActionExtensions.Time``16(System.Action{``0,``1,``2,``3,``4,``5,``6,``7,``8,``9,``10,``11,``12,``13,``14,``15},``0,``1,``2,``3,``4,``5,``6,``7,``8,``9,``10,``11,``12,``13,``14,``15)">
+            <summary>
+            Calculates the time it takes to run a given <see cref="T:System.Action"/> with sixteen parameters.
+            </summary>
+            <typeparam name="T1">The type of the first parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T2">The type of the second parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T3">The type of the third parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T4">The type of the fourth parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T5">The type of the fifth parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T6">The type of the sixth parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T7">The type of the seventh parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T8">The type of the eighth parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T9">The type of the ninth parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T10">The type of the tenth parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T11">The type of the eleventh parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T12">The type of the twelfth parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T13">The type of the thirteenth parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T14">The type of the fourteenth parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T15">The type of the fifteenth parameter to <paramref name="this"/>.</typeparam>
+            <typeparam name="T16">The type of the sixteenth parameter to <paramref name="this"/>.</typeparam>
+            <param name="this">The <see cref="T:System.Action"/> to time.</param>
+            <param name="arg1">The first parameter to <paramref name="this"/>.</param>
+            <param name="arg2">The second parameter to <paramref name="this"/>.</param>
+            <param name="arg3">The third parameter to <paramref name="this"/>.</param>
+            <param name="arg4">The fourth parameter to <paramref name="this"/>.</param>
+            <param name="arg5">The fifth parameter to <paramref name="this"/>.</param>
+            <param name="arg6">The sixth parameter to <paramref name="this"/>.</param>
+            <param name="arg7">The seventh parameter to <paramref name="this"/>.</param>
+            <param name="arg8">The eighth parameter to <paramref name="this"/>.</param>
+            <param name="arg9">The ninth parameter to <paramref name="this"/>.</param>
+            <param name="arg10">The tenth parameter to <paramref name="this"/>.</param>
+            <param name="arg11">The eleventh parameter to <paramref name="this"/>.</param>
+            <param name="arg12">The twelfth parameter to <paramref name="this"/>.</param>
+            <param name="arg13">The thirteenth parameter to <paramref name="this"/>.</param>
+            <param name="arg14">The fourteenth parameter to <paramref name="this"/>.</param>
+            <param name="arg15">The fifteenth parameter to <paramref name="this"/>.</param>
+            <param name="arg16">The sixteenth parameter to <paramref name="this"/>.</param>
+            <returns>A <see cref="T:System.TimeSpan"/> object that contains the time it took to run <paramref name="this"/>.</returns>
+            <exception cref="T:System.ArgumentNullException">Thrown if <paramref name="this"/> is <c>null</c>.</exception>
+        </member>
+        <member name="T:Spackle.Reflection.Extensions.MethodBaseExtensions">
+            <summary>
+            Provides extension methods for <see cref="T:System.Reflection.MethodBase"/>-based objects.
+            </summary>
+        </member>
+        <member name="M:Spackle.Reflection.Extensions.MethodBaseExtensions.GetParameterTypes(System.Reflection.MethodBase)">
+            <summary>
+            Gets the types of the parameters for the given method.
+            </summary>
+            <param name="this">The <see cref="T:System.Reflection.MethodBase"/> to get parameter types for.</param>
+            <returns>An array of <see cref="T:System.Type"/>s that map directly to the parameters (in terms of location) in the given method.</returns>
+            <exception cref="T:System.ArgumentNullException">Thrown if <paramref name="this"/> is <c>null</c>.</exception>
+            <remarks>
+            If <paramref name="this"/> is a <see cref="T:System.Reflection.Emit.MethodBuilder"/> or <see cref="T:System.Reflection.Emit.ConstructorBuilder"/>, 
+            no parameter type information can be determined, so the returned array will be empty.
+            </remarks>
+        </member>
+    </members>
+</doc>

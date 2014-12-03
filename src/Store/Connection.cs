@@ -6,6 +6,9 @@
     using System.Threading.Tasks;
     using ZeroMQ;
 
+    /// <summary>
+    /// Connection provides access to data persistence
+    /// </summary>
     public class Connection : IDisposable
     {
         private readonly Dictionary<string, IScope> scopes = new Dictionary<string, IScope>();
@@ -35,6 +38,11 @@
             return await result;
         }
 
+        /// <summary>
+        /// Adding a newscope that defines the access
+        /// </summary>
+        /// <typeparam name="T">THe type of object to be persisted</typeparam>
+        /// <param name="scope">the scope parameter of the specified type</param>
         internal void AddScope<T>(Scope<T> scope)
         {
             this.scopes.Add(typeof(T).Name, (IScope)scope);
@@ -57,14 +65,14 @@
                 {
                     foreach (var item in this.scopes)
                     {
-                        if (item.Value.actor.IsRunning)
+                        if (item.Value.Actor.IsRunning)
                         {
                             var OutputChannel = zmqContext.CreateSocket(SocketType.PUB);
                             OutputChannel.Connect(Pipe.PublishAddressClient);
                             ISerializer serializer = new Serializer(Encoding.UTF8);
                             SendMessage ("Sender", "stop", serializer, OutputChannel);
 
-                            while (item.Value.actor.IsRunning == true)
+                            while (item.Value.Actor.IsRunning == true)
                             {
                                 string a = "base";
                             }

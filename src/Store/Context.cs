@@ -64,6 +64,11 @@ namespace Daytona.Store
             GC.SuppressFinalize(this);
         }
 
+        /// <summary>
+        /// Get a connection to update the database. The connection will be for the specified type of object
+        /// </summary>
+        /// <typeparam name="T">The type of object that is being persisted</typeparam>
+        /// <returns>Connection of specified type</returns>
         public Connection GetConnection<T>()
         {
             var storeName = CleanupName(typeof(T).ToString());
@@ -87,32 +92,44 @@ namespace Daytona.Store
             this.OutputChannel.Connect(Pipe.PublishAddressClient);
         }
 
+        /// <summary>
+        /// You get a connection to update the database. the connection must be for a specific type of object
+        /// </summary>
+        /// <typeparam name="T">The type of object that is being persisted</typeparam>
+        /// <param name="connection">Pass in an existing connection additional connections will be added</param>
+        /// <returns>Connection of specified type</returns>
         public Connection GetConnection<T>(Connection connection)
         {
             ISerializer serializer = new Serializer(Encoding.UTF8);
             var actorFactory = new Actor(context);
 
-            actorFactory.RegisterActor<DBPayload<T>>("Writer", "Writer", "Sender", serializer, (IPayload message, byte[] messageAsBytes, string inRoute, string outRoute, ZmqSocket socket, Actor actor) =>
-            {
-                if (!actor.PropertyBag.ContainsKey("Count"))
+            actorFactory.RegisterActor<DBPayload<T>>(
+                "Writer", 
+                "Writer", 
+                "Sender", 
+                serializer, 
+                (IPayload message, byte[] messageAsBytes, string inRoute, string outRoute, ZmqSocket socket, Actor actor) =>
                 {
-                    actor.PropertyBag.Add("Count", "0");
-                }
-                var count = int.Parse(actor.PropertyBag["Count"]);
-                count++;
-                actor.PropertyBag["Count"] = count.ToString();
+                    if (!actor.PropertyBag.ContainsKey("Count"))
+                    {
+                        actor.PropertyBag.Add("Count", "0");
+                    }
 
-                actor.WriteLineToMonitor("Got here in the writer");
+                    var count = int.Parse(actor.PropertyBag["Count"]);
+                    count++;
+                    actor.PropertyBag["Count"] = count.ToString();
 
-                var writer = new Writer(this.EsentInstance);
-                var dBPayload = (DBPayload<T>)message;
+                    actor.WriteLineToMonitor("Got here in the writer");
 
-                int Id = writer.Save<T>(messageAsBytes, actor.Serializer);
+                    var writer = new Writer(this.EsentInstance);
+                    var dBPayload = (DBPayload<T>)message;
 
-                dBPayload.Id = count;
+                    int Id = writer.Save<T>(messageAsBytes, actor.Serializer);
 
-                actor.SendOneMessageOfType<DBPayload<T>>(outRoute, dBPayload, serializer, socket);
-            });
+                    dBPayload.Id = count;
+
+                    actor.SendOneMessageOfType<DBPayload<T>>(outRoute, dBPayload, serializer, socket);
+                });
 
             //ISerializer serializer2 = new Serializer(Encoding.UTF8);
             //actorFactory.RegisterActor<DBPayload<T>>("Sender", "Sender", "Writer", serializer2, (Message, InRoute, OutRoute, Socket, Actor) =>
@@ -136,7 +153,7 @@ namespace Daytona.Store
                 {
                     actor.CallBack(-1, null, ex);
                 }
-            })));
+            })));   
 
             return connection;
         }

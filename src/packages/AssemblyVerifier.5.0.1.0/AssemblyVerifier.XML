@@ -1,0 +1,153 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>AssemblyVerifier</name>
+    </assembly>
+    <members>
+        <member name="T:AssemblyVerifier.AssemblyVerification">
+            <summary>
+            Provides methods to check the validity of an assembly.
+            </summary>
+        </member>
+        <member name="M:AssemblyVerifier.AssemblyVerification.Verify(System.IO.FileSystemInfo)">
+            <summary>
+            Verifies an assembly based on its location on disk.
+            </summary>
+            <param name="assemblyLocation">The assembly's location on disk.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown if <c>assemblyLocation</c> is <c>null</c>.</exception>
+            <exception cref="T:System.IO.FileNotFoundException">Thrown if the given file does not exist.</exception>
+            <exception cref="T:AssemblyVerifier.VerificationException">Thrown if the assembly has verification errors.</exception>
+        </member>
+        <member name="M:AssemblyVerifier.AssemblyVerification.Verify(System.Reflection.Assembly)">
+            <summary>
+            Verifies an assembly based on an <see cref="T:System.Reflection.Assembly" /> instance.
+            </summary>
+            <param name="assembly">The <see cref="T:System.Reflection.Assembly" /> instance.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown if <c>assembly</c> is <c>null</c>.</exception>
+            <exception cref="T:System.IO.FileNotFoundException">Thrown if the given file does not exist.</exception>
+            <exception cref="T:AssemblyVerifier.VerificationException">Thrown if the assembly has verification errors.</exception>
+        </member>
+        <member name="M:AssemblyVerifier.AssemblyVerification.Verify(System.Reflection.Emit.AssemblyBuilder)">
+            <summary>
+            Verifies an assembly based on an <see cref="T:System.Reflection.Emit.AssemblyBuilder" /> instance.
+            </summary>
+            <param name="assemblyBuilder">The <see cref="T:System.Reflection.Emit.AssemblyBuilder" /> instance.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown if <c>assemblyBuilder</c> is <c>null</c>.</exception>
+            <exception cref="T:System.IO.FileNotFoundException">Thrown if the given file does not exist.</exception>
+            <exception cref="T:AssemblyVerifier.VerificationException">Thrown if the assembly has verification errors.</exception>
+        </member>
+        <member name="T:AssemblyVerifier.VerificationError">
+            <summary>
+            Defines a base class for peverify error types.
+            </summary>
+        </member>
+        <member name="M:AssemblyVerifier.VerificationError.#ctor">
+            <summary>
+            Creates a new <see cref="T:AssemblyVerifier.VerificationError" /> instance.
+            </summary>
+        </member>
+        <member name="M:AssemblyVerifier.VerificationError.Create(System.String)">
+            <summary>
+            Creates the correct kind of <see cref="T:AssemblyVerifier.VerificationError" />.
+            </summary>
+            <param name="error">The error string from peverify.</param>
+            <returns>A <see cref="T:AssemblyVerifier.VerificationError" />-based instance.</returns>
+            <exception cref="T:System.ArgumentNullException">Thrown if <paramref name="error"/> is <c>null</c>.</exception>
+            <exception cref="T:System.ArgumentException">Thrown if <c>error</c> is empty.</exception>
+        </member>
+        <member name="M:AssemblyVerifier.VerificationError.GetHashCode">
+            <summary>
+            Returns the hash code for this <see cref="T:AssemblyVerifier.VerificationError" /> instance.
+            </summary>
+            <returns>The hash code for this <see cref="T:AssemblyVerifier.VerificationError" /> instance.</returns>
+        </member>
+        <member name="M:AssemblyVerifier.VerificationError.Equals(AssemblyVerifier.VerificationError)">
+            <summary>
+            Provides a type-safe equality check.
+            </summary>
+            <param name="other">The object to check for equality.</param>
+            <returns>Returns <c>true</c> if the objects are equals; otherwise, <c>false</c>.</returns>
+        </member>
+        <member name="M:AssemblyVerifier.VerificationError.Equals(System.Object)">
+            <summary>
+            Checks to see if the given object is equal to the current <see cref="T:AssemblyVerifier.VerificationError" /> instance.
+            </summary>
+            <param name="obj">The object to check for equality.</param>
+            <returns>Returns <c>true</c> if the objects are equals; otherwise, <c>false</c>.</returns>
+        </member>
+        <member name="P:AssemblyVerifier.VerificationError.Description">
+            <summary>
+            Gets the description.
+            </summary>
+        </member>
+        <member name="P:AssemblyVerifier.VerificationError.Location">
+            <summary>
+            Gets the location.
+            </summary>
+        </member>
+        <member name="T:AssemblyVerifier.VerificationErrorCollectionCreator">
+            <summary>
+            Contains a method to create a collection of error information.
+            </summary>
+        </member>
+        <member name="M:AssemblyVerifier.VerificationErrorCollectionCreator.Create(System.IO.TextReader)">
+            <summary>
+            Creates a <see cref="T:System.Collections.ObjectModel.ReadOnlyCollection`1" /> based
+            on the output of peverify.
+            </summary>
+            <param name="peVerifyOutput">The output from peverify.</param>
+            <returns>A collection of errors.</returns>
+        </member>
+        <member name="T:AssemblyVerifier.VerificationException">
+            <summary>
+            The exception that is thrown when verification errors are detected from peverify.
+            </summary>
+        </member>
+        <member name="M:AssemblyVerifier.VerificationException.#ctor">
+            <summary>
+            Creates a new <see cref="T:AssemblyVerifier.VerificationException" /> instance.
+            </summary>
+        </member>
+        <member name="M:AssemblyVerifier.VerificationException.#ctor(System.String)">
+            <summary>
+            Creates a new <see cref="T:AssemblyVerifier.VerificationException" /> instance
+            with a specified error message.
+            </summary>
+            <param name="message">
+            The message that describes the error.
+            </param>
+        </member>
+        <member name="M:AssemblyVerifier.VerificationException.#ctor(System.String,System.Exception)">
+            <summary>
+            Creates a new <see cref="T:AssemblyVerifier.VerificationException" /> instance
+            with a specified error message and a reference to the inner exception that is the cause of this exception. 
+            </summary>
+            <param name="message">
+            The message that describes the error.
+            </param>
+            <param name="innerException">
+            The exception that is the cause of the current exception, 
+            or a null reference if no inner exception is specified. 
+            </param>
+        </member>
+        <member name="M:AssemblyVerifier.VerificationException.#ctor(System.Collections.ObjectModel.ReadOnlyCollection{AssemblyVerifier.VerificationError})">
+            <summary>
+            Creates a new <see cref="T:AssemblyVerifier.VerificationException" /> instance
+            based a list of errors.
+            </summary>
+            <exception cref="T:System.ArgumentNullException">Thrown if <param name="errors" /> is <c>null</c>.</exception>
+        </member>
+        <member name="M:AssemblyVerifier.VerificationException.GetObjectData(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
+            <summary>
+            Defaults to the base implementation.
+            </summary>
+            <param name="info">The object that holds the serialized object data.</param>
+            <param name="context">The contextual information about the source or destination.</param>
+        </member>
+        <member name="P:AssemblyVerifier.VerificationException.Errors">
+            <summary>
+            Gets the list of verification errors.
+            </summary>
+        </member>
+    </members>
+</doc>
