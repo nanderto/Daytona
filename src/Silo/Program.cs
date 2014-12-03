@@ -5,12 +5,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using TestHelpers;
-using ZeroMQ;
 
 namespace SiloConsole
 {
     using System.IO;
     using System.Reflection;
+
+    using NetMQ;
 
     class Program
     {
@@ -20,7 +21,7 @@ namespace SiloConsole
             var binarySerializer = new BinarySerializer();
             var useActor = true;
 
-            using (var context = ZmqContext.Create())
+            using (var context = NetMQContext.Create())
             {
                 //using (var silo = new Silo(context, new BinarySerializer()))
                 //{

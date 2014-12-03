@@ -7,9 +7,7 @@
     using System.Text;
 
     using NProxy.Core;
-
-    using ZeroMQ;
-
+    
     /// <summary>
     /// MessageSenderproxy used to intercept method calls and send them ass messages to the actors that need to respond 
     /// </summary>

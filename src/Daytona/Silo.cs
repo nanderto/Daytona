@@ -6,16 +6,16 @@ using System.Threading.Tasks;
 
 namespace Daytona
 {
-    using ZeroMQ;
+    using NetMQ;
 
     public class Silo : IDisposable
     {
-        private ZmqContext context;
+        private NetMQContext context;
         private BinarySerializer binarySerializer;
 
         private bool disposed;
 
-        public Silo(ZmqContext context, BinarySerializer binarySerializer)
+        public Silo(NetMQContext context, BinarySerializer binarySerializer)
         {
             this.context = context;
             this.binarySerializer = binarySerializer;

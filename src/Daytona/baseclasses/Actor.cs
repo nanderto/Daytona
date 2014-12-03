@@ -14,16 +14,16 @@ namespace Daytona
     using System.Text;
     using System.Threading.Tasks;
 
-    using ZeroMQ;
+    using NetMQ;
 
     [Serializable]
     public class Actor : IDisposable
     {
         [NonSerialized]
-        public ZmqSocket subscriber;
+        public NetMQSocket subscriber;
 
         [NonSerialized]
-        public ZmqContext context;
+        public NetMQContext context;
 
         public readonly Dictionary<string, Action> actorTypes = new Dictionary<string, Action>();
 
@@ -32,12 +32,12 @@ namespace Daytona
         private bool disposed;
 
         [NonSerialized]
-        private ZmqSocket monitorChannel;
+        private NetMQSocket monitorChannel;
 
         private bool monitorChannelDisposed = false;
 
         [NonSerialized]
-        private ZmqSocket outputChannel;
+        private NetMQSocket outputChannel;
 
         [NonSerialized]
         private ISerializer serializer;
@@ -49,7 +49,7 @@ namespace Daytona
         ///     This is generally used when creating a actor to act as a Actor factory.
         /// </summary>
         /// <param name="context">The context.</param>
-        public Actor(ZmqContext context)
+        public Actor(NetMQContext context)
         {
             this.IsRunning = false;
             this.context = context;
@@ -65,7 +65,7 @@ namespace Daytona
             this.Serializer = serializer;
         }
 
-        public Actor(ZmqContext context, ISerializer serializer)
+        public Actor(NetMQContext context, ISerializer serializer)
         {
             this.IsRunning = false;
             this.context = context;
@@ -75,7 +75,7 @@ namespace Daytona
             this.SetUpOutputChannel(context);
         }
 
-        public Actor(ZmqContext context, ISerializer serializer, string inRoute)
+        public Actor(NetMQContext context, ISerializer serializer, string inRoute)
         {
             this.IsRunning = false;
             this.context = context;
@@ -86,7 +86,7 @@ namespace Daytona
             this.SetUpReceivers(context, inRoute);
         }
 
-        public Actor(ZmqContext context, ISerializer serializer, string name, string inRoute, Action<Actor> workload)
+        public Actor(NetMQContext context, ISerializer serializer, string name, string inRoute, Action<Actor> workload)
         {
             this.IsRunning = false;
             this.context = context;
@@ -101,7 +101,7 @@ namespace Daytona
         }
 
 
-        public Actor(ZmqContext context, ISerializer serializer, string name, string inRoute, Action<string, List<object>, Actor> workload)
+        public Actor(NetMQContext context, ISerializer serializer, string name, string inRoute, Action<string, List<object>, Actor> workload)
         {
             this.IsRunning = false;
             this.context = context;
@@ -115,7 +115,7 @@ namespace Daytona
             this.SetUpReceivers(context, inRoute);
         }
 
-        public Actor(ZmqContext context, ISerializer serializer, string name, string inRoute, Action<string, MethodInfo, List<object>, Actor> workload)
+        public Actor(NetMQContext context, ISerializer serializer, string name, string inRoute, Action<string, MethodInfo, List<object>, Actor> workload)
         {
             this.IsRunning = false;
             this.context = context;
@@ -139,7 +139,7 @@ namespace Daytona
 
         public bool IsRunning { get; set; }
 
-        public ZmqSocket MonitorChannel
+        public NetMQSocket MonitorChannel
         {
             get
             {
@@ -156,7 +156,7 @@ namespace Daytona
 
         public string OutRoute { get; set; }
 
-        public ZmqSocket OutputChannel
+        public NetMQSocket OutputChannel
         {
             get
             {
@@ -282,28 +282,28 @@ namespace Daytona
             return this;
         }
 
-        public void SendMessage(string address, byte[] message, ISerializer serializer, ZmqSocket socket)
+        public void SendMessage(string address, byte[] message, ISerializer serializer, NetMQSocket socket)
         {
             this.SendMessage(serializer.Encoding.GetBytes(address), message, socket);
         }
 
-        public void SendMessage(byte[] address, byte[] message, ZmqSocket socket)
+        public void SendMessage(byte[] address, byte[] message, NetMQSocket socket)
         {
-            var zmqMessage = new ZmqMessage();
-            zmqMessage.Append(new Frame(address));
-            zmqMessage.Append(new Frame(message));
-            socket.SendMessage(zmqMessage);
+            var netMQMessage = new NetMQMessage();
+            netMQMessage.Append(new NetMQFrame(address));
+            netMQMessage.Append(new NetMQFrame(message));
+            socket.SendMessage(netMQMessage);
         }
 
-        public void SendOneMessageOfType<T>(string address, T message, ISerializer serializer, ZmqSocket socket)
+        public void SendOneMessageOfType<T>(string address, T message, ISerializer serializer, NetMQSocket socket)
             where T : IPayload
         {
-            var zmqMessage = new ZmqMessage();
-            zmqMessage.Append(new Frame(serializer.GetBuffer(address)));
-            zmqMessage.Append(new Frame(serializer.GetBuffer(message)));
+            var netMQMessage = new NetMQMessage();
+            netMQMessage.Append(new NetMQFrame(serializer.GetBuffer(address)));
+            netMQMessage.Append(new NetMQFrame(serializer.GetBuffer(message)));
 
             ////var replySignal = this.sendControlChannel.Receive(Pipe.ControlChannelEncoding);
-            socket.SendMessage(zmqMessage);
+            socket.SendMessage(netMQMessage);
 
             ////this.sendControlChannel.Send("Just sent message to " + address + " Message is: " + message, Pipe.ControlChannelEncoding);
             ////replySignal = this.sendControlChannel.Receive(Pipe.ControlChannelEncoding);
@@ -317,7 +317,7 @@ namespace Daytona
             {
                 this.IsRunning = true;
                 string address = string.Empty;
-                ZmqMessage zmqmessage = null;
+                NetMQMessage NetMQMessage = null;
 
                 this.WriteLineToMonitor("Waiting for message");
 
@@ -331,10 +331,12 @@ namespace Daytona
                 {
                     this.WriteLineToMonitor(string.Format("Serialization Error: {0}", se.ToString()));
                     ////skip to end of message
-                    while (this.subscriber.ReceiveMore)
+                    bool more;
+                    do
                     {
-                        Frame frame = subscriber.ReceiveFrame();
-                    }
+                        var data = this.subscriber.Receive(out more);
+                    
+                    } while (more);
                 }
                 
                 if (stop)
@@ -346,10 +348,10 @@ namespace Daytona
             this.WriteLineToMonitor("Exiting actor");
         }
 
-        public virtual bool ReceiveMessage(ZmqSocket subscriber)
+        public virtual bool ReceiveMessage(NetMQSocket subscriber)
         {
             var stopSignal = false;
-            var zmqOut = new ZmqMessage();
+            var zmqOut = new NetMQMessage();
             bool hasMore = true;
 
             // var address = string.Empty;
@@ -365,13 +367,14 @@ namespace Daytona
             string address = string.Empty;
             var returnedAddress = string.Empty;
             var exceptionThrown = false;
+            var buffer = subscriber.Receive(out hasMore);
 
             while (hasMore)
             {
-                Frame frame = subscriber.ReceiveFrame();
+                
                 try
                 {
-                    stopSignal = UnPackFrame(frameCount, serializer, frame, out address, ref methodinfo, methodParameters, ref typeParameter, ref type, out messageType);
+                    stopSignal = UnPackNetMQFrame(frameCount, serializer, buffer, out address, ref methodinfo, methodParameters, ref typeParameter, ref type, out messageType);
                 }
                 catch (SerializationException se)
                 {
@@ -395,8 +398,8 @@ namespace Daytona
                 }
 
                 frameCount++;
-                zmqOut.Append(new Frame(frame.Buffer));
-                hasMore = subscriber.ReceiveMore;
+                zmqOut.Append(new NetMQFrame(buffer));
+                buffer = subscriber.Receive(out hasMore);
             }
 
             //if (!exceptionThrown)
@@ -417,7 +420,7 @@ namespace Daytona
             return stopSignal;
         }
 
-        public static bool UnPackFrame(int frameCount, BinarySerializer serializer, Frame frame, out string address, ref MethodInfo methodinfo, List<object> methodParameters, ref bool typeParameter, ref Type type, out string messageType)
+        public static bool UnPackNetMQFrame(int frameCount, BinarySerializer serializer, byte[] buffer, out string address, ref MethodInfo methodinfo, List<object> methodParameters, ref bool typeParameter, ref Type type, out string messageType)
         {
             messageType = string.Empty;
             bool stopSignal = false;
@@ -427,12 +430,12 @@ namespace Daytona
 
             if (frameCount == 0)
             {
-                address = serializer.GetString(frame.Buffer);
+                address = serializer.GetString(buffer);
             }
 
             if (frameCount == 1)
             {
-                messageAsBytes = frame.Buffer;
+                messageAsBytes = buffer;
                 messageType = serializer.GetString(messageAsBytes);
                 if (messageType.ToLower() == "stop")
                 {
@@ -442,25 +445,25 @@ namespace Daytona
 
             if (frameCount == 2)
             {
-                methodinfo = (MethodInfo)serializer.Deserializer(frame.Buffer, typeof(MethodInfo));
+                methodinfo = (MethodInfo)serializer.Deserializer(buffer, typeof(MethodInfo));
             }
 
             if (frameCount == 3)
             {
                 numberOfParameters =
-                    int.Parse(serializer.GetString(frame.Buffer).Replace("ParameterCount:", string.Empty));
+                    int.Parse(serializer.GetString(buffer).Replace("ParameterCount:", string.Empty));
             }
 
             if (frameCount > 3)
             {
                 if (typeParameter)
                 {
-                    type = (Type)serializer.Deserializer(frame.Buffer, typeof(Type));
+                    type = (Type)serializer.Deserializer(buffer, typeof(Type));
                     typeParameter = false;
                 }
                 else
                 {
-                    var parameter = serializer.Deserializer(frame.Buffer, type);
+                    var parameter = serializer.Deserializer(buffer, type);
                     methodParameters.Add(parameter);
                     typeParameter = true;
                 }
@@ -476,14 +479,14 @@ namespace Daytona
             {
                 this.IsRunning = true;
                 string address = string.Empty;
-                ZmqMessage zmqmessage = null;
+                NetMQMessage NetMQMessage = null;
 
                 this.WriteLineToMonitor("Waiting for message");
 
                 byte[] messageAsBytes = null;
                 var message = this.ReceiveMessage<T>(
                     this.subscriber, 
-                    out zmqmessage, 
+                    out NetMQMessage, 
                     out address, 
                     out stop, 
                     out messageAsBytes, 
@@ -528,20 +531,20 @@ namespace Daytona
         {
             if (this.monitorChannelDisposed == false)
             {
-                this.MonitorChannel.Send(line, Pipe.ControlChannelEncoding);
-                var signal = this.MonitorChannel.Receive(Pipe.ControlChannelEncoding);
+                this.MonitorChannel.Send(line);
+                var signal = this.MonitorChannel.Receive();
             }
         }
         
-        protected void SetUpMonitorChannel(ZmqContext context)
+        protected void SetUpMonitorChannel(NetMQContext context)
         {
-            this.MonitorChannel = context.CreateSocket(SocketType.REQ);
+            this.MonitorChannel = context.CreateRequestSocket();
             this.MonitorChannel.Connect(Pipe.MonitorAddressClient);
         }
 
-        protected void SetUpOutputChannel(ZmqContext context)
+        protected void SetUpOutputChannel(NetMQContext context)
         {
-            this.OutputChannel = context.CreateSocket(SocketType.PUB);
+            this.OutputChannel = context.CreatePublisherSocket();
             this.OutputChannel.Connect(Pipe.PublishAddressClient);
 
             this.WriteLineToMonitor(
@@ -557,7 +560,7 @@ namespace Daytona
             ////Actor.Writeline(replySignal);
         }
 
-        protected void SetUpReceivers(ZmqContext context, string route)
+        protected void SetUpReceivers(NetMQContext context, string route)
         {
             this.InRoute = route;
             this.SetUpReceivers(context);
@@ -596,8 +599,8 @@ namespace Daytona
         }
 
         private T ReceiveMessage<T>(
-            ZmqSocket subscriber, 
-            out ZmqMessage zmqMessage, 
+            NetMQSocket subscriber, 
+            out NetMQMessage netMqMessage, 
             out string address, 
             out bool stopSignal, 
             out byte[] messageAsBytes, 
@@ -605,22 +608,25 @@ namespace Daytona
         {
             stopSignal = false;
             T result = default(T);
-            var zmqOut = new ZmqMessage();
+            var zmqOut = new NetMQMessage();
             bool hasMore = true;
             address = string.Empty;
             messageAsBytes = null;
             int i = 0;
+
+            var buffer = subscriber.Receive(out hasMore);
+
             while (hasMore)
             {
-                Frame frame = subscriber.ReceiveFrame();
+                
                 if (i == 0)
                 {
-                    address = serializer.GetString(frame.Buffer);
+                    address = serializer.GetString(buffer);
                 }
 
                 if (i == 1)
                 {
-                    messageAsBytes = frame.Buffer;
+                    messageAsBytes = buffer;
                     string stopMessage = serializer.GetString(messageAsBytes);
                     this.WriteLineToMonitor("Message: " + stopMessage);
                     if (stopMessage.ToLower() == "stop")
@@ -639,11 +645,11 @@ namespace Daytona
                 }
 
                 i++;
-                zmqOut.Append(new Frame(frame.Buffer));
-                hasMore = subscriber.ReceiveMore;
+                zmqOut.Append(new NetMQFrame(buffer));
+                buffer = subscriber.Receive(out hasMore);
             }
 
-            zmqMessage = zmqOut;
+            netMqMessage = zmqOut;
             return result;
         }
 
@@ -651,14 +657,14 @@ namespace Daytona
         ///     Creates a Socket and connects it to a endpoint that is bound to a Pipe
         /// </summary>
         /// <param name="context">The ZeroMQ context required to create the receivers</param>
-        private void SetUpReceivers(ZmqContext context)
+        private void SetUpReceivers(NetMQContext context)
         {
-            this.subscriber = context.CreateSocket(SocketType.SUB);
+            this.subscriber = context.CreateSubscriberSocket();
             this.subscriber.Connect(Pipe.SubscribeAddressClient);
             
             if (string.IsNullOrEmpty(this.InRoute))
             {
-                this.subscriber.SubscribeAll();
+                this.subscriber.Subscribe(string.Empty);
             }
             else
             {
@@ -668,7 +674,8 @@ namespace Daytona
             this.MonitorChannel.Send(
                 "Set up Receive channel on " + Pipe.SubscribeAddressClient + " listening on: " + this.InRoute, 
                 Pipe.ControlChannelEncoding);
-            var signal = this.MonitorChannel.Receive(Pipe.ControlChannelEncoding);
+            bool more = false;
+            var signal = this.MonitorChannel.Receive(); // Pipe.ControlChannelEncoding, out more);
             this.SendMessage(
                 Pipe.ControlChannelEncoding.GetBytes(Pipe.SubscriberCountAddress), 
                 Pipe.ControlChannelEncoding.GetBytes("ADDSUBSCRIBER"), 

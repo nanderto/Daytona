@@ -4,9 +4,10 @@
     using System.Collections.Generic;
     using System.Reflection;
 
+    using NetMQ;
+
     using NProxy.Core;
 
-    using ZeroMQ;
 
     /// <summary>
     ///     The Actor is the coe object of the Actor framework, it is self configuring to listen for messages that come in and
@@ -27,12 +28,12 @@
         ///     This is generally used when creating a actor to act as a Actor factory.
         /// </summary>
         /// <param name="context">The context.</param>
-        public Actor(ZmqContext context)
+        public Actor(NetMQContext context)
             : base(context)
         {
         }
 
-        public Actor(ZmqContext context, ISerializer serializer)
+        public Actor(NetMQContext context, ISerializer serializer)
             : base(context, serializer)
         {
             var inRoute = typeof(T).FullName;
@@ -40,13 +41,13 @@
             this.SetUpReceivers(context, inRoute);
         }
 
-        public Actor(ZmqContext context, ISerializer serializer, string inRoute)
+        public Actor(NetMQContext context, ISerializer serializer, string inRoute)
             : base(context, serializer)
         {
             this.SetUpReceivers(context, inRoute);
         }
 
-        public Actor(ZmqContext context, T model)
+        public Actor(NetMQContext context, T model)
             : base(context)
         {
             this.model = model;
@@ -58,7 +59,7 @@
             this.SetUpReceivers(context, inRoute);
         }
 
-        public Actor(ZmqContext context, T model, ISerializer serializer)
+        public Actor(NetMQContext context, T model, ISerializer serializer)
             : this(context, model)
         {
             this.Serializer = serializer;
@@ -71,15 +72,15 @@
         
         public override event EventHandler<CallBackEventArgs> SaveCompletedEvent;
         
-        public static ZmqMessage PackZmqMessage(object[] parameters, MethodInfo methodInfo, ISerializer serializer, string addressToSendTo)
+        public static NetMQMessage PackZmqMessage(object[] parameters, MethodInfo methodInfo, ISerializer serializer, string addressToSendTo)
         {
-            var zmqMessage = new ZmqMessage();
-            zmqMessage.Append(new Frame(serializer.GetBuffer(addressToSendTo)));
-            zmqMessage.Append(new Frame(serializer.GetBuffer("Process")));
+            var zmqMessage = new NetMQMessage();
+            zmqMessage.Append(new NetMQFrame(serializer.GetBuffer(addressToSendTo)));
+            zmqMessage.Append(new NetMQFrame(serializer.GetBuffer("Process")));
 
             var serializedMethodInfo = serializer.GetBuffer(methodInfo);
-            zmqMessage.Append(new Frame(serializedMethodInfo));
-            zmqMessage.Append(new Frame(serializer.GetBuffer(string.Format("ParameterCount:{0}", parameters.Length))));
+            zmqMessage.Append(new NetMQFrame(serializedMethodInfo));
+            zmqMessage.Append(new NetMQFrame(serializer.GetBuffer(string.Format("ParameterCount:{0}", parameters.Length))));
             foreach (var parameter in parameters)
             {
                 zmqMessage.Append(serializer.GetBuffer(parameter.GetType()));
@@ -89,7 +90,7 @@
             return zmqMessage;
         }
 
-        public static bool UnPackFrame(int frameCount, BinarySerializer serializer, Frame frame, out string address, ref MethodInfo methodinfo, List<object> methodParameters, ref bool typeParameter, ref Type type, out string messageType)
+        public static bool UnPackNetMQFrame(int frameCount, BinarySerializer serializer, NetMQFrame frame, out string address, ref MethodInfo methodinfo, List<object> methodParameters, ref bool typeParameter, ref Type type, out string messageType)
         {
             messageType = string.Empty;
             bool stopSignal = false;
@@ -219,10 +220,10 @@
             return proxyFactory.CreateProxy<TInterface>(Type.EmptyTypes, invocationHandler);
         }
 
-        public override bool ReceiveMessage(ZmqSocket subscriber)
+        public override bool ReceiveMessage(NetMQSocket subscriber)
         {
             var stopSignal = false;
-            var zmqOut = new ZmqMessage();
+            var zmqOut = new NetMQMessage();
             bool hasMore = true;
 
             // var address = string.Empty;
@@ -236,12 +237,12 @@
             MethodInfo returnedMethodInfo = null;
             string messageType, returnedMessageType = string.Empty;
             string address, returnedAddress = string.Empty;
+            
+            var buffer = subscriber.Receive(out hasMore);
 
             while (hasMore)
             {
-                Frame frame = subscriber.ReceiveFrame();
-
-                stopSignal = UnPackFrame(frameCount, serializer, frame, out address, ref methodinfo, methodParameters, ref typeParameter, ref type, out messageType);
+                stopSignal = UnPackNetMQFrame(frameCount, serializer, buffer, out address, ref methodinfo, methodParameters, ref typeParameter, ref type, out messageType);
                 if (frameCount == 0)
                 {
                     returnedAddress = address;
@@ -258,8 +259,8 @@
                 }
 
                 frameCount++;
-                zmqOut.Append(new Frame(frame.Buffer));
-                hasMore = subscriber.ReceiveMore;
+                zmqOut.Append(new NetMQFrame(buffer));
+                buffer = subscriber.Receive(out hasMore);
             }
 
             //if (returnedMessageType.ToLower() == "raw")
@@ -292,7 +293,7 @@
             {
                 this.IsRunning = true;
                 string address = string.Empty;
-                ZmqMessage zmqmessage = null;
+                NetMQMessage zmqmessage = null;
 
                 this.WriteLineToMonitor("Waiting for message");
 
@@ -309,7 +310,7 @@
             this.WriteLineToMonitor("Exiting actor");
         }
 
-         public void StartWithIdandMessage(string address, ZmqMessage zmqMessage)
+         public void StartWithIdandMessage(string address, NetMQMessage zmqMessage)
         {
             throw new NotImplementedException();
         }

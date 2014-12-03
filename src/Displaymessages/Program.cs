@@ -5,12 +5,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using TestHelpers;
-using ZeroMQ;
 
 namespace Monitor
 {
     using System.IO;
     using System.Reflection;
+
+    using NetMQ;
 
     class Program
     {
@@ -26,61 +27,61 @@ namespace Monitor
             var binarySerializer = new BinarySerializer();
             var useActor = true;
 
-            using (var context = ZmqContext.Create())
+            using (var context = NetMQContext.Create())
             {
-                if (!useActor)
+                //if (!useActor)
+                //{
+                //    var subscriber = context.CreateSubscriberSocket();
+                //    subscriber.Connect(Pipe.SubscribeAddressClient);
+                //    subscriber.Subscribe(string.Empty);
+                //    while (!interrupted)
+                //    {
+                //        var frame = subscriber.ReceiveFrame();
+                //        try
+                //        {
+                //            Console.WriteLine(binarySerializer.Deserializer(frame, typeof(string)));
+                //        }
+                //        catch (Exception)
+                //        {
+                //        }
+
+                //        while (subscriber.ReceiveMore)
+                //        {
+                //            var frame1 = subscriber.ReceiveFrame();
+                //        }
+                //    }
+                //}
+                //else
+                //{
+                using (var actorFactory = new Actor<Silo>(context, new BinarySerializer(), string.Empty))
                 {
-                    var subscriber = context.CreateSocket(SocketType.SUB);
-                    subscriber.Connect(Pipe.SubscribeAddressClient);
-                    subscriber.SubscribeAll();
+                    actorFactory.RegisterActor(
+                        "Display",
+                        "",
+                        "outRoute",
+                        new BinarySerializer(),
+                        (address, methodinfo, parameters, actor) =>
+                            {
+                                var firstParameter = string.Empty;
+                                try
+                                {
+                                    firstParameter = parameters[0].ToString();
+                                }
+                                catch (Exception)
+                                {
+                                }
+
+                                Console.WriteLine("Address: {0}, {1}", address, firstParameter);
+                            });
+                    actorFactory.StartAllActors();
+                    Console.WriteLine("yada yada");
+                       
                     while (!interrupted)
                     {
-                        var frame = subscriber.ReceiveFrame();
-                        try
-                        {
-                            Console.WriteLine(binarySerializer.Deserializer(frame, typeof(string)));
-                        }
-                        catch (Exception)
-                        {
-                        }
-
-                        while (subscriber.ReceiveMore)
-                        {
-                            var frame1 = subscriber.ReceiveFrame();
-                        }
+                        Console.ReadLine();
                     }
                 }
-                else
-                {
-                    using (var actorFactory = new Actor<Silo>(context, new BinarySerializer(), string.Empty))
-                    {
-                        actorFactory.RegisterActor(
-                            "Display",
-                            "",
-                            "outRoute",
-                            new BinarySerializer(),
-                            (address, methodinfo, parameters, actor) =>
-                                {
-                                    var firstParameter = string.Empty;
-                                    try
-                                    {
-                                        firstParameter = parameters[0].ToString();
-                                    }
-                                    catch (Exception)
-                                    {
-                                    }
-
-                                    Console.WriteLine("Address: {0}, {1}", address, firstParameter);
-                                });
-                        actorFactory.StartAllActors();
-                        Console.WriteLine("yada yada");
-                       
-                        while (!interrupted)
-                        {
-                            Console.ReadLine();
-                        }
-                    }
-                }
+                //}
             }
         }
 

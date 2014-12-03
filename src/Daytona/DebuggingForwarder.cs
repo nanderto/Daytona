@@ -6,17 +6,18 @@
 namespace Daytona
 {
     using System;
-    using ZeroMQ;
-    using ZeroMQ.Devices;
 
+    using NetMQ;
+    using NetMQ.Devices;
+    
     public class DebuggingForwarder : ForwarderDevice
     {
-        public DebuggingForwarder(ZmqContext context, string publishAddressServer, string subscribeAddressServer, DeviceMode mode)
+        public DebuggingForwarder(NetMQContext context, string publishAddressServer, string subscribeAddressServer, DeviceMode mode)
             : base(context, publishAddressServer, subscribeAddressServer, mode)
         {
         }
 
-        protected override void FrontendHandler(SocketEventArgs args)
+        protected override void FrontendHandler(NetMQSocketEventArgs args)
         {
             Console.WriteLine("In forwarder" + args.ToString());
             this.FrontendSocket.Forward(this.BackendSocket);

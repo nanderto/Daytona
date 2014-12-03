@@ -68,7 +68,8 @@
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="NetMQ">
+    <Reference Include="NetMQ, Version=3.3.0.11, Culture=neutral, PublicKeyToken=a6decef4ddc58b3a, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\NetMQ.3.3.0.11\lib\net40\NetMQ.dll</HintPath>
     </Reference>
     <Reference Include="Newtonsoft.Json, Version=4.5.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
@@ -90,7 +91,6 @@
     <Compile Include="baseclasses\Actor.cs" />
     <Compile Include="BinarySerializer.cs" />
     <Compile Include="CallBackEventArgs.cs" />
-    <Compile Include="DebuggingForwarder.cs" />
     <Compile Include="DefaultSerializer.cs" />
     <Compile Include="IPayload.cs" />
     <Compile Include="ISerializer.cs" />

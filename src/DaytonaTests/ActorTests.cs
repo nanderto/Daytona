@@ -11,9 +11,10 @@ namespace Daytona.Tests
     using System.Threading.Tasks;
     using Daytona;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
-    using TestHelpers;
 
-    using ZeroMQ;
+    using NetMQ;
+
+    using TestHelpers;
 
     [TestClass]
     public class ActorTests
@@ -21,7 +22,7 @@ namespace Daytona.Tests
         [TestMethod]
         public void CallMethod_usingDefaultSerializer()
         {
-            using (var context = ZmqContext.Create())
+            using (var context = NetMQContext.Create())
             {
                 using (var actor = new Actor<Customer>(context))
                 {
@@ -35,7 +36,7 @@ namespace Daytona.Tests
         [TestMethod]   
         public void CallMethod_UsingBinarySerializer()
         {
-            using (var context = ZmqContext.Create())
+            using (var context = NetMQContext.Create())
             {
                 using (var actor = new Actor<Order>(context, new BinarySerializer()))
                 {
@@ -49,7 +50,7 @@ namespace Daytona.Tests
         [TestMethod]
         public void CallMethod_Multiple_ObjectsBinarySerializer()
         {
-            using (var context = ZmqContext.Create())
+            using (var context = NetMQContext.Create())
             {
                 using (var actor = new Actor<Customer>(context, new BinarySerializer()))
                 {
@@ -71,7 +72,7 @@ namespace Daytona.Tests
         //[TestMethod()]
         //public void RegisterActorTest()
         //{
-        //    using (var context = ZmqContext.Create())
+        //    using (var context = NetMQContext.Create())
         //    {
         //        var actor = new Actor<Customer>(context);
         //        var actorCustomer = actor.RegisterActor<Customer>(new Customer());
@@ -82,7 +83,7 @@ namespace Daytona.Tests
         [TestMethod()]
         public async Task ReceiveMessageTest()
         {
-            //using (var context = ZmqContext.Create())
+            //using (var context = NetMQContext.Create())
             //{
             //    using (var actor = new Actor<Customer>(context, new BinarySerializer()))
             //    {
@@ -117,7 +118,7 @@ namespace Daytona.Tests
 
             int frameCount = 0;
             var stopSignal = false;
-            var zmqOut = new ZmqMessage();
+            var zmqOut = new NetMQMessage();
             bool hasMore = true;
             //var address = string.Empty;
             byte[] messageAsBytes = null;
@@ -133,7 +134,7 @@ namespace Daytona.Tests
 
             foreach (var frame in zmqMessage)
             {
-                stopSignal = Actor<Customer>.UnPackFrame(frameCount, serializer, frame, out address, ref methodinfo, methodParameters, ref typeParameter, ref type, out messageType);
+                stopSignal = Actor<Customer>.UnPackNetMQFrame(frameCount, serializer, frame, out address, ref methodinfo, methodParameters, ref typeParameter, ref type, out messageType);
                 if (frameCount == 0)
                 {
                     returnedAddress = address;
@@ -150,7 +151,7 @@ namespace Daytona.Tests
                 }
 
                 frameCount++;
-                zmqOut.Append(new Frame(frame.Buffer));
+                zmqOut.Append(new NetMQFrame(frame.Buffer));
                // hasMore = subscriber.ReceiveMore;
             }
             
@@ -159,11 +160,11 @@ namespace Daytona.Tests
             Assert.AreEqual("XXX", target.Lastname);
         }
 
-        private static MethodInfo UnPackFrame(
+        private static MethodInfo UnPackNetMQFrame(
             int FrameCount,
             ref bool stopSignal,
             BinarySerializer serializer,
-            Frame frame,
+            NetMQFrame frame,
             MethodInfo methodinfo,
             List<object> methodParameters,
             ref bool typeParameter,
