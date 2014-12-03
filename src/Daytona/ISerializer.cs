@@ -5,6 +5,7 @@
 //-----------------------------------------------------------------------
 namespace Daytona
 {
+    using System;
     using System.Text;
     
     public interface ISerializer
@@ -14,6 +15,8 @@ namespace Daytona
         T Deserializer<T>(byte[] input);
 
         T Deserializer<T>(string input);
+
+        object Deserializer(byte[] input, Type type);
 
         byte[] GetBuffer<T>(T message);
 

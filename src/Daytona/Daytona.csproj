@@ -71,6 +71,12 @@
     <Reference Include="clrzmq">
       <HintPath>..\packages\clrzmq.3.0.0-rc1\lib\net40\clrzmq.dll</HintPath>
     </Reference>
+    <Reference Include="Newtonsoft.Json, Version=4.5.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.4.5.11\lib\net40\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="NProxy.Core">
+      <HintPath>..\packages\NProxy.Core.2.3.4\lib\net35\NProxy.Core.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -81,13 +87,18 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Actor.cs" />
+    <Compile Include="baseclasses\Actor.cs" />
+    <Compile Include="BinarySerializer.cs" />
     <Compile Include="CallBackEventArgs.cs" />
     <Compile Include="DebuggingForwarder.cs" />
+    <Compile Include="DefaultSerializer.cs" />
     <Compile Include="IPayload.cs" />
     <Compile Include="ISerializer.cs" />
     <Compile Include="MessageReceiver.cs" />
+    <Compile Include="MessageSenderProxy.cs" />
     <Compile Include="Pipe.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Silo.cs" />
     <Compile Include="ZeroMQExtensionMethods.cs" />
   </ItemGroup>
   <ItemGroup>

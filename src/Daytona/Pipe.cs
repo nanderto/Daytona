@@ -61,7 +61,6 @@ namespace Daytona
 
         public Pipe(ZmqContext context)
         {
-            //this.Context = context;
             this.Start(context);
         }
 
@@ -112,7 +111,7 @@ namespace Daytona
 
             this.Writeline("Control channel started");
 
-            //this.Context = context;
+            long count = 0;
             this.cancellationTokenSource = new CancellationTokenSource();
             var token = this.cancellationTokenSource.Token;
             Task.Run(() =>
@@ -133,7 +132,8 @@ namespace Daytona
                             while (true)
                             {
                                 poller.Poll(new TimeSpan(0,0,0,0,5));
-                                Writeline("polling");
+                                Writeline("polling" + count);
+                                count++;
                                 if (token.IsCancellationRequested)
                                 {
                                     Writeline("break");

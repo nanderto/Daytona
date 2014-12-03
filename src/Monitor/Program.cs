@@ -26,6 +26,7 @@ namespace Monitor
                         Console.WriteLine("::> " + signal);
                         monitorService.Send("", Encoding.Unicode);
                     }
+
                 }
             }
         }

@@ -1,0 +1,2467 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>NProxy.Core</name>
+    </assembly>
+    <members>
+        <member name="T:NProxy.Core.Interceptors.IInterceptionBehavior">
+            <summary>
+            Defines an interception behavior.
+            </summary>
+        </member>
+        <member name="M:NProxy.Core.Interceptors.IInterceptionBehavior.Apply(System.Reflection.MemberInfo,System.Collections.Generic.ICollection{NProxy.Core.Interceptors.IInterceptor})">
+            <summary>
+            Applies the interception behavior.
+            </summary>
+            <param name="memberInfo">The member information.</param>
+            <param name="interceptors">The interceptors.</param>
+        </member>
+        <member name="M:NProxy.Core.Interceptors.IInterceptionBehavior.Validate(System.Reflection.MemberInfo)">
+            <summary>
+            Validates the interception behavior.
+            </summary>
+            <param name="memberInfo">The member information.</param>
+        </member>
+        <member name="T:NProxy.Core.Interceptors.BaseTargetInterceptor">
+            <summary>
+            Represents a base target interceptor.
+            </summary>
+        </member>
+        <member name="T:NProxy.Core.Interceptors.IInterceptor">
+            <summary>
+            Defines an interceptor.
+            </summary>
+        </member>
+        <member name="M:NProxy.Core.Interceptors.IInterceptor.Intercept(NProxy.Core.Interceptors.IInvocationContext)">
+            <summary>
+            Intercepts an invocation.
+            </summary>
+            <param name="invocationContext">The invocation context.</param>
+            <returns>The return value.</returns>
+        </member>
+        <member name="F:NProxy.Core.Interceptors.BaseTargetInterceptor.Instance">
+            <summary>
+            The singleton instance.
+            </summary>
+        </member>
+        <member name="M:NProxy.Core.Interceptors.BaseTargetInterceptor.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:NProxy.Core.Interceptors.BaseTargetInterceptor"/> class.
+            </summary>
+        </member>
+        <member name="M:NProxy.Core.Interceptors.BaseTargetInterceptor.Intercept(NProxy.Core.Interceptors.IInvocationContext)">
+            <inheritdoc/>
+        </member>
+        <member name="T:NProxy.Core.Interceptors.StaticTargetInterceptor">
+            <summary>
+            Represents a static target interceptor.
+            </summary>
+        </member>
+        <member name="F:NProxy.Core.Interceptors.StaticTargetInterceptor._target">
+            <summary>
+            The target object.
+            </summary>
+        </member>
+        <member name="M:NProxy.Core.Interceptors.StaticTargetInterceptor.#ctor(System.Object)">
+            <summary>
+            Initializes a new instance of the <see cref="T:NProxy.Core.Interceptors.StaticTargetInterceptor"/> class.
+            </summary>
+            <param name="target">The target object.</param>
+        </member>
+        <member name="M:NProxy.Core.Interceptors.StaticTargetInterceptor.Intercept(NProxy.Core.Interceptors.IInvocationContext)">
+            <inheritdoc/>
+        </member>
+        <member name="T:NProxy.Core.Internal.Definitions.ClassProxyDefinition">
+            <summary>
+            Represents a class proxy definition.
+            </summary>
+        </member>
+        <member name="T:NProxy.Core.Internal.Definitions.ProxyDefinitionBase">
+            <summary>
+            Represents the proxy definition base class.
+            </summary>
+        </member>
+        <member name="T:NProxy.Core.Internal.Definitions.IProxyDefinition">
+            <summary>
+            Defines a proxy definition.
+            </summary>
+        </member>
+        <member name="M:NProxy.Core.Internal.Definitions.IProxyDefinition.AcceptVisitor(NProxy.Core.Internal.Definitions.IProxyDefinitionVisitor)">
+            <summary>
+            Dispatches to the specific visit method for each member.
+            </summary>
+            <param name="proxyDefinitionVisitor">The proxy definition visitor.</param>
+        </member>
+        <member name="M:NProxy.Core.Internal.Definitions.IProxyDefinition.UnwrapProxy(System.Object)">
+            <summary>
+            Unwraps the specified proxy.
+            </summary>
+            <param name="proxy">The proxy object.</param>
+            <returns>The wrapped object.</returns>
+        </member>
+        <member name="M:NProxy.Core.Internal.Definitions.IProxyDefinition.CreateProxy(System.Type,System.Object[])">
+            <summary>
+            Creates a new proxy of the specified type.
+            </summary>
+            <param name="type">The type.</param>
+            <param name="arguments">The constructor arguments.</param>
+            <returns>The new proxy object.</returns>
+        </member>
+        <member name="P:NProxy.Core.Internal.Definitions.IProxyDefinition.DeclaringType">
+            <summary>
+            Returns the declaring type.
+            </summary>
+        </member>
+        <member name="P:NProxy.Core.Internal.Definitions.IProxyDefinition.ParentType">
+            <summary>
+            Returns the parent type.
+            </summary>
+        </member>
+        <member name="P:NProxy.Core.Internal.Definitions.IProxyDefinition.ImplementedInterfaces">
+            <summary>
+            Returns all implemented interfaces.
+            </summary>
+        </member>
+        <member name="F:NProxy.Core.Internal.Definitions.ProxyDefinitionBase._declaringType">
+            <summary>
+            The declaring type.
+            </summary>
+        </member>
+        <member name="F:NProxy.Core.Internal.Definitions.ProxyDefinitionBase._parentType">
+            <summary>
+            The parent type.
+            </summary>
+        </member>
+        <member name="F:NProxy.Core.Internal.Definitions.ProxyDefinitionBase._declaringInterfaceTypes">
+            <summary>
+            The declaring interface types.
+            </summary>
+        </member>
+        <member name="F:NProxy.Core.Internal.Definitions.ProxyDefinitionBase._additionalInterfaceTypes">
+            <summary>
+            The additional interface types.
+            </summary>
+        </member>
+        <member name="M:NProxy.Core.Internal.Definitions.ProxyDefinitionBase.#ctor(System.Type,System.Type,System.Collections.Generic.IEnumerable{System.Type})">
+            <summary>
+            Initializes a new instance of the <see cref="T:NProxy.Core.Internal.Definitions.ProxyDefinitionBase"/> class.
+            </summary>
+            <param name="declaringType">The declaring type.</param>
+            <param name="parentType">The parent type.</param>
+            <param name="interfaceTypes">The interface types.</param>
+        </member>
+        <member name="M:NProxy.Core.Internal.Definitions.ProxyDefinitionBase.ExtractInterfaces(System.Type)">
+            <summary>
+            Extracts all interface types for the specified type.
+            </summary>
+            <param name="type">The type.</param>
+            <returns>The interface types.</returns>
+        </member>
+        <member name="M:NProxy.Core.Internal.Definitions.ProxyDefinitionBase.ExtractAdditionalInterfaces(System.Collections.Generic.IEnumerable{System.Type},System.Collections.Generic.ICollection{System.Type})">
+            <summary>
+            Extracts all additional interface types.
+            </summary>
+            <param name="interfaceTypes">The interface types.</param>
+            <param name="declaringInterfaceTypes">The declaring interface types.</param>
+            <returns>The additional interface types.</returns>
+        </member>
+        <member name="M:NProxy.Core.Internal.Definitions.ProxyDefinitionBase.AddAdditionalInterfaces(System.Type,System.Collections.Generic.ICollection{System.Type},System.Collections.Generic.HashSet{System.Type})">
+            <summary>
+            Adds additional interface types.
+            </summary>
+            <param name="interfaceType">The interface type.</param>
+            <param name="declaringInterfaceTypes">The declaring interface types.</param>
+            <param name="additionalInterfaceTypes">The additional interface types.</param>
+        </member>
+        <member name="M:NProxy.Core.Internal.Definitions.ProxyDefinitionBase.AcceptVisitor(NProxy.Core.Internal.Definitions.IProxyDefinitionVisitor)">
+            <inheritdoc/>
+        </member>
+        <member name="M:NProxy.Core.Internal.Definitions.ProxyDefinitionBase.UnwrapProxy(System.Object)">
+            <inheritdoc/>
+        </member>
+        <member name="M:NProxy.Core.Internal.Definitions.ProxyDefinitionBase.CreateProxy(System.Type,System.Object[])">
+            <inheritdoc/>
+        </member>
+        <member name="M:NProxy.Core.Internal.Definitions.ProxyDefinitionBase.Equals(NProxy.Core.Internal.Definitions.ProxyDefinitionBase)">
+            <inheritdoc/>
+        </member>
+        <member name="M:NProxy.Core.Internal.Definitions.ProxyDefinitionBase.Equals(System.Object)">
+            <inheritdoc/>
+        </member>
+        <member name="M:NProxy.Core.Internal.Definitions.ProxyDefinitionBase.GetHashCode">
+            <inheritdoc/>
+        </member>
+        <member name="P:NProxy.Core.Internal.Definitions.ProxyDefinitionBase.DeclaringInterfaces">
+            <summary>
+            Returns all declaring interface types.
+            </summary>
+        </member>
+        <member name="P:NProxy.Core.Internal.Definitions.ProxyDefinitionBase.AdditionalInterfaces">
+            <summary>
+            Returns all additional interface types.
+            </summary>
+        </member>
+        <member name="P:NProxy.Core.Internal.Definitions.ProxyDefinitionBase.DeclaringType">
+            <inheritdoc/>
+        </member>
+        <member name="P:NProxy.Core.Internal.Definitions.ProxyDefinitionBase.ParentType">
+            <inheritdoc/>
+        </member>
+        <member name="P:NProxy.Core.Internal.Definitions.ProxyDefinitionBase.ImplementedInterfaces">
+            <inheritdoc/>
+        </member>
+        <member name="M:NProxy.Core.Internal.Definitions.ClassProxyDefinition.#ctor(System.Type,System.Collections.Generic.IEnumerable{System.Type})">
+            <summary>
+            Initializes a new instance of the <see cref="T:NProxy.Core.Internal.Definitions.ClassProxyDefinition"/> class.
+            </summary>
+            <param name="declaringType">The declaring type.</param>
+            <param name="interfaceTypes">The interface types.</param>
+        </member>
+        <member name="M:NProxy.Core.Internal.Definitions.ClassProxyDefinition.AcceptVisitor(NProxy.Core.Internal.Definitions.IProxyDefinitionVisitor)">
+            <inheritdoc/>
+        </member>
+        <member name="M:NProxy.Core.Internal.Definitions.ClassProxyDefinition.UnwrapProxy(System.Object)">
+            <inheritdoc/>
+        </member>
+        <member name="M:NProxy.Core.Internal.Definitions.ClassProxyDefinition.CreateProxy(System.Type,System.Object[])">
+            <inheritdoc/>
+        </member>
+        <member name="P:NProxy.Core.Internal.Definitions.ClassProxyDefinition.ImplementedInterfaces">
+            <inheritdoc/>
+        </member>
+        <member name="T:NProxy.Core.Internal.Definitions.DelegateProxyDefinition">
+            <summary>
+            Represents a delegate proxy definition.
+            </summary>
+        </member>
+        <member name="F:NProxy.Core.Internal.Definitions.DelegateProxyDefinition.DelegateMethodName">
+            <summary>
+            The name of the delegate method.
+            </summary>
+        </member>
+        <member name="M:NProxy.Core.Internal.Definitions.DelegateProxyDefinition.#ctor(System.Type,System.Collections.Generic.IEnumerable{System.Type})">
+            <summary>
+            Initializes a new instance of the <see cref="T:NProxy.Core.Internal.Definitions.DelegateProxyDefinition"/> class.
+            </summary>
+            <param name="declaringType">The declaring type.</param>
+            <param name="interfaceTypes">The interface types.</param>
+        </member>
+        <member name="M:NProxy.Core.Internal.Definitions.DelegateProxyDefinition.AcceptVisitor(NProxy.Core.Internal.Definitions.IProxyDefinitionVisitor)">
+            <inheritdoc/>
+        </member>
+        <member name="M:NProxy.Core.Internal.Definitions.DelegateProxyDefinition.UnwrapProxy(System.Object)">
+            <inheritdoc/>
+        </member>
+        <member name="M:NProxy.Core.Internal.Definitions.DelegateProxyDefinition.CreateProxy(System.Type,System.Object[])">
+            <inheritdoc/>
+        </member>
+        <member name="P:NProxy.Core.Internal.Definitions.DelegateProxyDefinition.ImplementedInterfaces">
+            <inheritdoc/>
+        </member>
+        <member name="T:NProxy.Core.Internal.Definitions.InterfaceProxyDefinition">
+            <summary>
+            Represents an interface proxy definition.
+            </summary>
+        </member>
+        <member name="M:NProxy.Core.Internal.Definitions.InterfaceProxyDefinition.#ctor(System.Type,System.Collections.Generic.IEnumerable{System.Type})">
+            <summary>
+            Initializes a new instance of the <see cref="T:NProxy.Core.Internal.Definitions.InterfaceProxyDefinition"/> class.
+            </summary>
+            <param name="declaringType">The declaring type.</param>
+            <param name="interfaceTypes">The interface types.</param>
+        </member>
+        <member name="M:NProxy.Core.Internal.Definitions.InterfaceProxyDefinition.AcceptVisitor(NProxy.Core.Internal.Definitions.IProxyDefinitionVisitor)">
+            <inheritdoc/>
+        </member>
+        <member name="M:NProxy.Core.Internal.Definitions.InterfaceProxyDefinition.UnwrapProxy(System.Object)">
+            <inheritdoc/>
+        </member>
+        <member name="M:NProxy.Core.Internal.Definitions.InterfaceProxyDefinition.CreateProxy(System.Type,System.Object[])">
+            <inheritdoc/>
+        </member>
+        <member name="P:NProxy.Core.Internal.Definitions.InterfaceProxyDefinition.ImplementedInterfaces">
+            <inheritdoc/>
+        </member>
+        <member name="T:NProxy.Core.Internal.Reflection.MemberToken">
+            <summary>
+            Represents a value which uniquely identifies a member.
+            </summary>
+        </member>
+        <member name="F:NProxy.Core.Internal.Reflection.MemberToken._declaringType">
+            <summary>
+            The declaring type.
+            </summary>
+        </member>
+        <member name="F:NProxy.Core.Internal.Reflection.MemberToken._metadataToken">
+            <summary>
+            The metadata token.
+            </summary>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.MemberToken.#ctor(System.Reflection.MemberInfo)">
+            <summary>
+            Initializes a new instance of the <see cref="T:NProxy.Core.Internal.Reflection.MemberToken"/> struct.
+            </summary>
+            <param name="memberInfo">The member information.</param>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.MemberToken.Equals(NProxy.Core.Internal.Reflection.MemberToken)">
+            <inheritdoc/>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.MemberToken.GetHashCode">
+            <inheritdoc/>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.MemberToken.Equals(System.Object)">
+            <inheritdoc/>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.MemberToken.ToString">
+            <inheritdoc/>
+        </member>
+        <member name="T:NProxy.Core.Internal.Reflection.Emit.MethodBuilderExtensions">
+            <summary>
+            Provides <see cref="T:System.Reflection.Emit.MethodBuilder"/> extension methods.
+            </summary>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.Emit.MethodBuilderExtensions.DefineParameters(System.Reflection.Emit.MethodBuilder,System.Reflection.MethodInfo)">
+            <summary>
+            Defines the method parameters based on the specified method.
+            </summary>
+            <param name="methodBuilder">The method builder.</param>
+            <param name="methodInfo">The method information.</param>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.Emit.MethodBuilderExtensions.DefineParameters(System.Reflection.Emit.MethodBuilder,System.Reflection.MethodInfo,System.Type[])">
+            <summary>
+            Defines the method parameters based on the specified method.
+            </summary>
+            <param name="methodBuilder">The method builder.</param>
+            <param name="methodInfo">The method information.</param>
+            <param name="genericTypes">The generic types.</param>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.Emit.MethodBuilderExtensions.DefineGenericParameters(System.Reflection.Emit.MethodBuilder,System.Reflection.MethodBase)">
+            <summary>
+            Defines the generic method parameters based on the specified method.
+            </summary>
+            <param name="methodBuilder">The method builder.</param>
+            <param name="methodBase">The method base.</param>
+            <returns>The generic parameter types.</returns>
+            <remarks>
+            Custom attributes are not considered by this method.
+            </remarks>
+        </member>
+        <member name="T:NProxy.Core.Internal.Reflection.MethodInfoExtensions">
+            <summary>
+            Provides <see cref="T:System.Reflection.MethodInfo"/> extension methods.
+            </summary>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.MethodInfoExtensions.MapGenericMethod(System.Reflection.MethodInfo,System.Type[])">
+            <summary>
+            Maps a method to the specified generic types.
+            </summary>
+            <param name="methodInfo">The method information.</param>
+            <param name="genericTypes">The generic types.</param>
+            <returns>The mapped method information.</returns>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.MethodInfoExtensions.MapGenericReturnType(System.Reflection.MethodInfo,System.Type[])">
+            <summary>
+            Maps a return type to the specified generic types.
+            </summary>
+            <param name="methodInfo">The method information.</param>
+            <param name="genericTypes">The generic types.</param>
+            <returns>The mapped return type.</returns>
+        </member>
+        <member name="T:NProxy.Core.IProxyFactory">
+            <summary>
+            Defines a proxy factory.
+            </summary>
+        </member>
+        <member name="M:NProxy.Core.IProxyFactory.GetProxyTemplate(System.Type,System.Collections.Generic.IEnumerable{System.Type})">
+            <summary>
+            Returns a proxy template.
+            </summary>
+            <param name="declaringType">The declaring type.</param>
+            <param name="interfaceTypes">The additional interface types.</param>
+            <returns>The proxy template.</returns>
+        </member>
+        <member name="T:NProxy.Core.ProxyFactory">
+            <summary>
+            Represents the proxy factory.
+            </summary>
+        </member>
+        <member name="F:NProxy.Core.ProxyFactory._typeBuilderFactory">
+            <summary>
+            The type builder factory.
+            </summary>
+        </member>
+        <member name="F:NProxy.Core.ProxyFactory._interceptionFilter">
+            <summary>
+            The interception filter.
+            </summary>
+        </member>
+        <member name="F:NProxy.Core.ProxyFactory._proxyTemplateCache">
+            <summary>
+            The proxy template cache.
+            </summary>
+        </member>
+        <member name="M:NProxy.Core.ProxyFactory.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:NProxy.Core.ProxyFactory"/> class.
+            </summary>
+        </member>
+        <member name="M:NProxy.Core.ProxyFactory.#ctor(NProxy.Core.IInterceptionFilter)">
+            <summary>
+            Initializes a new instance of the <see cref="T:NProxy.Core.ProxyFactory"/> class.
+            </summary>
+            <param name="interceptionFilter">The interception filter.</param>
+        </member>
+        <member name="M:NProxy.Core.ProxyFactory.#ctor(NProxy.Core.Internal.Reflection.Emit.ITypeBuilderFactory,NProxy.Core.IInterceptionFilter)">
+            <summary>
+            Initializes a new instance of the <see cref="T:NProxy.Core.ProxyFactory"/> class.
+            </summary>
+            <param name="typeBuilderFactory">The type builder factory.</param>
+            <param name="interceptionFilter">The interception filter.</param>
+        </member>
+        <member name="M:NProxy.Core.ProxyFactory.CreateProxyDefinition(System.Type,System.Collections.Generic.IEnumerable{System.Type})">
+            <summary>
+            Creates a proxy definition for the specified declaring type and interface types.
+            </summary>
+            <param name="declaringType">The declaring type.</param>
+            <param name="interfaceTypes">The interface types.</param>
+            <returns>The proxy definition.</returns>
+        </member>
+        <member name="M:NProxy.Core.ProxyFactory.GenerateProxyTemplate(NProxy.Core.Internal.Definitions.IProxyDefinition)">
+            <summary>
+            Generates a proxy template.
+            </summary>
+            <param name="proxyDefinition">The proxy definition.</param>
+            <returns>The proxy template.</returns>
+        </member>
+        <member name="M:NProxy.Core.ProxyFactory.GetProxyTemplate(System.Type,System.Collections.Generic.IEnumerable{System.Type})">
+            <inheritdoc/>
+        </member>
+        <member name="T:NProxy.Core.Internal.Reflection.Emit.ILGeneratorExtensions">
+            <summary>
+            Provides <see cref="T:System.Reflection.Emit.ILGenerator"/> extension methods.
+            </summary>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.Emit.ILGeneratorExtensions.EmitCall(System.Reflection.Emit.ILGenerator,System.Reflection.MethodInfo)">
+            <summary>
+            Calls the specified method.
+            </summary>
+            <param name="ilGenerator">The intermediate language generator.</param>
+            <param name="methodInfo">The method information.</param>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.Emit.ILGeneratorExtensions.EmitLoadArguments(System.Reflection.Emit.ILGenerator,System.Int32,System.Int32)">
+            <summary>
+            Loads the arguments onto the stack.
+            </summary>
+            <param name="ilGenerator">The intermediate language generator.</param>
+            <param name="offset">The argument offset.</param>
+            <param name="count">The argument count.</param>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.Emit.ILGeneratorExtensions.EmitLoadArgument(System.Reflection.Emit.ILGenerator,System.Int32)">
+            <summary>
+            Loads an argument onto the stack.
+            </summary>
+            <param name="ilGenerator">The intermediate language generator.</param>
+            <param name="index">The argument index.</param>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.Emit.ILGeneratorExtensions.EmitLoadValue(System.Reflection.Emit.ILGenerator,System.Int32)">
+            <summary>
+            Loads a value onto the stack.
+            </summary>
+            <param name="ilGenerator">The intermediate language generator.</param>
+            <param name="value">The value.</param>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.Emit.ILGeneratorExtensions.ThrowException(System.Reflection.Emit.ILGenerator,System.Type,System.String)">
+            <summary>
+            Throws a new exception of the specified exception type.
+            </summary>
+            <param name="ilGenerator">The intermediate language generator.</param>
+            <param name="exceptionType">The exception type.</param>
+            <param name="message">The error message.</param>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.Emit.ILGeneratorExtensions.NewArray(System.Reflection.Emit.ILGenerator,System.Type,System.Int32)">
+            <summary>
+            Creates a new array of the specified element type.
+            </summary>
+            <param name="ilGenerator">The intermediate language generator.</param>
+            <param name="elementType">The element type.</param>
+            <param name="size">The array size.</param>
+            <returns>The new array.</returns>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.Emit.ILGeneratorExtensions.EmitBox(System.Reflection.Emit.ILGenerator,System.Type)">
+            <summary>
+            Converts a value type to an object reference.
+            </summary>
+            <param name="ilGenerator">The intermediate language generator.</param>
+            <param name="type">The type.</param>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.Emit.ILGeneratorExtensions.EmitUnbox(System.Reflection.Emit.ILGenerator,System.Type)">
+            <summary>
+            Converts the boxed representation of a specified type to its unboxed form.
+            </summary>
+            <param name="ilGenerator">The intermediate language generator.</param>
+            <param name="type">The type.</param>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.Emit.ILGeneratorExtensions.EmitLoadIndirect(System.Reflection.Emit.ILGenerator,System.Type)">
+            <summary>
+            Loads a value from an address.
+            </summary>
+            <param name="ilGenerator">The intermediate language generator.</param>
+            <param name="type">The type.</param>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.Emit.ILGeneratorExtensions.EmitStoreIndirect(System.Reflection.Emit.ILGenerator,System.Type)">
+            <summary>
+            Stores a value to an address.
+            </summary>
+            <param name="ilGenerator">The intermediate language generator.</param>
+            <param name="type">The type.</param>
+        </member>
+        <member name="T:NProxy.Core.Internal.Reflection.Emit.TypeBuilderExtensions">
+            <summary>
+            Provides <see cref="T:System.Reflection.Emit.TypeBuilder"/> extension methods.
+            </summary>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.Emit.TypeBuilderExtensions.DefineGenericParameters(System.Reflection.Emit.TypeBuilder,System.Type[])">
+            <summary>
+            Defines the generic type parameters.
+            </summary>
+            <param name="typeBuilder">The type builder.</param>
+            <param name="genericTypes">The generic types.</param>
+            <returns>The generic parameter types.</returns>
+            <remarks>
+            Custom attributes are not considered by this method.
+            </remarks>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.Emit.TypeBuilderExtensions.DefineConstructor(System.Reflection.Emit.TypeBuilder,System.Reflection.MethodAttributes,System.Reflection.CallingConventions,System.Type[],System.String[])">
+            <summary>
+            Defines a constructor.
+            </summary>
+            <param name="typeBuilder">The type builder.</param>
+            <param name="methodAttributes">The method attributes.</param>
+            <param name="callingConvention">The calling convention.</param>
+            <param name="parameterTypes">The parameter types.</param>
+            <param name="parameterNames">The parameter names.</param>
+            <returns>The constructor builder.</returns>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.Emit.TypeBuilderExtensions.DefineParameters(System.Reflection.Emit.ConstructorBuilder,System.Collections.Generic.IEnumerable{System.String})">
+            <summary>
+            Defines the constructor parameters.
+            </summary>
+            <param name="constructorBuilder">The constructor builder.</param>
+            <param name="parameterNames">The parameter names.</param>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.Emit.TypeBuilderExtensions.DefineConstructor(System.Reflection.Emit.TypeBuilder,System.Reflection.ConstructorInfo,System.Collections.Generic.IEnumerable{System.Type},System.Collections.Generic.IEnumerable{System.String})">
+            <summary>
+            Defines a constructor based on the specified constructor.
+            </summary>
+            <param name="typeBuilder">The type builder.</param>
+            <param name="constructorInfo">The constructor information.</param>
+            <param name="additionalParameterTypes">The additional parameter types.</param>
+            <param name="additionalParameterNames">The additional parameter names.</param>
+            <returns>The constructor builder.</returns>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.Emit.TypeBuilderExtensions.DefineParameters(System.Reflection.Emit.ConstructorBuilder,System.Reflection.ConstructorInfo,System.Collections.Generic.IEnumerable{System.String})">
+            <summary>
+            Defines the constructor parameters based on the specified constructor.
+            </summary>
+            <param name="constructorBuilder">The constructor builder.</param>
+            <param name="constructorInfo">The constructor information.</param>
+            <param name="additionalParameterNames">The additional parameter names.</param>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.Emit.TypeBuilderExtensions.DefineEvent(System.Reflection.Emit.TypeBuilder,System.Reflection.EventInfo,System.Boolean,System.Func{System.Reflection.MethodInfo,System.Boolean,System.Reflection.Emit.MethodBuilder})">
+            <summary>
+            Defines an event based on the specified event.
+            </summary>
+            <param name="typeBuilder">The type builder.</param>
+            <param name="eventInfo">The event information.</param>
+            <param name="isExplicit">A value indicating whether the specified event should be implemented explicitly.</param>
+            <param name="methodBuilderFactory">The method builder factory function.</param>
+            <returns>The event builder.</returns>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.Emit.TypeBuilderExtensions.DefineProperty(System.Reflection.Emit.TypeBuilder,System.Reflection.PropertyInfo,System.Boolean,System.Func{System.Reflection.MethodInfo,System.Boolean,System.Reflection.Emit.MethodBuilder})">
+            <summary>
+            Defines a property based on the specified property.
+            </summary>
+            <param name="typeBuilder">The type builder.</param>
+            <param name="propertyInfo">The property information.</param>
+            <param name="isExplicit">A value indicating whether the specified property should be implemented explicitly.</param>
+            <param name="methodBuilderFactory">The method builder factory function.</param>
+            <returns>The property builder.</returns>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.Emit.TypeBuilderExtensions.DefineMethod(System.Reflection.Emit.TypeBuilder,System.Reflection.MethodInfo,System.Boolean,System.Boolean)">
+            <summary>
+            Defines a method based on the specified method.
+            </summary>
+            <param name="typeBuilder">The type builder.</param>
+            <param name="methodInfo">The method information.</param>
+            <param name="isExplicit">A value indicating whether the specified method should be implemented explicitly.</param>
+            <param name="isOverride">A value indicating whether the specified method should be overridden.</param>
+            <returns>The method builder.</returns>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.Emit.TypeBuilderExtensions.SetCustomAttribute(System.Reflection.Emit.TypeBuilder,System.Reflection.ConstructorInfo,System.Object[])">
+            <summary>
+            Sets the specified custom attribute.
+            </summary>
+            <param name="typeBuilder">The type builder.</param>
+            <param name="constructorInfo">The constructor information.</param>
+            <param name="arguments">The constructor arguments.</param>
+        </member>
+        <member name="T:NProxy.Core.ProxyFactoryExtensions">
+            <summary>
+            Provides <see cref="T:NProxy.Core.IProxyFactory"/> extension methods.
+            </summary>
+        </member>
+        <member name="M:NProxy.Core.ProxyFactoryExtensions.GetProxyTemplate``1(NProxy.Core.IProxyFactory,System.Collections.Generic.IEnumerable{System.Type})">
+            <summary>
+            Returns a proxy template.
+            </summary>
+            <typeparam name="T">The declaring type.</typeparam>
+            <param name="proxyFactory">The proxy factory.</param>
+            <param name="interfaceTypes">The additional interface types.</param>
+            <returns>The proxy template.</returns>
+        </member>
+        <member name="M:NProxy.Core.ProxyFactoryExtensions.CreateProxy(NProxy.Core.IProxyFactory,System.Type,System.Collections.Generic.IEnumerable{System.Type},NProxy.Core.IInvocationHandler,System.Object[])">
+            <summary>
+            Creates a new proxy.
+            </summary>
+            <param name="proxyFactory">The proxy factory.</param>
+            <param name="declaringType">The declaring type.</param>
+            <param name="interfaceTypes">The additional interface types.</param>
+            <param name="invocationHandler">The invocation handler.</param>
+            <param name="arguments">The constructor arguments.</param>
+            <returns>The new proxy object.</returns>
+        </member>
+        <member name="M:NProxy.Core.ProxyFactoryExtensions.CreateProxy``1(NProxy.Core.IProxyFactory,System.Collections.Generic.IEnumerable{System.Type},NProxy.Core.IInvocationHandler,System.Object[])">
+            <summary>
+            Creates a new proxy.
+            </summary>
+            <typeparam name="T">The declaring type.</typeparam>
+            <param name="proxyFactory">The proxy factory.</param>
+            <param name="interfaceTypes">The additional interface types.</param>
+            <param name="invocationHandler">The invocation handler.</param>
+            <param name="arguments">The constructor arguments.</param>
+            <returns>The new proxy object.</returns>
+        </member>
+        <member name="T:NProxy.Core.ProxyTypeBuilderFactory">
+            <summary>
+            Represents a proxy type builder factory.
+            </summary>
+        </member>
+        <member name="T:NProxy.Core.Internal.Reflection.Emit.ITypeBuilderFactory">
+            <summary>
+            Defines a type builder factory.
+            </summary>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.Emit.ITypeBuilderFactory.CreateBuilder(System.Type)">
+            <summary>
+            Creates a type builder.
+            </summary>
+            <param name="parentType">The parent type.</param>
+            <returns>The type builder.</returns>
+        </member>
+        <member name="T:NProxy.Core.Internal.Reflection.Emit.ITypeRepository">
+            <summary>
+            Defines a type repository.
+            </summary>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.Emit.ITypeRepository.DefineType(System.String,System.Type)">
+            <summary>
+            Constructs a type builder.
+            </summary>
+            <param name="typeName">The type name.</param>
+            <param name="parentType">The parent type.</param>
+            <returns>The type builder.</returns>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.Emit.ITypeRepository.GetType(System.Reflection.MethodInfo)">
+            <summary>
+            Returns a type for the specified method.
+            </summary>
+            <param name="methodInfo">The method information.</param>
+            <returns>The type.</returns>
+        </member>
+        <member name="F:NProxy.Core.ProxyTypeBuilderFactory.DynamicAssemblyName">
+            <summary>
+            The dynamic assembly name.
+            </summary>
+        </member>
+        <member name="F:NProxy.Core.ProxyTypeBuilderFactory.DynamicModuleName">
+            <summary>
+            The dynamic module name.
+            </summary>
+        </member>
+        <member name="F:NProxy.Core.ProxyTypeBuilderFactory.DynamicDefaultNamespace">
+            <summary>
+            The dynamic default namespace.
+            </summary>
+        </member>
+        <member name="F:NProxy.Core.ProxyTypeBuilderFactory.DynamicAssemblyKeyPairResourceName">
+            <summary>
+            The dynamic assembly key pair resource name.
+            </summary>
+        </member>
+        <member name="F:NProxy.Core.ProxyTypeBuilderFactory._assemblyBuilder">
+            <summary>
+            The assembly builder.
+            </summary>
+        </member>
+        <member name="F:NProxy.Core.ProxyTypeBuilderFactory._moduleBuilder">
+            <summary>
+            The module builder.
+            </summary>
+        </member>
+        <member name="F:NProxy.Core.ProxyTypeBuilderFactory._methodInfoTypeFactory">
+            <summary>
+            The method information type factory.
+            </summary>
+        </member>
+        <member name="F:NProxy.Core.ProxyTypeBuilderFactory._methodInfoTypeCache">
+            <summary>
+            The method information type cache.
+            </summary>
+        </member>
+        <member name="F:NProxy.Core.ProxyTypeBuilderFactory._nextTypeId">
+            <summary>
+            The next type identifier.
+            </summary>
+        </member>
+        <member name="M:NProxy.Core.ProxyTypeBuilderFactory.#ctor(System.Boolean)">
+            <summary>
+            Initializes a new instance of the <see cref="T:NProxy.Core.ProxyTypeBuilderFactory"/> class.
+            </summary>
+            <param name="canSaveAssembly">A value indicating whether the assembly can be saved.</param>
+        </member>
+        <member name="M:NProxy.Core.ProxyTypeBuilderFactory.DefineDynamicAssembly(System.String,System.Boolean)">
+            <summary>
+            Defines the dynamic assembly.
+            </summary>
+            <param name="name">The assembly name.</param>
+            <param name="canSaveAssembly">A value indicating whether the assembly can be saved.</param>
+            <returns>The assembly builder.</returns>
+        </member>
+        <member name="M:NProxy.Core.ProxyTypeBuilderFactory.GetDynamicAssemblyName(System.String)">
+            <summary>
+            Returns the dynamic assembly name.
+            </summary>
+            <param name="assemblyName">The assembly name.</param>
+            <returns>The assembly name.</returns>
+        </member>
+        <member name="M:NProxy.Core.ProxyTypeBuilderFactory.GetExecutingAssemblyName">
+            <summary>
+            Returns the executing assembly name.
+            </summary>
+            <returns>The assembly name.</returns>
+        </member>
+        <member name="M:NProxy.Core.ProxyTypeBuilderFactory.GetDynamicAssemblyKeyPair">
+            <summary>
+            Returns the dynamic assembly key pair.
+            </summary>
+            <returns>The dynamic assembly key pair.</returns>
+        </member>
+        <member name="M:NProxy.Core.ProxyTypeBuilderFactory.ReadToEnd(System.IO.Stream)">
+            <summary>
+            Reads all bytes from the current position to the end of the specified stream.
+            </summary>
+            <param name="stream">The stream.</param>
+            <returns>All bytes from the current position to the end of the specified stream.</returns>
+        </member>
+        <member name="M:NProxy.Core.ProxyTypeBuilderFactory.SaveAssembly(System.String)">
+            <summary>
+            Saves the dynamic assembly to disk.
+            </summary>
+            <param name="path">The path of the assembly.</param>
+        </member>
+        <member name="M:NProxy.Core.ProxyTypeBuilderFactory.DefineType(System.String,System.Type)">
+            <inheritdoc/>
+        </member>
+        <member name="M:NProxy.Core.ProxyTypeBuilderFactory.GetType(System.Reflection.MethodInfo)">
+            <inheritdoc/>
+        </member>
+        <member name="M:NProxy.Core.ProxyTypeBuilderFactory.CreateBuilder(System.Type)">
+            <inheritdoc/>
+        </member>
+        <member name="T:NProxy.Core.ProxyTypeBuilder">
+            <summary>
+            Represents a proxy type builder.
+            </summary>
+        </member>
+        <member name="T:NProxy.Core.Internal.Reflection.Emit.ITypeBuilder">
+            <summary>
+            Defines a type builder.
+            </summary>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.Emit.ITypeBuilder.AddCustomAttribute(System.Reflection.ConstructorInfo,System.Object[])">
+            <summary>
+            Adds the specified custom attribute.
+            </summary>
+            <param name="constructorInfo">The constructor information.</param>
+            <param name="arguments">The constructor arguments.</param>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.Emit.ITypeBuilder.AddInterface(System.Type)">
+            <summary>
+            Adds the specified interface.
+            </summary>
+            <param name="interfaceType">The interface type.</param>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.Emit.ITypeBuilder.BuildConstructor(System.Reflection.ConstructorInfo)">
+            <summary>
+            Builds a constructor based on the specified constructor.
+            </summary>
+            <param name="constructorInfo">The constructor information.</param>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.Emit.ITypeBuilder.IsConcreteEvent(System.Reflection.EventInfo)">
+            <summary>
+            Returns a value indicating whether the specified event is concrete.
+            </summary>
+            <param name="eventInfo">The event information.</param>
+            <returns>A value indicating whether the specified event is concrete.</returns>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.Emit.ITypeBuilder.BuildEvent(System.Reflection.EventInfo)">
+            <summary>
+            Builds an event based on the specified event.
+            </summary>
+            <param name="eventInfo">The event information.</param>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.Emit.ITypeBuilder.IsConcreteProperty(System.Reflection.PropertyInfo)">
+            <summary>
+            Returns a value indicating whether the specified property is concrete.
+            </summary>
+            <param name="propertyInfo">The property information.</param>
+            <returns>A value indicating whether the specified property is concrete.</returns>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.Emit.ITypeBuilder.BuildProperty(System.Reflection.PropertyInfo)">
+            <summary>
+            Builds a property based on the specified property.
+            </summary>
+            <param name="propertyInfo">The property information.</param>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.Emit.ITypeBuilder.IsConcreteMethod(System.Reflection.MethodInfo)">
+            <summary>
+            Returns a value indicating whether the specified method is concrete.
+            </summary>
+            <param name="methodInfo">The method information.</param>
+            <returns>A value indicating whether the specified method is concrete.</returns>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.Emit.ITypeBuilder.BuildMethod(System.Reflection.MethodInfo)">
+            <summary>
+            Builds a method based on the specified method.
+            </summary>
+            <param name="methodInfo">The method information.</param>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.Emit.ITypeBuilder.CreateType">
+            <summary>
+            Creates the type.
+            </summary>
+            <returns>The type.</returns>
+        </member>
+        <member name="F:NProxy.Core.ProxyTypeBuilder.InvocationHandlerInvokeMethodInfo">
+            <summary>
+            The <c>IInvocationHandler.Invoke</c> method information.
+            </summary>
+        </member>
+        <member name="F:NProxy.Core.ProxyTypeBuilder._typeRepository">
+            <summary>
+            The type repository.
+            </summary>
+        </member>
+        <member name="F:NProxy.Core.ProxyTypeBuilder._parentType">
+            <summary>
+            The parent type.
+            </summary>
+        </member>
+        <member name="F:NProxy.Core.ProxyTypeBuilder._typeBuilder">
+            <summary>
+            The type builder.
+            </summary>
+        </member>
+        <member name="F:NProxy.Core.ProxyTypeBuilder._invocationHandlerFieldInfo">
+            <summary>
+            The invocation handler field information.
+            </summary>
+        </member>
+        <member name="F:NProxy.Core.ProxyTypeBuilder._interfaceTypes">
+            <summary>
+            The interface types.
+            </summary>
+        </member>
+        <member name="M:NProxy.Core.ProxyTypeBuilder.#ctor(NProxy.Core.Internal.Reflection.Emit.ITypeRepository,System.Type)">
+            <summary>
+            Initializes a new instance of the <see cref="T:NProxy.Core.ProxyTypeBuilder"/> class.
+            </summary>
+            <param name="typeRepository">The type repository.</param>
+            <param name="parentType">The parent type.</param>
+        </member>
+        <member name="M:NProxy.Core.ProxyTypeBuilder.BuildInterceptedMethod(System.Reflection.MethodInfo,System.Boolean)">
+            <summary>
+            Builds an intercepted method based on the specified method.
+            </summary>
+            <param name="methodInfo">The method information.</param>
+            <param name="isExplicit">A value indicating whether the specified method should be implemented explicitly.</param>
+            <returns>The intercepted method builder.</returns>
+        </member>
+        <member name="M:NProxy.Core.ProxyTypeBuilder.GetMethodInfoConstructor(System.Reflection.MethodInfo,System.Type[])">
+            <summary>
+            Returns a constructor information for the specified method.
+            </summary>
+            <param name="methodInfo">The method information.</param>
+            <param name="genericParameterTypes">The generic parameter types.</param>
+            <returns>The constructor information.</returns>
+        </member>
+        <member name="M:NProxy.Core.ProxyTypeBuilder.LoadArguments(System.Reflection.Emit.ILGenerator,System.Collections.Generic.IList{System.Type},System.Reflection.Emit.LocalBuilder)">
+            <summary>
+            Loads the arguments onto the stack.
+            </summary>
+            <param name="ilGenerator">The intermediate language generator.</param>
+            <param name="parameterTypes">The parameter types.</param>
+            <param name="parametersLocalBuilder">The parameters local builder.</param>
+        </member>
+        <member name="M:NProxy.Core.ProxyTypeBuilder.RestoreByReferenceArguments(System.Reflection.Emit.ILGenerator,System.Collections.Generic.IList{System.Type},System.Reflection.Emit.LocalBuilder)">
+            <summary>
+            Restores the by reference arguments.
+            </summary>
+            <param name="ilGenerator">The intermediate language generator.</param>
+            <param name="parameterTypes">The parameter types.</param>
+            <param name="parametersLocalBuilder">The parameters local builder.</param>
+        </member>
+        <member name="M:NProxy.Core.ProxyTypeBuilder.IsOverrideMember(System.Reflection.MemberInfo)">
+            <summary>
+            Returns a value indicating whether the specified member should be overridden.
+            </summary>
+            <param name="memberInfo">The member information.</param>
+            <returns>A value indicating whether the specified member should be overridden.</returns>
+        </member>
+        <member name="M:NProxy.Core.ProxyTypeBuilder.IsExplicitMember(System.Reflection.MemberInfo)">
+            <summary>
+            Returns a value indicating whether the specified member should be implemented explicitly.
+            </summary>
+            <param name="memberInfo">The member information.</param>
+            <returns>A value indicating whether the specified member should be implemented explicitly.</returns>
+        </member>
+        <member name="M:NProxy.Core.ProxyTypeBuilder.AddCustomAttribute(System.Reflection.ConstructorInfo,System.Object[])">
+            <inheritdoc/>
+        </member>
+        <member name="M:NProxy.Core.ProxyTypeBuilder.AddInterface(System.Type)">
+            <inheritdoc/>
+        </member>
+        <member name="M:NProxy.Core.ProxyTypeBuilder.BuildConstructor(System.Reflection.ConstructorInfo)">
+            <inheritdoc/>
+        </member>
+        <member name="M:NProxy.Core.ProxyTypeBuilder.IsConcreteEvent(System.Reflection.EventInfo)">
+            <inheritdoc/>
+        </member>
+        <member name="M:NProxy.Core.ProxyTypeBuilder.BuildEvent(System.Reflection.EventInfo)">
+            <inheritdoc/>
+        </member>
+        <member name="M:NProxy.Core.ProxyTypeBuilder.IsConcreteProperty(System.Reflection.PropertyInfo)">
+            <inheritdoc/>
+        </member>
+        <member name="M:NProxy.Core.ProxyTypeBuilder.BuildProperty(System.Reflection.PropertyInfo)">
+            <inheritdoc/>
+        </member>
+        <member name="M:NProxy.Core.ProxyTypeBuilder.IsConcreteMethod(System.Reflection.MethodInfo)">
+            <inheritdoc/>
+        </member>
+        <member name="M:NProxy.Core.ProxyTypeBuilder.BuildMethod(System.Reflection.MethodInfo)">
+            <inheritdoc/>
+        </member>
+        <member name="M:NProxy.Core.ProxyTypeBuilder.CreateType">
+            <inheritdoc/>
+        </member>
+        <member name="T:NProxy.Core.IInvocationHandler">
+            <summary>
+            Defines an invocation handler.
+            </summary>
+        </member>
+        <member name="M:NProxy.Core.IInvocationHandler.Invoke(System.Object,System.Reflection.MethodInfo,System.Object[])">
+            <summary>
+            Processes an invocation on a target.
+            </summary>
+            <param name="target">The target object.</param>
+            <param name="methodInfo">The method information.</param>
+            <param name="parameters">The parameter values.</param>
+            <returns>The return value.</returns>
+        </member>
+        <member name="T:NProxy.Core.Internal.Reflection.EventInfoExtensions">
+            <summary>
+            Provides <see cref="T:System.Reflection.EventInfo"/> extension methods.
+            </summary>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.EventInfoExtensions.CanOverride(System.Reflection.EventInfo)">
+            <summary>
+            Returns a value indicating whether the specified event is overrideable.
+            </summary>
+            <param name="eventInfo">The event information.</param>
+            <returns>A value indicating whether the specified event is overrideable.</returns>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.EventInfoExtensions.GetAccessorMethods(System.Reflection.EventInfo)">
+            <summary>
+            Returns all accessor methods for the specified event.
+            </summary>
+            <param name="eventInfo">The event information.</param>
+            <returns>All accessor methods for the specified event.</returns>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.EventInfoExtensions.GetFullName(System.Reflection.EventInfo)">
+            <summary>
+            Returns the full name of the specified event.
+            </summary>
+            <param name="eventInfo">The event information.</param>
+            <returns>The full name.</returns>
+        </member>
+        <member name="T:NProxy.Core.Internal.Reflection.MethodBaseExtensions">
+            <summary>
+            Provides <see cref="T:System.Reflection.MethodBase"/> extension methods.
+            </summary>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.MethodBaseExtensions.CanOverride(System.Reflection.MethodBase)">
+            <summary>
+            Returns a value indicating whether the specified method is overrideable.
+            </summary>
+            <param name="methodBase">The method base.</param>
+            <returns>A value indicating whether the specified method is overrideable.</returns>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.MethodBaseExtensions.GetFullName(System.Reflection.MethodBase)">
+            <summary>
+            Returns the full name of the specified method.
+            </summary>
+            <param name="methodBase">The method base.</param>
+            <returns>The full name.</returns>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.MethodBaseExtensions.GetParameterTypes(System.Reflection.MethodBase)">
+            <summary>
+            Returns the parameter types of the specified method.
+            </summary>
+            <param name="methodBase">The method base.</param>
+            <returns>The parameter types.</returns>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.MethodBaseExtensions.MapGenericParameterTypes(System.Reflection.MethodBase,System.Type[])">
+            <summary>
+            Maps the parameter types to the specified generic types.
+            </summary>
+            <param name="methodBase">The method base.</param>
+            <param name="genericTypes">The generic types.</param>
+            <returns>The mapped parameter types.</returns>
+        </member>
+        <member name="T:NProxy.Core.Internal.Reflection.PropertyInfoExtensions">
+            <summary>
+            Provides <see cref="T:System.Reflection.PropertyInfo"/> extension methods.
+            </summary>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.PropertyInfoExtensions.CanOverride(System.Reflection.PropertyInfo)">
+            <summary>
+            Returns a value indicating whether the specified property is overrideable.
+            </summary>
+            <param name="propertyInfo">The property information.</param>
+            <returns>A value indicating whether the specified property is overrideable.</returns>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.PropertyInfoExtensions.GetAccessorMethods(System.Reflection.PropertyInfo)">
+            <summary>
+            Returns all accessor methods for the specified property.
+            </summary>
+            <param name="propertyInfo">The property information.</param>
+            <returns>All accessor methods for the specified property.</returns>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.PropertyInfoExtensions.GetFullName(System.Reflection.PropertyInfo)">
+            <summary>
+            Returns the full name of the specified property.
+            </summary>
+            <param name="propertyInfo">The property information.</param>
+            <returns>The full name.</returns>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.PropertyInfoExtensions.GetIndexParameterTypes(System.Reflection.PropertyInfo)">
+            <summary>
+            Returns the index parameter types of the specified property.
+            </summary>
+            <param name="propertyInfo">The property information.</param>
+            <returns>The index parameter types.</returns>
+        </member>
+        <member name="T:NProxy.Core.Internal.Reflection.TypeExtensions">
+            <summary>
+            Provides <see cref="T:System.Type"/> extension methods.
+            </summary>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.TypeExtensions.IsDelegate(System.Type)">
+            <summary>
+            Returns a value indicating whether the specified type is a delegate.
+            </summary>
+            <param name="type">The type.</param>
+            <returns>A value indicating whether the specified type is a delegate.</returns>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.TypeExtensions.IsVoid(System.Type)">
+            <summary>
+            Returns a value indicating whether the specified type is void.
+            </summary>
+            <param name="type">The type.</param>
+            <returns>A value indicating whether the specified type is void.</returns>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.TypeExtensions.GetConstructor(System.Type,System.Reflection.BindingFlags,System.Type[])">
+            <summary>
+            Returns the constructor information that reflects the constructor that matches the specified criterias.
+            </summary>
+            <param name="type">The type.</param>
+            <param name="bindingFlags">The binding flags.</param>
+            <param name="parameterTypes">The parameter types.</param>
+            <returns>The constructor information.</returns>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.TypeExtensions.GetMethod(System.Type,System.String,System.Reflection.BindingFlags,System.Type[])">
+            <summary>
+            Returns the method that reflects the method that matches the specified criterias.
+            </summary>
+            <param name="type">The type.</param>
+            <param name="methodName">The method name.</param>
+            <param name="bindingFlags">The binding flags.</param>
+            <param name="parameterTypes">The parameter types.</param>
+            <returns>The method information.</returns>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.TypeExtensions.MapGenericType(System.Type,System.Type[])">
+            <summary>
+            Maps a type to the specified generic types.
+            </summary>
+            <param name="type">The type.</param>
+            <param name="genericTypes">The generic types.</param>
+            <returns>The mapped type.</returns>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.TypeExtensions.MapGenericArguments(System.Type,System.Type[])">
+            <summary>
+            Maps the generic arguments to the specified generic types.
+            </summary>
+            <param name="type">The type.</param>
+            <param name="genericTypes">The generic types.</param>
+            <returns>The mapped generic arguments.</returns>
+        </member>
+        <member name="T:NProxy.Core.Interceptors.IInvocationContext">
+            <summary>
+            Defines an invocation context.
+            </summary>
+        </member>
+        <member name="M:NProxy.Core.Interceptors.IInvocationContext.Proceed">
+            <summary>
+            Proceed to the next interceptor in the interceptor chain.
+            </summary>
+            <returns>The return value of the next method in the chain.</returns>
+        </member>
+        <member name="P:NProxy.Core.Interceptors.IInvocationContext.Target">
+            <summary>
+            Returns the target object. 
+            </summary>
+        </member>
+        <member name="P:NProxy.Core.Interceptors.IInvocationContext.Method">
+            <summary>
+            Returns the method of the target class for which the interceptor was invoked.
+            </summary>
+        </member>
+        <member name="P:NProxy.Core.Interceptors.IInvocationContext.Parameters">
+            <summary>
+            Returns the parameter values that will be passed to the method of the target class.
+            </summary>
+        </member>
+        <member name="T:NProxy.Core.Interceptors.InvocationContext">
+            <summary>
+            Represents an invocation context.
+            </summary>
+        </member>
+        <member name="F:NProxy.Core.Interceptors.InvocationContext._target">
+            <summary>
+            The target object.
+            </summary>
+        </member>
+        <member name="F:NProxy.Core.Interceptors.InvocationContext._methodInfo">
+            <summary>
+            The method information.
+            </summary>
+        </member>
+        <member name="F:NProxy.Core.Interceptors.InvocationContext._parameters">
+            <summary>
+            The parameter values.
+            </summary>
+        </member>
+        <member name="F:NProxy.Core.Interceptors.InvocationContext._interceptors">
+            <summary>
+            The interceptors.
+            </summary>
+        </member>
+        <member name="F:NProxy.Core.Interceptors.InvocationContext._nextInterceptorIndex">
+            <summary>
+            The index of the next interceptor.
+            </summary>
+        </member>
+        <member name="M:NProxy.Core.Interceptors.InvocationContext.#ctor(System.Object,System.Reflection.MethodInfo,System.Object[],NProxy.Core.Interceptors.IInterceptor[])">
+            <summary>
+            Initializes a new instance of the <see cref="T:NProxy.Core.Interceptors.InvocationContext"/> class.
+            </summary>
+            <param name="target">The target object.</param>
+            <param name="methodInfo">The method information.</param>
+            <param name="parameters">The parameter values.</param>
+            <param name="interceptors">The interceptors.</param>
+        </member>
+        <member name="M:NProxy.Core.Interceptors.InvocationContext.GetNextInterceptor">
+            <summary>
+            Returns the next interceptor in the interceptor chain.
+            </summary>
+            <returns>The next interceptor.</returns>
+        </member>
+        <member name="M:NProxy.Core.Interceptors.InvocationContext.Proceed">
+            <inheritdoc/>
+        </member>
+        <member name="P:NProxy.Core.Interceptors.InvocationContext.Target">
+            <inheritdoc/>
+        </member>
+        <member name="P:NProxy.Core.Interceptors.InvocationContext.Method">
+            <inheritdoc/>
+        </member>
+        <member name="P:NProxy.Core.Interceptors.InvocationContext.Parameters">
+            <inheritdoc/>
+        </member>
+        <member name="T:NProxy.Core.Interceptors.ProxyFactoryExtensions">
+            <summary>
+            Provides <see cref="T:NProxy.Core.IProxyFactory"/> extension methods.
+            </summary>
+        </member>
+        <member name="M:NProxy.Core.Interceptors.ProxyFactoryExtensions.CreateProxy``1(NProxy.Core.IProxyFactory,System.Object[])">
+            <summary>
+            Returns a fluent interface for creating a new proxy.
+            </summary>
+            <typeparam name="T">The declaring type.</typeparam>
+            <param name="proxyFactory">The proxy factory.</param>
+            <param name="arguments">The constructor arguments.</param>
+            <returns>A fluent interface for creating a new proxy.</returns>
+        </member>
+        <member name="T:NProxy.Core.Interceptors.DynamicTargetInterceptor">
+            <summary>
+            Represents a dynamic target interceptor.
+            </summary>
+        </member>
+        <member name="F:NProxy.Core.Interceptors.DynamicTargetInterceptor._targetFactory">
+            <summary>
+            The target factory.
+            </summary>
+        </member>
+        <member name="M:NProxy.Core.Interceptors.DynamicTargetInterceptor.#ctor(System.Func{System.Object,System.Object})">
+            <summary>
+            Initializes a new instance of the <see cref="T:NProxy.Core.Interceptors.DynamicTargetInterceptor"/> class.
+            </summary>
+            <param name="targetFactory">The target factory.</param>
+        </member>
+        <member name="M:NProxy.Core.Interceptors.DynamicTargetInterceptor.Intercept(NProxy.Core.Interceptors.IInvocationContext)">
+            <inheritdoc/>
+        </member>
+        <member name="T:NProxy.Core.Internal.Caching.AnonymousDisposable">
+            <summary>
+            Represents an anonymous disposable.
+            </summary>
+        </member>
+        <member name="F:NProxy.Core.Internal.Caching.AnonymousDisposable._dispose">
+            <summary>
+            The dispose action.
+            </summary>
+        </member>
+        <member name="F:NProxy.Core.Internal.Caching.AnonymousDisposable._disposed">
+            <summary>
+            A value indicating whether this <see cref="T:NProxy.Core.Internal.Caching.AnonymousDisposable"/> was already disposed.
+            </summary>
+        </member>
+        <member name="M:NProxy.Core.Internal.Caching.AnonymousDisposable.#ctor(System.Action{System.Boolean})">
+            <summary>
+            Initializes a new instance of the <see cref="T:NProxy.Core.Internal.Caching.AnonymousDisposable"/> class.
+            </summary>
+            <param name="dispose">The dispose action.</param>
+        </member>
+        <member name="M:NProxy.Core.Internal.Caching.AnonymousDisposable.Finalize">
+            <summary>
+            Releases unmanaged resources and performs other cleanup operations before the
+            <see cref="T:NProxy.Core.Internal.Caching.AnonymousDisposable"/> is reclaimed by garbage collection.
+            </summary>
+        </member>
+        <member name="M:NProxy.Core.Internal.Caching.AnonymousDisposable.Dispose(System.Boolean)">
+            <summary>
+            Dispose this <see cref="T:NProxy.Core.Internal.Caching.AnonymousDisposable"/>.
+            </summary>
+            <param name="disposing">A value indicating whether disposing is in progress.</param>
+        </member>
+        <member name="M:NProxy.Core.Internal.Caching.AnonymousDisposable.Dispose">
+            <inheritdoc/>
+        </member>
+        <member name="T:NProxy.Core.Internal.Caching.ReadWriteLock">
+            <summary>
+            Represents a read write lock.
+            </summary>
+        </member>
+        <member name="F:NProxy.Core.Internal.Caching.ReadWriteLock._lock">
+            <summary>
+            The reader writer lock.
+            </summary>
+        </member>
+        <member name="F:NProxy.Core.Internal.Caching.ReadWriteLock._disposed">
+            <summary>
+            A value indicating whether this <see cref="T:NProxy.Core.Internal.Caching.ReadWriteLock"/> was already disposed.
+            </summary>
+        </member>
+        <member name="M:NProxy.Core.Internal.Caching.ReadWriteLock.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:NProxy.Core.Internal.Caching.ReadWriteLock"/> class.
+            </summary>
+        </member>
+        <member name="M:NProxy.Core.Internal.Caching.ReadWriteLock.Finalize">
+            <summary>
+            Releases unmanaged resources and performs other cleanup operations before the
+            <see cref="T:NProxy.Core.Internal.Caching.ReadWriteLock"/> is reclaimed by garbage collection.
+            </summary>
+        </member>
+        <member name="M:NProxy.Core.Internal.Caching.ReadWriteLock.Dispose(System.Boolean)">
+            <summary>
+            Dispose this <see cref="T:NProxy.Core.Internal.Caching.AnonymousDisposable"/>.
+            </summary>
+            <param name="disposing">A value indicating whether disposing is in progress.</param>
+        </member>
+        <member name="M:NProxy.Core.Internal.Caching.ReadWriteLock.UpgradeableRead">
+            <summary>
+            Tries to enter the lock in upgradeable mode.
+            </summary>
+            <returns>A disposable to exit the lock from upgradeable mode.</returns>
+        </member>
+        <member name="M:NProxy.Core.Internal.Caching.ReadWriteLock.Read">
+            <summary>
+            Tries to enter the lock in read mode.
+            </summary>
+            <returns>A disposable to exit the lock from read mode.</returns>
+        </member>
+        <member name="M:NProxy.Core.Internal.Caching.ReadWriteLock.Write">
+            <summary>
+            Tries to enter the lock in write mode.
+            </summary>
+            <returns>A disposable to exit the lock from write mode.</returns>
+        </member>
+        <member name="M:NProxy.Core.Internal.Caching.ReadWriteLock.Dispose">
+            <inheritdoc/>
+        </member>
+        <member name="T:NProxy.Core.Interceptors.MixinInvocationHandler">
+            <summary>
+            Represents a mixin invocation handler.
+            </summary>
+        </member>
+        <member name="F:NProxy.Core.Interceptors.MixinInvocationHandler._invocationHandler">
+            <summary>
+            The next invocation handler.
+            </summary>
+        </member>
+        <member name="F:NProxy.Core.Interceptors.MixinInvocationHandler._mixins">
+            <summary>
+            The mixin objects.
+            </summary>
+        </member>
+        <member name="M:NProxy.Core.Interceptors.MixinInvocationHandler.#ctor(System.Collections.Generic.IDictionary{System.Type,System.Object},NProxy.Core.IInvocationHandler)">
+            <summary>
+            Initializes a new instance of the <see cref="T:NProxy.Core.Interceptors.MixinInvocationHandler"/> class.
+            </summary>
+            <param name="mixins">The mixin objects.</param>
+            <param name="invocationHandler">The next invocation handler.</param>
+        </member>
+        <member name="M:NProxy.Core.Interceptors.MixinInvocationHandler.Invoke(System.Object,System.Reflection.MethodInfo,System.Object[])">
+            <inheritdoc/>
+        </member>
+        <member name="T:NProxy.Core.Interceptors.Language.IFluent">
+            <summary>
+            Interface that is used to build fluent interfaces and hides methods declared by <see cref="T:System.Object"/>
+            from IntelliSense.
+            </summary>
+            <remarks>
+            Code that consumes implementations of this interface should expect one of two things:
+            <list type="number">
+            <item>
+            When referencing the interface from within the same solution (project reference),
+            you will still see the methods this interface is meant to hide.
+            </item>
+            <item>When referencing the interface through the compiled output assembly (external reference),
+            the standard Object methods will be hidden as intended.
+            </item>
+            </list>
+            See http://bit.ly/ifluentinterface for more information.
+            </remarks> 
+        </member>
+        <member name="M:NProxy.Core.Interceptors.Language.IFluent.GetType">
+            <summary>
+            Redeclaration that hides the <see cref="M:System.Object.GetType"/> method from IntelliSense.
+            </summary>
+        </member>
+        <member name="M:NProxy.Core.Interceptors.Language.IFluent.GetHashCode">
+            <summary>
+            Redeclaration that hides the <see cref="M:System.Object.GetHashCode"/> method from IntelliSense.
+            </summary>
+        </member>
+        <member name="M:NProxy.Core.Interceptors.Language.IFluent.ToString">
+            <summary>
+            Redeclaration that hides the <see cref="M:System.Object.ToString"/> method from IntelliSense.
+            </summary>
+        </member>
+        <member name="M:NProxy.Core.Interceptors.Language.IFluent.Equals(System.Object)">
+            <summary>
+            Redeclaration that hides the <see cref="M:System.Object.Equals(System.Object)"/> method from IntelliSense.
+            </summary>
+        </member>
+        <member name="T:NProxy.Core.Interceptors.Language.IExtendWith`2">
+            <summary>
+            Defines the <c>ExtendWith</c> verb.
+            </summary>
+            <typeparam name="T">The declaring type.</typeparam>
+            <typeparam name="TInterceptor">The interceptor type.</typeparam>
+        </member>
+        <member name="T:NProxy.Core.Interceptors.Language.IImplement`2">
+            <summary>
+            Defines the <c>Implement</c> verb.
+            </summary>
+            <typeparam name="T">The declaring type.</typeparam>
+            <typeparam name="TInterceptor">The interceptor type.</typeparam>
+        </member>
+        <member name="T:NProxy.Core.Interceptors.Language.IInterceptBy`2">
+            <summary>
+            Defines the <c>InterceptBy</c> verb.
+            </summary>
+            <typeparam name="T">The declaring type.</typeparam>
+            <typeparam name="TInterceptor">The interceptor type.</typeparam>
+        </member>
+        <member name="T:NProxy.Core.Interceptors.Language.ITarget`1">
+            <summary>
+            Defines the <c>Target</c> verb.
+            </summary>
+            <typeparam name="T">The declaring type.</typeparam>
+        </member>
+        <member name="M:NProxy.Core.Interceptors.Language.ITarget`1.Target``1">
+            <summary>
+            Specifies a singleton target and returns a new proxy.
+            </summary>
+            <typeparam name="TTarget">The target type.</typeparam>
+            <returns>The new proxy object.</returns>
+        </member>
+        <member name="M:NProxy.Core.Interceptors.Language.ITarget`1.Target(`0)">
+            <summary>
+            Specifies a singleton target and returns a new proxy.
+            </summary>
+            <param name="target">The target object.</param>
+            <returns>The new proxy object.</returns>
+        </member>
+        <member name="M:NProxy.Core.Interceptors.Language.ITarget`1.Target(System.Object)">
+            <summary>
+            Specifies a singleton target and returns a new proxy.
+            </summary>
+            <param name="target">The target object.</param>
+            <returns>The new proxy object.</returns>
+        </member>
+        <member name="M:NProxy.Core.Interceptors.Language.ITarget`1.Target(System.Func{System.Object,System.Object})">
+            <summary>
+            Specifies a target factory and returns a new proxy.
+            </summary>
+            <param name="targetFactory">The target factory.</param>
+            <returns>The new proxy object.</returns>
+        </member>
+        <member name="M:NProxy.Core.Interceptors.Language.ITarget`1.TargetBase">
+            <summary>
+            Specifies the base class as the target and returns a new proxy.
+            </summary>
+            <returns>The new proxy object.</returns>
+        </member>
+        <member name="M:NProxy.Core.Interceptors.Language.IInterceptBy`2.InterceptBy(`1[])">
+            <summary>
+            Specifies interceptors.
+            </summary>
+            <param name="interceptors">The interceptors.</param>
+            <returns>The <c>Target</c> verb.</returns>
+        </member>
+        <member name="M:NProxy.Core.Interceptors.Language.IImplement`2.Implement``1">
+            <summary>
+            Specifies an interface to implement.
+            </summary>
+            <typeparam name="TInterface">The interface type.</typeparam>
+            <returns>The <c>Implement</c> verb.</returns>
+        </member>
+        <member name="M:NProxy.Core.Interceptors.Language.IImplement`2.Implement(System.Type[])">
+            <summary>
+            Specifies interfaces to implement.
+            </summary>
+            <param name="interfaceTypes">The interface types.</param>
+            <returns>The <c>Implement</c> verb.</returns>
+        </member>
+        <member name="M:NProxy.Core.Interceptors.Language.IExtendWith`2.ExtendWith``1">
+            <summary>
+            Specifies a mixin.
+            </summary>
+            <typeparam name="TMixin">The mixin type.</typeparam>
+            <returns>The <c>ExtendWith</c> verb.</returns>
+        </member>
+        <member name="M:NProxy.Core.Interceptors.Language.IExtendWith`2.ExtendWith(System.Object[])">
+            <summary>
+            Specifies mixins.
+            </summary>
+            <param name="mixins">The mixins.</param>
+            <returns>The <c>ExtendWith</c> verb.</returns>
+        </member>
+        <member name="T:NProxy.Core.Interceptors.ICreateProxy`1">
+            <summary>
+            Defines a fluent interface for creating a new proxy.
+            </summary>
+            <typeparam name="T">The declaring type.</typeparam>
+        </member>
+        <member name="T:NProxy.Core.Interceptors.CreateProxy`1">
+            <summary>
+            Represents a fluent interface implementation for creating a new proxy.
+            </summary>
+            <typeparam name="T">The declaring type.</typeparam>
+        </member>
+        <member name="F:NProxy.Core.Interceptors.CreateProxy`1._proxyFactory">
+            <summary>
+            The proxy factory.
+            </summary>
+        </member>
+        <member name="F:NProxy.Core.Interceptors.CreateProxy`1._arguments">
+            <summary>
+            The constructor arguments.
+            </summary>
+        </member>
+        <member name="F:NProxy.Core.Interceptors.CreateProxy`1._mixins">
+            <summary>
+            The mixin objects.
+            </summary>
+        </member>
+        <member name="F:NProxy.Core.Interceptors.CreateProxy`1._interfaceTypes">
+            <summary>
+            The interface types.
+            </summary>
+        </member>
+        <member name="F:NProxy.Core.Interceptors.CreateProxy`1._interceptors">
+            <summary>
+            The interceptors.
+            </summary>
+        </member>
+        <member name="M:NProxy.Core.Interceptors.CreateProxy`1.#ctor(NProxy.Core.IProxyFactory,System.Object[])">
+            <summary>
+            Initializes a new instance of the <see cref="T:NProxy.Core.Interceptors.CreateProxy`1"/> class.
+            </summary>
+            <param name="proxyFactory">The proxy factory.</param>
+            <param name="arguments">The constructor arguments.</param>
+        </member>
+        <member name="M:NProxy.Core.Interceptors.CreateProxy`1.AddMixin(System.Object)">
+            <summary>
+            Adds a mixin.
+            </summary>
+            <param name="mixin">The mixin object.</param>
+        </member>
+        <member name="M:NProxy.Core.Interceptors.CreateProxy`1.AddMixin(System.Type,System.Object)">
+            <summary>
+            Adds a mixin for the specified interface type.
+            </summary>
+            <param name="interfaceType">The interface type.</param>
+            <param name="mixin">The mixin object.</param>
+        </member>
+        <member name="M:NProxy.Core.Interceptors.CreateProxy`1.AddInterface(System.Type)">
+            <summary>
+            Adds an interface type.
+            </summary>
+            <param name="interfaceType">The interface type.</param>
+        </member>
+        <member name="M:NProxy.Core.Interceptors.CreateProxy`1.CreateInvocationHandler(NProxy.Core.IProxyTemplate,NProxy.Core.Interceptors.IInterceptor[])">
+            <summary>
+            Creates an invocation handler.
+            </summary>
+            <param name="proxyTemplate">The proxy template.</param>
+            <param name="defaultInterceptors">The default interceptors.</param>
+            <returns>The invocation handler.</returns>
+        </member>
+        <member name="M:NProxy.Core.Interceptors.CreateProxy`1.ExtendWith``1">
+            <inheritdoc/>
+        </member>
+        <member name="M:NProxy.Core.Interceptors.CreateProxy`1.ExtendWith(System.Object[])">
+            <inheritdoc/>
+        </member>
+        <member name="M:NProxy.Core.Interceptors.CreateProxy`1.Implement``1">
+            <inheritdoc/>
+        </member>
+        <member name="M:NProxy.Core.Interceptors.CreateProxy`1.Implement(System.Type[])">
+            <inheritdoc/>
+        </member>
+        <member name="M:NProxy.Core.Interceptors.CreateProxy`1.InterceptBy(NProxy.Core.Interceptors.IInterceptor[])">
+            <inheritdoc/>
+        </member>
+        <member name="M:NProxy.Core.Interceptors.CreateProxy`1.Target``1">
+            <inheritdoc/>
+        </member>
+        <member name="M:NProxy.Core.Interceptors.CreateProxy`1.Target(`0)">
+            <inheritdoc/>
+        </member>
+        <member name="M:NProxy.Core.Interceptors.CreateProxy`1.Target(System.Object)">
+            <inheritdoc/>
+        </member>
+        <member name="M:NProxy.Core.Interceptors.CreateProxy`1.Target(System.Func{System.Object,System.Object})">
+            <inheritdoc/>
+        </member>
+        <member name="M:NProxy.Core.Interceptors.CreateProxy`1.TargetBase">
+            <inheritdoc/>
+        </member>
+        <member name="T:NProxy.Core.NonInterceptedAttribute">
+            <summary>
+            Represents an attribute which indicates that an event, property or method should not be intercepted.
+            </summary>
+        </member>
+        <member name="T:NProxy.Core.Interceptors.InterceptorInvocationHandler">
+            <summary>
+            Represents an interceptor invocation handler.
+            </summary>
+        </member>
+        <member name="F:NProxy.Core.Interceptors.InterceptorInvocationHandler._defaultInterceptors">
+            <summary>
+            The default interceptors.
+            </summary>
+        </member>
+        <member name="F:NProxy.Core.Interceptors.InterceptorInvocationHandler._interceptors">
+            <summary>
+            The interceptors.
+            </summary>
+        </member>
+        <member name="M:NProxy.Core.Interceptors.InterceptorInvocationHandler.#ctor(NProxy.Core.Interceptors.IInterceptor[])">
+            <summary>
+            Initializes a new instance of the <see cref="T:NProxy.Core.Interceptors.InterceptorInvocationHandler"/> class.
+            </summary>
+            <param name="defaultInterceptors">The default interceptors.</param>
+        </member>
+        <member name="M:NProxy.Core.Interceptors.InterceptorInvocationHandler.ApplyInterceptors(NProxy.Core.IProxyTemplate,System.Collections.Generic.IEnumerable{NProxy.Core.Interceptors.IInterceptor})">
+            <summary>
+            Applies all interceptors for the specified proxy template.
+            </summary>
+            <param name="proxyTemplate">The proxy template.</param>
+            <param name="interceptors">The interceptors.</param>
+        </member>
+        <member name="M:NProxy.Core.Interceptors.InterceptorInvocationHandler.ApplyInterceptors(System.Reflection.EventInfo,System.Collections.Generic.IEnumerable{NProxy.Core.Interceptors.IInterceptor})">
+            <summary>
+            Applies all interceptors for the specified event.
+            </summary>
+            <param name="eventInfo">The event information.</param>
+            <param name="interceptors">The interceptors.</param>
+        </member>
+        <member name="M:NProxy.Core.Interceptors.InterceptorInvocationHandler.ApplyInterceptors(System.Reflection.PropertyInfo,System.Collections.Generic.IEnumerable{NProxy.Core.Interceptors.IInterceptor})">
+            <summary>
+            Applies all interceptors for the specified property.
+            </summary>
+            <param name="propertyInfo">The property information.</param>
+            <param name="interceptors">The interceptors.</param>
+        </member>
+        <member name="M:NProxy.Core.Interceptors.InterceptorInvocationHandler.ApplyInterceptors(System.Reflection.MemberInfo,System.Collections.Generic.IEnumerable{NProxy.Core.Interceptors.IInterceptor})">
+            <summary>
+            Applies all interceptors for the specified member.
+            </summary>
+            <param name="memberInfo">The member information.</param>
+            <param name="interceptors">The interceptors.</param>
+        </member>
+        <member name="M:NProxy.Core.Interceptors.InterceptorInvocationHandler.ApplyInterceptionBehaviors(System.Reflection.MemberInfo,System.Collections.Generic.IEnumerable{NProxy.Core.Interceptors.IInterceptor})">
+            <summary>
+            Applies the interception behaviors for the specified member.
+            </summary>
+            <param name="memberInfo">The member information.</param>
+            <param name="interceptors">The interceptors.</param>
+            <returns>The member interceptors.</returns>
+        </member>
+        <member name="M:NProxy.Core.Interceptors.InterceptorInvocationHandler.GetInterceptors(System.Reflection.MemberInfo)">
+            <summary>
+            Returns all interceptors for the specified member.
+            </summary>
+            <param name="memberInfo">The member information.</param>
+            <returns>The interceptors.</returns>
+        </member>
+        <member name="M:NProxy.Core.Interceptors.InterceptorInvocationHandler.Invoke(System.Object,System.Reflection.MethodInfo,System.Object[])">
+            <inheritdoc/>
+        </member>
+        <member name="T:NProxy.Core.ProxyTemplate">
+            <summary>
+            Represents a proxy template.
+            </summary>
+        </member>
+        <member name="T:NProxy.Core.IProxyTemplate">
+            <summary>
+            Defines a proxy template.
+            </summary>
+        </member>
+        <member name="M:NProxy.Core.IProxyTemplate.AdaptProxy(System.Type,System.Object)">
+            <summary>
+            Adapts a proxy to the specified interface type.
+            </summary>
+            <param name="interfaceType">The interface type.</param>
+            <param name="proxy">The proxy object.</param>
+            <returns>The object, of the specified interface type, to which the proxy has been adapted.</returns>
+        </member>
+        <member name="M:NProxy.Core.IProxyTemplate.CreateProxy(NProxy.Core.IInvocationHandler,System.Object[])">
+            <summary>
+            Creates a new proxy.
+            </summary>
+            <param name="invocationHandler">The invocation handler.</param>
+            <param name="arguments">The constructor arguments.</param>
+            <returns>The new proxy object.</returns>
+        </member>
+        <member name="P:NProxy.Core.IProxyTemplate.DeclaringType">
+            <summary>
+            Returns the declaring type.
+            </summary>
+        </member>
+        <member name="P:NProxy.Core.IProxyTemplate.ParentType">
+            <summary>
+            Returns the parent type.
+            </summary>
+        </member>
+        <member name="P:NProxy.Core.IProxyTemplate.ImplementationType">
+            <summary>
+            Returns the implementation type.
+            </summary>
+        </member>
+        <member name="P:NProxy.Core.IProxyTemplate.ImplementedInterfaces">
+            <summary>
+            Returns all implemented interfaces.
+            </summary>
+        </member>
+        <member name="P:NProxy.Core.IProxyTemplate.InterceptedEvents">
+            <summary>
+            Returns all intercepted events.
+            </summary>
+        </member>
+        <member name="P:NProxy.Core.IProxyTemplate.InterceptedProperties">
+            <summary>
+            Returns all intercepted properties.
+            </summary>
+        </member>
+        <member name="P:NProxy.Core.IProxyTemplate.InterceptedMethods">
+            <summary>
+            Returns all intercepted methods.
+            </summary>
+        </member>
+        <member name="F:NProxy.Core.ProxyTemplate._proxyDefinition">
+            <summary>
+            The proxy definition.
+            </summary>
+        </member>
+        <member name="F:NProxy.Core.ProxyTemplate._implementationType">
+            <summary>
+            The implementation type.
+            </summary>
+        </member>
+        <member name="F:NProxy.Core.ProxyTemplate._eventInfos">
+            <summary>
+            The event informations.
+            </summary>
+        </member>
+        <member name="F:NProxy.Core.ProxyTemplate._propertyInfos">
+            <summary>
+            The property informations.
+            </summary>
+        </member>
+        <member name="F:NProxy.Core.ProxyTemplate._methodInfos">
+            <summary>
+            The method informations.
+            </summary>
+        </member>
+        <member name="M:NProxy.Core.ProxyTemplate.#ctor(NProxy.Core.Internal.Definitions.IProxyDefinition,System.Type,System.Collections.Generic.ICollection{System.Reflection.EventInfo},System.Collections.Generic.ICollection{System.Reflection.PropertyInfo},System.Collections.Generic.ICollection{System.Reflection.MethodInfo})">
+            <summary>
+            Initializes a new instance of the <see cref="T:NProxy.Core.ProxyTemplate"/> class.
+            </summary>
+            <param name="proxyDefinition">The proxy definition.</param>
+            <param name="implementationType">The implementation type.</param>
+            <param name="eventInfos">The event informations.</param>
+            <param name="propertyInfos">The property informations.</param>
+            <param name="methodInfos">The method informations.</param>
+        </member>
+        <member name="M:NProxy.Core.ProxyTemplate.AdaptProxy(System.Type,System.Object)">
+            <inheritdoc/>
+        </member>
+        <member name="M:NProxy.Core.ProxyTemplate.CreateProxy(NProxy.Core.IInvocationHandler,System.Object[])">
+            <inheritdoc/>
+        </member>
+        <member name="P:NProxy.Core.ProxyTemplate.DeclaringType">
+            <inheritdoc/>
+        </member>
+        <member name="P:NProxy.Core.ProxyTemplate.ParentType">
+            <inheritdoc/>
+        </member>
+        <member name="P:NProxy.Core.ProxyTemplate.ImplementationType">
+            <inheritdoc/>
+        </member>
+        <member name="P:NProxy.Core.ProxyTemplate.ImplementedInterfaces">
+            <inheritdoc/>
+        </member>
+        <member name="P:NProxy.Core.ProxyTemplate.InterceptedEvents">
+            <inheritdoc/>
+        </member>
+        <member name="P:NProxy.Core.ProxyTemplate.InterceptedProperties">
+            <inheritdoc/>
+        </member>
+        <member name="P:NProxy.Core.ProxyTemplate.InterceptedMethods">
+            <inheritdoc/>
+        </member>
+        <member name="T:NProxy.Core.ProxyTemplate`1">
+            <summary>
+            Represents a proxy template.
+            </summary>
+            <typeparam name="T">The declaring type.</typeparam>
+        </member>
+        <member name="T:NProxy.Core.IProxyTemplate`1">
+            <summary>
+            Defines a proxy template.
+            </summary>
+            <typeparam name="T">The declaring type.</typeparam>
+        </member>
+        <member name="M:NProxy.Core.IProxyTemplate`1.CreateProxy(NProxy.Core.IInvocationHandler,System.Object[])">
+            <summary>
+            Creates a new proxy.
+            </summary>
+            <param name="invocationHandler">The invocation handler.</param>
+            <param name="arguments">The constructor arguments.</param>
+            <returns>The new proxy object.</returns>
+        </member>
+        <member name="F:NProxy.Core.ProxyTemplate`1._proxyTemplate">
+            <summary>
+            The proxy template.
+            </summary>
+        </member>
+        <member name="M:NProxy.Core.ProxyTemplate`1.#ctor(NProxy.Core.IProxyTemplate)">
+            <summary>
+            Initializes a new instance of the <see cref="T:NProxy.Core.ProxyTemplate`1"/> class.
+            </summary>
+            <param name="proxyTemplate">The proxy template.</param>
+        </member>
+        <member name="M:NProxy.Core.ProxyTemplate`1.AdaptProxy(System.Type,System.Object)">
+            <inheritdoc/>
+        </member>
+        <member name="M:NProxy.Core.ProxyTemplate`1.NProxy#Core#IProxyTemplate#CreateProxy(NProxy.Core.IInvocationHandler,System.Object[])">
+            <inheritdoc/>
+        </member>
+        <member name="M:NProxy.Core.ProxyTemplate`1.CreateProxy(NProxy.Core.IInvocationHandler,System.Object[])">
+            <inheritdoc/>
+        </member>
+        <member name="P:NProxy.Core.ProxyTemplate`1.DeclaringType">
+            <inheritdoc/>
+        </member>
+        <member name="P:NProxy.Core.ProxyTemplate`1.ParentType">
+            <inheritdoc/>
+        </member>
+        <member name="P:NProxy.Core.ProxyTemplate`1.ImplementationType">
+            <inheritdoc/>
+        </member>
+        <member name="P:NProxy.Core.ProxyTemplate`1.ImplementedInterfaces">
+            <inheritdoc/>
+        </member>
+        <member name="P:NProxy.Core.ProxyTemplate`1.InterceptedEvents">
+            <inheritdoc/>
+        </member>
+        <member name="P:NProxy.Core.ProxyTemplate`1.InterceptedProperties">
+            <inheritdoc/>
+        </member>
+        <member name="P:NProxy.Core.ProxyTemplate`1.InterceptedMethods">
+            <inheritdoc/>
+        </member>
+        <member name="T:NProxy.Core.Internal.Caching.Cache`2">
+            <summary>
+            Represents a cache.
+            </summary>
+        </member>
+        <member name="T:NProxy.Core.Internal.Caching.ICache`2">
+            <summary>
+            Defines a cache.
+            </summary>
+            <typeparam name="TKey">The key type.</typeparam>
+            <typeparam name="TValue">The value type.</typeparam>
+        </member>
+        <member name="M:NProxy.Core.Internal.Caching.ICache`2.GetOrAdd(`0,System.Func{`0,`1})">
+            <summary>
+            Gets or adds a value for the specified key.
+            </summary>
+            <param name="key">The key.</param>
+            <param name="valueFactory">The value factory.</param>
+            <returns>The value.</returns>
+        </member>
+        <member name="F:NProxy.Core.Internal.Caching.Cache`2._values">
+            <summary>
+            The values.
+            </summary>
+        </member>
+        <member name="M:NProxy.Core.Internal.Caching.Cache`2.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:NProxy.Core.Internal.Caching.Cache`2"/> class.
+            </summary>
+        </member>
+        <member name="M:NProxy.Core.Internal.Caching.Cache`2.GetOrAdd(`0,System.Func{`0,`1})">
+            <inheritdoc/>
+        </member>
+        <member name="T:NProxy.Core.Internal.Caching.LockOnWriteCache`2">
+            <summary>
+            Represents a lock-on-write cache.
+            </summary>
+            <typeparam name="TKey">The key type.</typeparam>
+            <typeparam name="TValue">The value type.</typeparam>
+        </member>
+        <member name="F:NProxy.Core.Internal.Caching.LockOnWriteCache`2._values">
+            <summary>
+            The values.
+            </summary>
+        </member>
+        <member name="F:NProxy.Core.Internal.Caching.LockOnWriteCache`2._lock">
+            <summary>
+            The lock.
+            </summary>
+        </member>
+        <member name="F:NProxy.Core.Internal.Caching.LockOnWriteCache`2._disposed">
+            <summary>
+            A value indicating whether this <see cref="T:NProxy.Core.Internal.Caching.LockOnWriteCache`2"/> was already disposed.
+            </summary>
+        </member>
+        <member name="M:NProxy.Core.Internal.Caching.LockOnWriteCache`2.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:NProxy.Core.Internal.Caching.LockOnWriteCache`2"/> class.
+            </summary>
+        </member>
+        <member name="M:NProxy.Core.Internal.Caching.LockOnWriteCache`2.Finalize">
+            <summary>
+            Releases unmanaged resources and performs other cleanup operations before the
+            <see cref="T:NProxy.Core.Internal.Caching.LockOnWriteCache`2"/> is reclaimed by garbage collection.
+            </summary>
+        </member>
+        <member name="M:NProxy.Core.Internal.Caching.LockOnWriteCache`2.Dispose(System.Boolean)">
+            <summary>
+            Dispose this <see cref="T:NProxy.Core.Internal.Caching.LockOnWriteCache`2"/>.
+            </summary>
+            <param name="disposing">A value indicating whether disposing is in progress.</param>
+        </member>
+        <member name="M:NProxy.Core.Internal.Caching.LockOnWriteCache`2.GetOrAdd(`0,System.Func{`0,`1})">
+            <inheritdoc/>
+        </member>
+        <member name="M:NProxy.Core.Internal.Caching.LockOnWriteCache`2.Dispose">
+            <inheritdoc/>
+        </member>
+        <member name="T:NProxy.Core.Internal.Definitions.IProxyDefinitionVisitor">
+            <summary>
+            Defines a proxy definition visitor.
+            </summary>
+        </member>
+        <member name="M:NProxy.Core.Internal.Definitions.IProxyDefinitionVisitor.VisitInterface(System.Type)">
+            <summary>
+            Visits the specified interface type.
+            </summary>
+            <param name="interfaceType">The interface type.</param>
+        </member>
+        <member name="M:NProxy.Core.Internal.Definitions.IProxyDefinitionVisitor.VisitConstructor(System.Reflection.ConstructorInfo)">
+            <summary>
+            Visits the specified constructor.
+            </summary>
+            <param name="constructorInfo">The constructor information.</param>
+        </member>
+        <member name="M:NProxy.Core.Internal.Definitions.IProxyDefinitionVisitor.VisitEvent(System.Reflection.EventInfo)">
+            <summary>
+            Visits the specified event.
+            </summary>
+            <param name="eventInfo">The event information.</param>
+        </member>
+        <member name="M:NProxy.Core.Internal.Definitions.IProxyDefinitionVisitor.VisitProperty(System.Reflection.PropertyInfo)">
+            <summary>
+            Visits the specified property.
+            </summary>
+            <param name="propertyInfo">The property information.</param>
+        </member>
+        <member name="M:NProxy.Core.Internal.Definitions.IProxyDefinitionVisitor.VisitMethod(System.Reflection.MethodInfo)">
+            <summary>
+            Visits the specified method.
+            </summary>
+            <param name="methodInfo">The method information.</param>
+        </member>
+        <member name="T:NProxy.Core.Internal.Definitions.ProxyDefinitionVisitorExtensions">
+            <summary>
+            Provides <see cref="T:NProxy.Core.Internal.Definitions.IProxyDefinitionVisitor"/> extension methods.
+            </summary>
+        </member>
+        <member name="M:NProxy.Core.Internal.Definitions.ProxyDefinitionVisitorExtensions.VisitInterfaces(NProxy.Core.Internal.Definitions.IProxyDefinitionVisitor,System.Collections.Generic.IEnumerable{System.Type})">
+            <summary>
+            Visits all specified interface types.
+            </summary>
+            <param name="proxyDefinitionVisitor">The proxy definition visitor.</param>
+            <param name="interfaceTypes">The interface types.</param>
+        </member>
+        <member name="M:NProxy.Core.Internal.Definitions.ProxyDefinitionVisitorExtensions.VisitConstructors(NProxy.Core.Internal.Definitions.IProxyDefinitionVisitor,System.Type)">
+            <summary>
+            Visits all constructors of the specified type.
+            </summary>
+            <param name="proxyDefinitionVisitor">The proxy definition visitor.</param>
+            <param name="type">The type.</param>
+        </member>
+        <member name="M:NProxy.Core.Internal.Definitions.ProxyDefinitionVisitorExtensions.VisitMembers(NProxy.Core.Internal.Definitions.IProxyDefinitionVisitor,System.Type)">
+            <summary>
+            Visits all members of the specified type.
+            </summary>
+            <param name="proxyDefinitionVisitor">The proxy definition visitor.</param>
+            <param name="type">The type.</param>
+        </member>
+        <member name="M:NProxy.Core.Internal.Definitions.ProxyDefinitionVisitorExtensions.VisitEvents(NProxy.Core.Internal.Definitions.IProxyDefinitionVisitor,System.Type)">
+            <summary>
+            Visits all events of the specified type.
+            </summary>
+            <param name="proxyDefinitionVisitor">The proxy definition visitor.</param>
+            <param name="type">The type.</param>
+        </member>
+        <member name="M:NProxy.Core.Internal.Definitions.ProxyDefinitionVisitorExtensions.VisitProperties(NProxy.Core.Internal.Definitions.IProxyDefinitionVisitor,System.Type)">
+            <summary>
+            Visits all properties of the specified type.
+            </summary>
+            <param name="proxyDefinitionVisitor">The proxy definition visitor.</param>
+            <param name="type">The type.</param>
+        </member>
+        <member name="M:NProxy.Core.Internal.Definitions.ProxyDefinitionVisitorExtensions.VisitMethods(NProxy.Core.Internal.Definitions.IProxyDefinitionVisitor,System.Type)">
+            <summary>
+            Visits all methods of the specified type.
+            </summary>
+            <param name="proxyDefinitionVisitor">The proxy definition visitor.</param>
+            <param name="type">The type.</param>
+        </member>
+        <member name="T:NProxy.Core.Internal.Reflection.Emit.MethodInfoBase">
+            <summary>
+            Represents the method information base class.
+            </summary>
+        </member>
+        <member name="F:NProxy.Core.Internal.Reflection.Emit.MethodInfoBase._source">
+            <summary>
+            The source object.
+            </summary>
+        </member>
+        <member name="F:NProxy.Core.Internal.Reflection.Emit.MethodInfoBase._methodInfo">
+            <summary>
+            The declaring method information.
+            </summary>
+        </member>
+        <member name="F:NProxy.Core.Internal.Reflection.Emit.MethodInfoBase._isOverride">
+            <summary>
+            A value indicating whether the method is an override.
+            </summary>
+        </member>
+        <member name="F:NProxy.Core.Internal.Reflection.Emit.MethodInfoBase._declaringType">
+            <summary>
+            The declaring type.
+            </summary>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.Emit.MethodInfoBase.#ctor(System.Object,System.Reflection.MethodInfo,System.Boolean)">
+            <summary>
+            Initializes a new instance of the <see cref="T:NProxy.Core.Internal.Reflection.Emit.MethodInfoBase"/> class.
+            </summary>
+            <param name="source">The source object.</param>
+            <param name="methodInfo">The declaring method information.</param>
+            <param name="isOverride">A value indicating whether the method is an override.</param>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.Emit.MethodInfoBase.InvokeBase(System.Object,System.Object[])">
+            <summary>
+            Invokes the base method represented by the current instance.
+            </summary>
+            <param name="target">The target object.</param>
+            <param name="parameters">The parameters.</param>
+            <returns>The return value.</returns>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.Emit.MethodInfoBase.InvokeVirtual(System.Object,System.Object[])">
+            <summary>
+            Invokes the virtual method represented by the current instance.
+            </summary>
+            <param name="target">The target object.</param>
+            <param name="parameters">The parameters.</param>
+            <returns>The return value.</returns>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.Emit.MethodInfoBase.GetBaseDefinition">
+            <inheritdoc/>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.Emit.MethodInfoBase.GetGenericMethodDefinition">
+            <inheritdoc/>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.Emit.MethodInfoBase.MakeGenericMethod(System.Type[])">
+            <inheritdoc/>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.Emit.MethodInfoBase.GetGenericArguments">
+            <inheritdoc/>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.Emit.MethodInfoBase.GetMethodBody">
+            <inheritdoc/>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.Emit.MethodInfoBase.GetMethodImplementationFlags">
+            <inheritdoc/>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.Emit.MethodInfoBase.GetParameters">
+            <inheritdoc/>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.Emit.MethodInfoBase.Invoke(System.Object,System.Reflection.BindingFlags,System.Reflection.Binder,System.Object[],System.Globalization.CultureInfo)">
+            <inheritdoc/>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.Emit.MethodInfoBase.GetCustomAttributes(System.Type,System.Boolean)">
+            <inheritdoc/>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.Emit.MethodInfoBase.GetCustomAttributes(System.Boolean)">
+            <inheritdoc/>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.Emit.MethodInfoBase.IsDefined(System.Type,System.Boolean)">
+            <inheritdoc/>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.Emit.MethodInfoBase.Equals(System.Object)">
+            <inheritdoc/>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.Emit.MethodInfoBase.GetHashCode">
+            <inheritdoc/>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.Emit.MethodInfoBase.ToString">
+            <inheritdoc/>
+        </member>
+        <member name="P:NProxy.Core.Internal.Reflection.Emit.MethodInfoBase.ReturnParameter">
+            <inheritdoc/>
+        </member>
+        <member name="P:NProxy.Core.Internal.Reflection.Emit.MethodInfoBase.ReturnType">
+            <inheritdoc/>
+        </member>
+        <member name="P:NProxy.Core.Internal.Reflection.Emit.MethodInfoBase.ReturnTypeCustomAttributes">
+            <inheritdoc/>
+        </member>
+        <member name="P:NProxy.Core.Internal.Reflection.Emit.MethodInfoBase.Attributes">
+            <inheritdoc/>
+        </member>
+        <member name="P:NProxy.Core.Internal.Reflection.Emit.MethodInfoBase.CallingConvention">
+            <inheritdoc/>
+        </member>
+        <member name="P:NProxy.Core.Internal.Reflection.Emit.MethodInfoBase.ContainsGenericParameters">
+            <inheritdoc/>
+        </member>
+        <member name="P:NProxy.Core.Internal.Reflection.Emit.MethodInfoBase.IsGenericMethod">
+            <inheritdoc/>
+        </member>
+        <member name="P:NProxy.Core.Internal.Reflection.Emit.MethodInfoBase.IsGenericMethodDefinition">
+            <inheritdoc/>
+        </member>
+        <member name="P:NProxy.Core.Internal.Reflection.Emit.MethodInfoBase.MethodHandle">
+            <inheritdoc/>
+        </member>
+        <member name="P:NProxy.Core.Internal.Reflection.Emit.MethodInfoBase.DeclaringType">
+            <inheritdoc/>
+        </member>
+        <member name="P:NProxy.Core.Internal.Reflection.Emit.MethodInfoBase.MemberType">
+            <inheritdoc/>
+        </member>
+        <member name="P:NProxy.Core.Internal.Reflection.Emit.MethodInfoBase.MetadataToken">
+            <inheritdoc/>
+        </member>
+        <member name="P:NProxy.Core.Internal.Reflection.Emit.MethodInfoBase.Module">
+            <inheritdoc/>
+        </member>
+        <member name="P:NProxy.Core.Internal.Reflection.Emit.MethodInfoBase.Name">
+            <inheritdoc/>
+        </member>
+        <member name="P:NProxy.Core.Internal.Reflection.Emit.MethodInfoBase.ReflectedType">
+            <inheritdoc/>
+        </member>
+        <member name="T:NProxy.Core.Internal.Reflection.Emit.MethodInfoTypeFactory">
+            <summary>
+            Represents a method information type factory.
+            </summary>
+        </member>
+        <member name="T:NProxy.Core.Internal.Reflection.Emit.ITypeFactory">
+            <summary>
+            Defines a type factory.
+            </summary>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.Emit.ITypeFactory.CreateType(System.Reflection.MethodInfo)">
+            <summary>
+            Creates a new type based on the specified method.
+            </summary>
+            <param name="methodInfo">The method information.</param>
+            <returns>The new type.</returns>
+        </member>
+        <member name="F:NProxy.Core.Internal.Reflection.Emit.MethodInfoTypeFactory.MethodBaseGetMethodFromHandleMethodInfo">
+            <summary>
+            The <see cref="M:System.Reflection.MethodBase.GetMethodFromHandle(System.RuntimeMethodHandle,System.RuntimeTypeHandle)"/> method information.
+            </summary>
+        </member>
+        <member name="F:NProxy.Core.Internal.Reflection.Emit.MethodInfoTypeFactory.MethodInfoBaseConstructorInfo">
+            <summary>
+            The <see cref="T:NProxy.Core.Internal.Reflection.Emit.MethodInfoBase"/> constructor information.
+            </summary>
+        </member>
+        <member name="F:NProxy.Core.Internal.Reflection.Emit.MethodInfoTypeFactory.MethodInfoBaseInvokeBaseMethodInfo">
+            <summary>
+            The <see cref="M:NProxy.Core.Internal.Reflection.Emit.MethodInfoBase.InvokeBase(System.Object,System.Object[])"/> method information.
+            </summary>
+        </member>
+        <member name="F:NProxy.Core.Internal.Reflection.Emit.MethodInfoTypeFactory.MethodInfoBaseInvokeVirtualMethodInfo">
+            <summary>
+            The <see cref="M:NProxy.Core.Internal.Reflection.Emit.MethodInfoBase.InvokeVirtual(System.Object,System.Object[])"/> method information.
+            </summary>
+        </member>
+        <member name="F:NProxy.Core.Internal.Reflection.Emit.MethodInfoTypeFactory._typeRepository">
+            <summary>
+            The type repository.
+            </summary>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.Emit.MethodInfoTypeFactory.#ctor(NProxy.Core.Internal.Reflection.Emit.ITypeRepository)">
+            <summary>
+            Initializes a new instance of the <see cref="T:NProxy.Core.Internal.Reflection.Emit.MethodInfoTypeFactory"/> class.
+            </summary>
+            <param name="typeRepository">The type repository.</param>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.Emit.MethodInfoTypeFactory.BuildTypeInitializer(System.Reflection.Emit.TypeBuilder,System.Reflection.MethodInfo,System.Type[],System.Reflection.FieldInfo)">
+            <summary>
+            Builds the type initializer.
+            </summary>
+            <param name="typeBuilder">The type builder.</param>
+            <param name="methodInfo">The method information.</param>
+            <param name="genericParameterTypes">The generic parameter types.</param>
+            <param name="methodFieldInfo">The method information static field information.</param>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.Emit.MethodInfoTypeFactory.BuildConstructor(System.Reflection.Emit.TypeBuilder,System.Reflection.FieldInfo)">
+            <summary>
+            Builds the constructor.
+            </summary>
+            <param name="typeBuilder">The type builder.</param>
+            <param name="methodFieldInfo">The method information static field information.</param>
+            <returns>The constructor information.</returns>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.Emit.MethodInfoTypeFactory.BuildInvokeMethod(System.Reflection.Emit.TypeBuilder,System.Reflection.MethodInfo,System.Type[],System.Boolean)">
+            <summary>
+            Builds the invoke method.
+            </summary>
+            <param name="typeBuilder">The type builder.</param>
+            <param name="methodInfo">The method information.</param>
+            <param name="genericParameterTypes">The generic parameter types.</param>
+            <param name="isVirtual">A value indicating whether the method should be called virtually.</param>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.Emit.MethodInfoTypeFactory.LoadParameterValues(System.Reflection.Emit.ILGenerator,System.Int32,System.Collections.Generic.IList{System.Type},System.Collections.Generic.IList{System.Reflection.Emit.LocalBuilder})">
+            <summary>
+            Loads the parameter values onto the stack.
+            </summary>
+            <param name="ilGenerator">The intermediate language generator.</param>
+            <param name="argumentIndex">The argument index.</param>
+            <param name="parameterTypes">The parameter types.</param>
+            <param name="parameterValueLocalBuilders">The parameter value local builders.</param>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.Emit.MethodInfoTypeFactory.RestoreByReferenceParameterValues(System.Reflection.Emit.ILGenerator,System.Int32,System.Collections.Generic.IList{System.Type},System.Collections.Generic.IList{System.Reflection.Emit.LocalBuilder})">
+            <summary>
+            Restores the by reference parameter values.
+            </summary>
+            <param name="ilGenerator">The intermediate language generator.</param>
+            <param name="argumentIndex">The argument index.</param>
+            <param name="parameterTypes">The parameter types.</param>
+            <param name="parameterValueLocalBuilders">The parameter value local builders.</param>
+        </member>
+        <member name="M:NProxy.Core.Internal.Reflection.Emit.MethodInfoTypeFactory.CreateType(System.Reflection.MethodInfo)">
+            <inheritdoc/>
+        </member>
+        <member name="T:NProxy.Core.IInterceptionFilter">
+            <summary>
+            Defines an interception filter.
+            </summary>
+        </member>
+        <member name="M:NProxy.Core.IInterceptionFilter.AcceptEvent(System.Reflection.EventInfo)">
+            <summary>
+            Returns a value indicating whether the specified event should be intercepted.
+            </summary>
+            <param name="eventInfo">The event information.</param>
+            <returns>A value indicating whether the specified event should be intercepted.</returns>
+        </member>
+        <member name="M:NProxy.Core.IInterceptionFilter.AcceptProperty(System.Reflection.PropertyInfo)">
+            <summary>
+            Returns a value indicating whether the specified property should be intercepted.
+            </summary>
+            <param name="propertyInfo">The property information.</param>
+            <returns>A value indicating whether the specified property should be intercepted.</returns>
+        </member>
+        <member name="M:NProxy.Core.IInterceptionFilter.AcceptMethod(System.Reflection.MethodInfo)">
+            <summary>
+            Returns a value indicating whether the specified method should be intercepted.
+            </summary>
+            <param name="methodInfo">The method information.</param>
+            <returns>A value indicating whether the specified method should be intercepted.</returns>
+        </member>
+        <member name="T:NProxy.Core.ProxyGenerator">
+            <summary>
+            Represents the proxy generator.
+            </summary>
+        </member>
+        <member name="F:NProxy.Core.ProxyGenerator._typeBuilder">
+            <summary>
+            The type builder.
+            </summary>
+        </member>
+        <member name="F:NProxy.Core.ProxyGenerator._interceptionFilter">
+            <summary>
+            The interception filter.
+            </summary>
+        </member>
+        <member name="F:NProxy.Core.ProxyGenerator._eventInfos">
+            <summary>
+            The event informations.
+            </summary>
+        </member>
+        <member name="F:NProxy.Core.ProxyGenerator._propertyInfos">
+            <summary>
+            The property informations.
+            </summary>
+        </member>
+        <member name="F:NProxy.Core.ProxyGenerator._methodInfos">
+            <summary>
+            The method informations.
+            </summary>
+        </member>
+        <member name="M:NProxy.Core.ProxyGenerator.#ctor(NProxy.Core.Internal.Reflection.Emit.ITypeBuilder,NProxy.Core.IInterceptionFilter)">
+            <summary>
+            Initializes a new instance of the <see cref="T:NProxy.Core.ProxyGenerator"/> class.
+            </summary>
+            <param name="typeBuilder">The type builder.</param>
+            <param name="interceptionFilter">The interception filter.</param>
+        </member>
+        <member name="M:NProxy.Core.ProxyGenerator.GenerateProxyTemplate(NProxy.Core.Internal.Definitions.IProxyDefinition)">
+            <summary>
+            Generates a proxy template based on the specified proxy definition.
+            </summary>
+            <param name="proxyDefinition">The proxy definition.</param>
+            <returns>The proxy template.</returns>
+        </member>
+        <member name="M:NProxy.Core.ProxyGenerator.VisitInterface(System.Type)">
+            <inheritdoc/>
+        </member>
+        <member name="M:NProxy.Core.ProxyGenerator.VisitConstructor(System.Reflection.ConstructorInfo)">
+            <inheritdoc/>
+        </member>
+        <member name="M:NProxy.Core.ProxyGenerator.VisitEvent(System.Reflection.EventInfo)">
+            <inheritdoc/>
+        </member>
+        <member name="M:NProxy.Core.ProxyGenerator.VisitProperty(System.Reflection.PropertyInfo)">
+            <inheritdoc/>
+        </member>
+        <member name="M:NProxy.Core.ProxyGenerator.VisitMethod(System.Reflection.MethodInfo)">
+            <inheritdoc/>
+        </member>
+        <member name="T:NProxy.Core.NonInterceptedInterceptionFilter">
+            <summary>
+            Represents an non-intercepted interception filter.
+            </summary>
+        </member>
+        <member name="F:NProxy.Core.NonInterceptedInterceptionFilter.DestructorMethodName">
+            <summary>
+            The name of the destructor method.
+            </summary>
+        </member>
+        <member name="M:NProxy.Core.NonInterceptedInterceptionFilter.AcceptEvent(System.Reflection.EventInfo)">
+            <inheritdoc/>
+        </member>
+        <member name="M:NProxy.Core.NonInterceptedInterceptionFilter.AcceptProperty(System.Reflection.PropertyInfo)">
+            <inheritdoc/>
+        </member>
+        <member name="M:NProxy.Core.NonInterceptedInterceptionFilter.AcceptMethod(System.Reflection.MethodInfo)">
+            <inheritdoc/>
+        </member>
+        <member name="T:NProxy.Core.ProxyTemplateExtensions">
+            <summary>
+            Provides <see cref="T:NProxy.Core.IProxyTemplate"/> extension methods.
+            </summary>
+        </member>
+        <member name="M:NProxy.Core.ProxyTemplateExtensions.AdaptProxy``1(NProxy.Core.IProxyTemplate,System.Object)">
+            <summary>
+            Adapts a proxy to the specified interface type.
+            </summary>
+            <typeparam name="TInterface">The interface type.</typeparam>
+            <param name="proxyTemplate">The proxy template.</param>
+            <param name="proxy">The proxy object.</param>
+            <returns>The object, of the specified interface type, to which the proxy object has been adapted.</returns>
+        </member>
+        <member name="T:NProxy.Core.Internal.Resources">
+            <summary>
+              A strongly-typed resource class, for looking up localized strings, etc.
+            </summary>
+        </member>
+        <member name="P:NProxy.Core.Internal.Resources.ResourceManager">
+            <summary>
+              Returns the cached ResourceManager instance used by this class.
+            </summary>
+        </member>
+        <member name="P:NProxy.Core.Internal.Resources.Culture">
+            <summary>
+              Overrides the current thread's CurrentUICulture property for all
+              resource lookups using this strongly typed resource class.
+            </summary>
+        </member>
+        <member name="P:NProxy.Core.Internal.Resources.CannotAdaptProxy">
+            <summary>
+              Looks up a localized string similar to Cannot adapt proxy to interface type..
+            </summary>
+        </member>
+        <member name="P:NProxy.Core.Internal.Resources.ConstructorOnTypeNotFound">
+            <summary>
+              Looks up a localized string similar to Constructor on type &apos;{0}&apos; not found..
+            </summary>
+        </member>
+        <member name="P:NProxy.Core.Internal.Resources.DynamicAssemblyKeyPairIsMissing">
+            <summary>
+              Looks up a localized string similar to Dynamic assembly key pair is missing..
+            </summary>
+        </member>
+        <member name="P:NProxy.Core.Internal.Resources.InterfaceTypeMustNotBeAGenericTypeDefinition">
+            <summary>
+              Looks up a localized string similar to Interface type &apos;{0}&apos; must not be a generic type definition..
+            </summary>
+        </member>
+        <member name="P:NProxy.Core.Internal.Resources.InterfaceTypeMustNotBeNull">
+            <summary>
+              Looks up a localized string similar to Interface type must not be null..
+            </summary>
+        </member>
+        <member name="P:NProxy.Core.Internal.Resources.InterfaceTypeWasAlreadyAdded">
+            <summary>
+              Looks up a localized string similar to Interface type {0} was already added..
+            </summary>
+        </member>
+        <member name="P:NProxy.Core.Internal.Resources.InvalidProxyType">
+            <summary>
+              Looks up a localized string similar to Invalid proxy type..
+            </summary>
+        </member>
+        <member name="P:NProxy.Core.Internal.Resources.MemberHasNoDeclaringType">
+            <summary>
+              Looks up a localized string similar to Member has no declaring type..
+            </summary>
+        </member>
+        <member name="P:NProxy.Core.Internal.Resources.MethodNotDeclaredOrInherited">
+            <summary>
+              Looks up a localized string similar to Method is not declared or inherited by target object..
+            </summary>
+        </member>
+        <member name="P:NProxy.Core.Internal.Resources.MethodNotImplemented">
+            <summary>
+              Looks up a localized string similar to Method is not implemented by target object..
+            </summary>
+        </member>
+        <member name="P:NProxy.Core.Internal.Resources.MethodNotOverridable">
+            <summary>
+              Looks up a localized string similar to Method &apos;{0}&apos; is not overridable..
+            </summary>
+        </member>
+        <member name="P:NProxy.Core.Internal.Resources.MethodOnTypeNotFound">
+            <summary>
+              Looks up a localized string similar to Method &apos;{0}&apos; on type &apos;{1}&apos; not found..
+            </summary>
+        </member>
+        <member name="P:NProxy.Core.Internal.Resources.MethodRequiresATargetObject">
+            <summary>
+              Looks up a localized string similar to Method requires a target object..
+            </summary>
+        </member>
+        <member name="P:NProxy.Core.Internal.Resources.NoMoreInterceptorsInTheInterceptorChain">
+            <summary>
+              Looks up a localized string similar to No more interceptors in the interceptor chain..
+            </summary>
+        </member>
+        <member name="P:NProxy.Core.Internal.Resources.NumberOfParameterTypesAndNamesMustBeEqual">
+            <summary>
+              Looks up a localized string similar to Number of parameter types and names must be equal..
+            </summary>
+        </member>
+        <member name="P:NProxy.Core.Internal.Resources.ParentTypeMustNotBeAGenericTypeDefinition">
+            <summary>
+              Looks up a localized string similar to Parent type must not be a generic type definition..
+            </summary>
+        </member>
+        <member name="P:NProxy.Core.Internal.Resources.ParentTypeMustNotBeSealed">
+            <summary>
+              Looks up a localized string similar to Parent type must not be sealed..
+            </summary>
+        </member>
+        <member name="P:NProxy.Core.Internal.Resources.TypeNotAnInterfaceType">
+            <summary>
+              Looks up a localized string similar to Type &apos;{0}&apos; is not an interface type..
+            </summary>
+        </member>
+    </members>
+</doc>
