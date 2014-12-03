@@ -121,12 +121,13 @@ namespace DaytonaTests
         {
             string expectedAddress = "XXXX";
             string message = "hello its me";
-            int count = 0;
+            int count = 2;
 
             using (var context = ZmqContext.Create())
             {
                 using (var forwarderDevice = new ForwarderDevice(context, "tcp://*:5555", "inproc://back", DeviceMode.Threaded))
                 {
+                    forwarderDevice.FrontendSetup.SubscribeAll();
                     forwarderDevice.Start();
                     while (!forwarderDevice.IsRunning)
                     {
