@@ -127,12 +127,12 @@ namespace DaytonaTests
             using (var context = NetMQContext.Create())
             {
                 var forwarderDevice = new ForwarderDevice(context, "tcp://*:5555", "inproc://back", DeviceMode.Threaded);
-                
+                forwarderDevice.FrontendSetup.Subscribe(string.Empty);
                 forwarderDevice.Start();
-                while (!forwarderDevice.IsRunning)
-                {
+                //while (!forwarderDevice.IsRunning)
+                //{
                         
-                }
+                //}
                 using (var sub = Helper.GetConnectedSubscribeSocket(context, "inproc://back"))
                 {
                     using (var pub = Helper.GetConnectedPublishSocket(context, "tcp://localhost:5555"))

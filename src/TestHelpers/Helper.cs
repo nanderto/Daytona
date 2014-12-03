@@ -137,7 +137,7 @@ namespace TestHelpers
 
         public static NetMQSocket GetConnectedPublishSocket(NetMQContext context, string address)
         {
-            NetMQSocket publisher = context.CreateSubscriberSocket();
+            NetMQSocket publisher = context.CreatePublisherSocket();
 
             try
             {
