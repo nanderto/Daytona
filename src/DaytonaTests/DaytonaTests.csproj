@@ -96,6 +96,7 @@
   <ItemGroup>
     <Compile Include="ActorTests.cs" />
     <Compile Include="BinarySerializerTests.cs" />
+    <Compile Include="ExchangeTests.cs" />
     <Compile Include="PipeTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

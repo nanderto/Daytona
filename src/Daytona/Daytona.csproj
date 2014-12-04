@@ -92,6 +92,7 @@
     <Compile Include="BinarySerializer.cs" />
     <Compile Include="CallBackEventArgs.cs" />
     <Compile Include="DefaultSerializer.cs" />
+    <Compile Include="Exchange.cs" />
     <Compile Include="IPayload.cs" />
     <Compile Include="ISerializer.cs" />
     <Compile Include="MessageReceiver.cs" />

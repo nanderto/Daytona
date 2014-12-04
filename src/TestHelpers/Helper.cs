@@ -160,11 +160,16 @@ namespace TestHelpers
 
         public static NetMQSocket GetConnectedSubscribeSocket(NetMQContext context, string address)
         {
+            return GetConnectedSubscribeSocket(context, address, string.Empty);
+        }
+
+        public static NetMQSocket GetConnectedSubscribeSocket(NetMQContext context, string address, string Subcription)
+        {
             NetMQSocket subscriber = context.CreateSubscriberSocket();
             try
             {
                 subscriber.Connect(address);
-                subscriber.Subscribe(string.Empty);
+                subscriber.Subscribe(Subcription);
             }
             catch
             {
