@@ -40,11 +40,11 @@ namespace Daytona.Tests
 
                 sub.ReceiveReady +=sub_ReceiveReady;
 
-                Thread.Sleep(500);
-                while (!ReceiveReady)
-                {
+                Thread.Sleep(100);
+                //while (!ReceiveReady)
+                //{
 
-                }
+                //}
 
                 pub.Send("hello");
                 var received = sub.ReceiveString();
@@ -74,10 +74,5 @@ namespace Daytona.Tests
             ReceiveReady = true;
         }
 
-        [TestMethod()]
-        public void ExchangeTest1()
-        {
-            Assert.Fail();
-        }
     }
 }

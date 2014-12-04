@@ -97,10 +97,12 @@ namespace TestHelpers
             int i =0;
             string address = string.Empty;
 
-            var buffer = Subscriber.Receive(out hasMore);
+            byte[] buffer = null; 
 
             while (hasMore)
             {
+                buffer = Subscriber.Receive(out hasMore);
+
                 if (buffer.Count() > 0)
                 {
                     if (i == 0)
@@ -115,7 +117,7 @@ namespace TestHelpers
                     i++;
                     NetMQMessage.Append(new NetMQFrame(buffer));
 
-                    buffer = Subscriber.Receive(out hasMore);
+                    
                     //message = Subscriber.Receive(Encoding.Unicode,);
 
                     //NetMQMessage.Append(new NetMQFrame(Encoding.Unicode.GetBytes(message)));
@@ -132,7 +134,7 @@ namespace TestHelpers
 
         public static NetMQSocket GetConnectedPublishSocket(NetMQContext context)
         {
-            return GetConnectedPublishSocket(context, "tcp://localhost:5556");
+            return GetConnectedPublishSocket(context, Pipe.PublishAddressClient);
         }
 
         public static NetMQSocket GetConnectedPublishSocket(NetMQContext context, string address)
@@ -154,7 +156,7 @@ namespace TestHelpers
 
         public static NetMQSocket GetConnectedSubscribeSocket(NetMQContext context)
         {
-            string address = "tcp://localhost:5555";
+            string address = Pipe.SubscribeAddressClient;
             return GetConnectedSubscribeSocket(context, address);
         }
 

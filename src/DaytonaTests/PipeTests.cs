@@ -11,6 +11,9 @@ namespace DaytonaTests
 {
     using NetMQ;
     using NetMQ.Devices;
+    using NetMQ.zmq;
+
+    using Pipe = Daytona.Pipe;
 
     [TestClass]
     public class PipeTests
@@ -20,17 +23,22 @@ namespace DaytonaTests
         {
             string input = string.Empty;
             string expectedAddress = "XXXXxxxx";
-            string message = string.Empty;
+            string message = "ZZZ";
             var count = 2;
 
             using (var context = NetMQContext.Create())
             {
-                var pipe = new Pipe();
-                pipe.Start(context);
+                var exchange = new Exchange(
+                    context,
+                    Pipe.PublishAddressServer,
+                    Pipe.SubscribeAddressServer,
+                    DeviceMode.Threaded);
+                exchange.Start();
                 using (var pub = Helper.GetConnectedPublishSocket(context))
                 {
                     using (var sub = Helper.GetConnectedSubscribeSocket(context))
                     {
+                        Thread.Sleep(500);
                         Helper.SendOneSimpleMessage(expectedAddress, message, pub);
 
                         var netMQMessage = Helper.ReceiveMessage(sub);
@@ -39,10 +47,11 @@ namespace DaytonaTests
                         NetMQFrame frame = netMQMessage[0];
                         var address = Encoding.Unicode.GetString(frame.Buffer);
                         Assert.AreEqual(expectedAddress, address);
+                        
                     }
                 }
-
-                pipe.Exit();
+              
+                exchange.Stop();
             }
         }
 
