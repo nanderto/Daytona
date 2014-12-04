@@ -134,7 +134,7 @@ namespace Daytona
 
                             while (true)
                             {
-                                poller.Start(); // .PollOnce(); .Poll(new TimeSpan(0,0,0,0,5));
+                                poller. .PollOnce();// Poll(new TimeSpan(0,0,0,0,5));
                                 Writeline("polling" + count);
                                 count++;
                                 if (token.IsCancellationRequested)

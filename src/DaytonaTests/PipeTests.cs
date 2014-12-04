@@ -56,7 +56,8 @@ namespace DaytonaTests
         }
 
         [TestMethod]
-        public void InProcOnlyWithForwarder ()
+        public void InProcOnlyWithForwarder
+            ()
         {
             string expectedAddress = "XXXX";
             string message = "hello its me";
