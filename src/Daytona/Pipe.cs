@@ -22,19 +22,27 @@ namespace Daytona
 
         public static string MonitorAddressServer = "tcp://*:5560";
 
+        public static string PublishAddress = "inproc://PublishAddress";
+
         public static string PublishAddressClient = "tcp://localhost:5550";
 
         public static string PublishAddressServer = "tcp://*:5550";
+
+        public static string PubSubControlBackAddress = "inproc://PubSubControlBackAddress";
 
         public static string PubSubControlBackAddressClient = "tcp://localhost:5552"; ////"inproc://pubsubcontrol";//
 
         public static string PubSubControlBackAddressServer = "tcp://*:5552"; ////"inproc://pubsubcontrol";//
 
-        public static string PubSubControlFrontAddress = "tcp://*:5551";
+        public static string PubSubControlFrontAddress = "inproc://PubSubControlFrontAddress";
+
+        public static string PubSubControlFrontAddressServer = "tcp://*:5551";
 
         public static string PubSubControlFrontAddressClient = "tcp://localhost:5551";
 
         public static QueueDevice QueueDevce = null;
+
+        public static string SubscribeAddress = "inproc://SubscribeAddress"; ////"inproc://back";
 
         public static string SubscribeAddressClient = "tcp://localhost:5553"; ////"inproc://back";
 
@@ -105,7 +113,7 @@ namespace Daytona
             //while (!forwarderDevice.IsRunning)
             //{ }
 
-            QueueDevce = new QueueDevice(context, PubSubControlBackAddressServer, PubSubControlFrontAddress, DeviceMode.Threaded);
+            QueueDevce = new QueueDevice(context, PubSubControlBackAddressServer, PubSubControlFrontAddressServer, DeviceMode.Threaded);
             QueueDevce.Start();
             //while (!QueueDevce.IsRunning)
             //{
@@ -134,7 +142,7 @@ namespace Daytona
 
                             while (true)
                             {
-                                poller. .PollOnce();// Poll(new TimeSpan(0,0,0,0,5));
+                                poller. PollOnce();// Poll(new TimeSpan(0,0,0,0,5));
                                 Writeline("polling" + count);
                                 count++;
                                 if (token.IsCancellationRequested)

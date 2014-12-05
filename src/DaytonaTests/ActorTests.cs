@@ -13,6 +13,7 @@ namespace Daytona.Tests
     using Microsoft.VisualStudio.TestTools.UnitTesting;
 
     using NetMQ;
+    using NetMQ.Devices;
 
     using TestHelpers;
 
@@ -52,6 +53,9 @@ namespace Daytona.Tests
         {
             using (var context = NetMQContext.Create())
             {
+                var exchange = new Exchange(context, Pipe.SubscribeAddress, Pipe.PublishAddress, DeviceMode.Threaded);
+                exchange.Start();
+
                 using (var actor = new Actor<Customer>(context, new BinarySerializer()))
                 {
                     var customer = actor.CreateInstance<ICustomer>(typeof(Customer), 33);
@@ -66,6 +70,8 @@ namespace Daytona.Tests
                     Assert.IsInstanceOfType(order2, typeof(IOrder));
                     order2.UpdateDescription("ZZZ"); //called without exception
                 }
+
+                exchange.Stop();
             }
         }
 

@@ -105,7 +105,7 @@ namespace Daytona
             //while (!forwarderDevice.IsRunning)
             //{ }
 
-            QueueDevce = new QueueDevice(context, PubSubControlBackAddressServer, PubSubControlFrontAddress, DeviceMode.Threaded);
+            QueueDevce = new QueueDevice(context, PubSubControlBackAddressServer, PubSubControlFrontAddressServer, DeviceMode.Threaded);
             QueueDevce.Start();
             //while (!QueueDevce.IsRunning)
             //{

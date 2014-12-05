@@ -532,7 +532,7 @@ namespace Daytona
             if (this.monitorChannelDisposed == false)
             {
                 this.MonitorChannel.Send(line);
-                var signal = this.MonitorChannel.Receive();
+                 var signal = this.MonitorChannel.Receive();
             }
         }
         
@@ -545,10 +545,10 @@ namespace Daytona
         protected void SetUpOutputChannel(NetMQContext context)
         {
             this.OutputChannel = context.CreatePublisherSocket();
-            this.OutputChannel.Connect(Pipe.PublishAddressClient);
+            this.OutputChannel.Connect(Pipe.PublishAddress);
 
             this.WriteLineToMonitor(
-                "Set up output channel on " + Pipe.PublishAddressClient + " Default sending on: " + this.OutRoute);
+                "Set up output channel on " + Pipe.PublishAddress + " Default sending on: " + this.OutRoute);
 
             ////if(this.sendControlChannel == null)
             ////{
@@ -660,7 +660,7 @@ namespace Daytona
         private void SetUpReceivers(NetMQContext context)
         {
             this.subscriber = context.CreateSubscriberSocket();
-            this.subscriber.Connect(Pipe.SubscribeAddressClient);
+            this.subscriber.Connect(Pipe.SubscribeAddress);
             
             if (string.IsNullOrEmpty(this.InRoute))
             {

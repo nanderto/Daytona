@@ -74,7 +74,7 @@ namespace Monitor
                                 Console.WriteLine("Address: {0}, {1}", address, firstParameter);
                             });
                     actorFactory.StartAllActors();
-                    Console.WriteLine("yada yada");
+                    Console.WriteLine("yada ");
                        
                     while (!interrupted)
                     {

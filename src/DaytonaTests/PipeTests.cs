@@ -38,7 +38,7 @@ namespace DaytonaTests
                 {
                     using (var sub = Helper.GetConnectedSubscribeSocket(context))
                     {
-                        Thread.Sleep(500);
+                        Thread.Sleep(50);
                         Helper.SendOneSimpleMessage(expectedAddress, message, pub);
 
                         var netMQMessage = Helper.ReceiveMessage(sub);
@@ -55,24 +55,66 @@ namespace DaytonaTests
             }
         }
 
+         [TestMethod]
+        public void SendOneMessage_inProc()
+        {
+            string input = string.Empty;
+            string expectedAddress = "XXXXxxxx";
+            string message = "ZZZ";
+            var count = 2;
+
+            using (var context = NetMQContext.Create())
+            {
+                var exchange = new Exchange(
+                    context,
+                    "inproc://frontend",
+                    "inproc://SubscribeAddress",
+                    DeviceMode.Threaded);
+                exchange.Start();
+                using (var pub = Helper.GetConnectedPublishSocket(context, "inproc://frontend"))
+                {
+                    using (var sub = Helper.GetConnectedSubscribeSocket(context, "inproc://SubscribeAddress"))
+                    {
+                        Thread.Sleep(50);
+                        Helper.SendOneSimpleMessage(expectedAddress, message, pub);
+
+                        var netMQMessage = Helper.ReceiveMessage(sub);
+
+                        Assert.AreEqual(count, netMQMessage.FrameCount);
+                        NetMQFrame frame = netMQMessage[0];
+                        var address = Encoding.Unicode.GetString(frame.Buffer);
+                        Assert.AreEqual(expectedAddress, address);
+
+                    }
+                }
+
+                exchange.Stop();
+            }
+        }
+
         [TestMethod]
-        public void InProcOnlyWithForwarder
-            ()
+        public void InProcOnlyWithForwarder()
         {
             string expectedAddress = "XXXX";
             string message = "hello its me";
             int count = 0;
             using (var context = NetMQContext.Create())
             {
-                Pipe pipe = new Pipe();
-                pipe.Start(context);
+                var exchange = new Exchange(context, "inproc://frontend", "inproc://SubscribeAddress", DeviceMode.Threaded);
+                exchange.Start();
+                var queueDevice = new QueueDevice(
+                    context,
+                    Pipe.PubSubControlBackAddressServer,
+                    Pipe.PubSubControlFrontAddressServer,
+                    DeviceMode.Threaded);
+                queueDevice.Start();
 
                 Task.Run(() =>
                 {
                     return RunSubscriber(context);
                 });
 
-                using (NetMQSocket pub = Helper.GetConnectedPublishSocket(context, Pipe.PublishAddressClient), 
+                using (NetMQSocket pub = Helper.GetConnectedPublishSocket(context, "inproc://frontend"), 
                    syncService = context.CreateResponseSocket())
                 {
                     syncService.Connect(Pipe.PubSubControlFrontAddressClient);
@@ -86,13 +128,15 @@ namespace DaytonaTests
                            
 
                 }
-                pipe.Exit();
+                exchange.Stop(true);
+                queueDevice.Stop(true);
+                
             }          
         }
 
         private Task RunSubscriber(NetMQContext context)
         {
-            using (NetMQSocket sub = Helper.GetConnectedSubscribeSocket(context, Pipe.SubscribeAddressClient),
+            using (NetMQSocket sub = Helper.GetConnectedSubscribeSocket(context, "inproc://SubscribeAddress"),
                 syncClient = context.CreateRequestSocket())
             {
                 syncClient.Connect(Pipe.PubSubControlBackAddressClient);

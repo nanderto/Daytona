@@ -12,6 +12,7 @@ namespace SiloConsole
     using System.Reflection;
 
     using NetMQ;
+    using NetMQ.Devices;
 
     class Program
     {
@@ -23,6 +24,8 @@ namespace SiloConsole
 
             using (var context = NetMQContext.Create())
             {
+                var exchange = new Exchange(context, Pipe.SubscribeAddress, Pipe.PublishAddress, DeviceMode.Threaded);
+                exchange.Start();
                 //using (var silo = new Silo(context, new BinarySerializer()))
                 //{
 
