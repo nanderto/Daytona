@@ -16,7 +16,7 @@ namespace Daytona
 
     public class Pipe : IDisposable
     {
-        public static Exchange forwarderDevice = null;
+        public static XForwarder forwarderDevice = null;
 
         public static string MonitorAddressClient = "tcp://localhost:5560";  ////"inproc://pubsubcontrol";//
 

@@ -8,6 +8,7 @@ namespace Daytona.Tests
     using System.Linq;
     using System.Reflection;
     using System.Text;
+    using System.Threading;
     using System.Threading.Tasks;
     using Daytona;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -20,40 +21,100 @@ namespace Daytona.Tests
     [TestClass]
     public class ActorTests
     {
-        [TestMethod]
-        public void CallMethod_usingDefaultSerializer()
-        {
+        public static AutoResetEvent waitHandle = new AutoResetEvent(false);
+
+       [TestMethod]   
+       public void CallMethod_Using_NProxyWrapper_ReadMessageWithRawActor()
+       {
+            waitHandle.Reset();
             using (var context = NetMQContext.Create())
             {
-                using (var actor = new Actor<Customer>(context))
+                using (var exchange = new Exchange(context))
                 {
-                    var customer = actor.CreateInstance<ICustomer>(typeof(Customer));
-                    Assert.IsInstanceOfType(customer, typeof(ICustomer));
-                    customer.UpdateName("XXX"); //called without exception
+                    exchange.Start();
+                    
+                    var queueDevice = new QueueDevice(
+                    context,
+                    Pipe.PubSubControlBackAddressServer,
+                    Pipe.PubSubControlFrontAddressServer,
+                    DeviceMode.Threaded);
+                    queueDevice.Start();
+
+                    Thread.Sleep(200);
+
+                    var task = Task.Run(() =>
+                    {
+                        return RunSubscriber(context);
+                    });
+
+                    using (var actor = new Actor<Order>(context, new BinarySerializer()))
+                    {
+                        using (var syncService = context.CreateResponseSocket())
+                        {
+                            syncService.Connect(Pipe.PubSubControlFrontAddressClient);
+                            for (int i = 0; i < 1; i++)
+                            {
+                                syncService.Receive();
+                                syncService.Send("");
+                            }
+
+                            var order = actor.CreateInstance<IOrder>(typeof(Order));
+                            Assert.IsInstanceOfType(order, typeof(IOrder));
+                            order.UpdateDescription("XXX"); //called without exception    
+                            waitHandle.WaitOne();
+                        }
+                    }
+                  
+                    queueDevice.Stop(true);
+                    exchange.Stop(true);
                 }
             }
         }
 
-        [TestMethod]   
-        public void CallMethod_UsingBinarySerializer()
-        {
-            using (var context = NetMQContext.Create())
+       private Task RunSubscriber(NetMQContext context)
+       {
+            using (NetMQSocket syncClient = context.CreateRequestSocket())
             {
+                syncClient.Connect(Pipe.PubSubControlBackAddressClient);
+                syncClient.Send("");
+                syncClient.Receive();
+
                 using (var actor = new Actor<Order>(context, new BinarySerializer()))
                 {
-                    var customer = actor.CreateInstance<ICustomer>(typeof(Customer));
-                    Assert.IsInstanceOfType(customer, typeof(ICustomer));
-                    customer.UpdateName("XXX"); //called without exception
-                }
-            }
-        }
+                    actor.RegisterActor(
+                        "Display",
+                        "",
+                        "outRoute",
+                        new BinarySerializer(),
+                        (address, methodinfo, parameters, actr) =>
+                        {
+                            var firstParameter = string.Empty;
+                            try
+                            {
+                                firstParameter = parameters[0].ToString();
+                            }
+                            catch (Exception)
+                            {
+                            }
+
+                            Console.WriteLine("Address: {0}, {1}", address, firstParameter);
+                            actr.WriteLineToMonitor(string.Format("Address: {0}, {1}", address, firstParameter));
+                            waitHandle.Set();
+                        });
+
+                    actor.StartAllActors();
+                }               
+           }
+
+           return null;
+       }
 
         [TestMethod]
         public void CallMethod_Multiple_ObjectsBinarySerializer()
         {
             using (var context = NetMQContext.Create())
             {
-                var exchange = new Exchange(context, Pipe.SubscribeAddress, Pipe.PublishAddress, DeviceMode.Threaded);
+                var exchange = new XForwarder(context, Pipe.SubscribeAddress, Pipe.PublishAddress, DeviceMode.Threaded);
                 exchange.Start();
 
                 using (var actor = new Actor<Customer>(context, new BinarySerializer()))
@@ -137,34 +198,85 @@ namespace Daytona.Tests
             Type type = null;
             MethodInfo returnedMethodInfo = null;
             string address, returnedAddress, messageType, returnedMessageType = string.Empty;
+            //List<object> parameters = new List<object>();
 
-            foreach (var frame in zmqMessage)
+            returnedAddress = getString(zmqMessage, serializer);
+            returnedMessageType = getString(zmqMessage, serializer);
+            if (returnedMessageType == "MethodInfo")
             {
-                stopSignal = Actor<Customer>.UnPackNetMQFrame(frameCount, serializer, frame, out address, ref methodinfo, methodParameters, ref typeParameter, ref type, out messageType);
-                if (frameCount == 0)
+                returnedMethodInfo = getMethodInfo(zmqMessage, serializer);
+                while (AddParameter(zmqMessage, serializer, methodParameters))
                 {
-                    returnedAddress = address;
                 }
-
-                if (frameCount == 1)
-                {
-                    returnedMessageType = messageType;
-                }
-
-                if (frameCount == 2)
-                {
-                    returnedMethodInfo = methodinfo;
-                }
-
-                frameCount++;
-                zmqOut.Append(new NetMQFrame(frame.Buffer));
-               // hasMore = subscriber.ReceiveMore;
             }
             
             var target = (Customer)Activator.CreateInstance(typeof(Customer));
             var result = (Customer)returnedMethodInfo.Invoke(target, methodParameters.ToArray());
             Assert.AreEqual("XXX", target.Lastname);
         }
+
+        //public static IEnumerable<T2> MySelect<T1, T2>(this IEnumerable<T1> data, Func<T1, T2> f)
+        //{
+        //    List<T2> retVal = new List<T2>();
+        //    foreach (T1 x in data) retVal.Add(f(x));
+        //    return retVal;
+        //}
+
+        private Func<NetMQMessage, BinarySerializer, MethodInfo> getMethodInfo = (socket, serializer) =>
+        {
+            //var hasMore = false;
+            //var buffer = socket.Receive(out hasMore);
+            var frame = socket.First();
+            var buffer = frame.Buffer;
+            socket.RemoveFrame(frame);
+            return (MethodInfo)serializer.Deserializer(buffer, typeof(MethodInfo));
+        };
+
+        private Func<NetMQMessage, BinarySerializer, string> getString = (socket, serializer) =>
+        {
+           // var hasMore = false;
+           // var buffer = socket.Receive(out hasMore);
+            var frame = socket.First();
+            var buffer = frame.Buffer;
+            socket.RemoveFrame(frame);
+            return serializer.GetString(buffer);
+        };
+
+        private Func<NetMQMessage, BinarySerializer, List<object>,  bool> AddParameter = (socket, serializer, parameters) =>
+            {
+                Type returnedType = getType(socket, serializer);
+                object parameter = null;
+                var result = getParameter(socket, serializer, returnedType);
+                parameters.Add(result.Item1);
+                return result.Item2;
+            };
+
+        private static Func<NetMQMessage, BinarySerializer, Type> getType = (socket, serializer) =>
+        {
+           // var hasMore = false;
+           // var buffer = socket.Receive(out hasMore);
+            var frame = socket.First();
+            var buffer = frame.Buffer;
+            socket.RemoveFrame(frame);
+            return (Type)serializer.Deserializer(buffer, typeof(Type));
+        };
+
+         private static Func<NetMQMessage, BinarySerializer, Type, Tuple<object, bool>> getParameter = (socket, serializer, type) =>
+        {
+            var hasMore = true;
+           // var buffer = socket.Receive(out hasMore);
+            
+            var frame = socket.First();
+            var buffer = frame.Buffer;
+            socket.RemoveFrame(frame);
+            if (socket.Count() == 0)
+            {
+                hasMore = false;
+            }
+
+            var parameter = serializer.Deserializer(buffer, type);
+            return new Tuple<object, bool>(parameter, hasMore);
+        };
 
         private static MethodInfo UnPackNetMQFrame(
             int FrameCount,

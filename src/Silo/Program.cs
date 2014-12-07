@@ -24,7 +24,7 @@ namespace SiloConsole
 
             using (var context = NetMQContext.Create())
             {
-                var exchange = new Exchange(context, Pipe.SubscribeAddress, Pipe.PublishAddress, DeviceMode.Threaded);
+                var exchange = new XForwarder(context, Pipe.SubscribeAddress, Pipe.PublishAddress, DeviceMode.Threaded);
                 exchange.Start();
                 //using (var silo = new Silo(context, new BinarySerializer()))
                 //{

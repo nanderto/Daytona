@@ -76,11 +76,11 @@
         {
             var zmqMessage = new NetMQMessage();
             zmqMessage.Append(new NetMQFrame(serializer.GetBuffer(addressToSendTo)));
-            zmqMessage.Append(new NetMQFrame(serializer.GetBuffer("Process")));
+            zmqMessage.Append(new NetMQFrame(serializer.GetBuffer("MethodInfo")));
 
             var serializedMethodInfo = serializer.GetBuffer(methodInfo);
             zmqMessage.Append(new NetMQFrame(serializedMethodInfo));
-            zmqMessage.Append(new NetMQFrame(serializer.GetBuffer(string.Format("ParameterCount:{0}", parameters.Length))));
+            //zmqMessage.Append(new NetMQFrame(serializer.GetBuffer(string.Format("ParameterCount:{0}", parameters.Length))));
             foreach (var parameter in parameters)
             {
                 zmqMessage.Append(serializer.GetBuffer(parameter.GetType()));
@@ -90,7 +90,7 @@
             return zmqMessage;
         }
 
-        public static bool UnPackNetMQFrame(int frameCount, BinarySerializer serializer, NetMQFrame frame, out string address, ref MethodInfo methodinfo, List<object> methodParameters, ref bool typeParameter, ref Type type, out string messageType)
+        public static bool UnPackNetMQFrame(int frameCount, BinarySerializer serializer, byte[] buffer, out string address, ref MethodInfo methodinfo, List<object> methodParameters, ref bool typeParameter, ref Type type, out string messageType)
         {
             messageType = string.Empty;
             bool stopSignal = false;
@@ -100,12 +100,12 @@
 
             if (frameCount == 0)
             {
-                address = serializer.GetString(frame.Buffer);
+                address = serializer.GetString(buffer);
             }
 
             if (frameCount == 1)
             {
-                messageAsBytes = frame.Buffer;
+                messageAsBytes = buffer;
                 messageType = serializer.GetString(messageAsBytes);
                 if (messageType.ToLower() == "stop")
                 {
@@ -115,25 +115,25 @@
 
             if (frameCount == 2)
             {
-                methodinfo = (MethodInfo)serializer.Deserializer(frame.Buffer, typeof(MethodInfo));
+                methodinfo = (MethodInfo)serializer.Deserializer(buffer, typeof(MethodInfo));
             }
 
             if (frameCount == 3)
             {
                 numberOfParameters =
-                    int.Parse(serializer.GetString(frame.Buffer).Replace("ParameterCount:", string.Empty));
+                    int.Parse(serializer.GetString(buffer).Replace("ParameterCount:", string.Empty));
             }
 
             if (frameCount > 3)
             {
                 if (typeParameter)
                 {
-                    type = (Type)serializer.Deserializer(frame.Buffer, typeof(Type));
+                    type = (Type)serializer.Deserializer(buffer, typeof(Type));
                     typeParameter = false;
                 }
                 else
                 {
-                    var parameter = serializer.Deserializer(frame.Buffer, type);
+                    var parameter = serializer.Deserializer(buffer, type);
                     methodParameters.Add(parameter);
                     typeParameter = true;
                 }
@@ -220,64 +220,107 @@
             return proxyFactory.CreateProxy<TInterface>(Type.EmptyTypes, invocationHandler);
         }
 
-        public override bool ReceiveMessage(NetMQSocket subscriber)
+        public virtual bool ReceiveMessage(NetMQSocket subscriber)
         {
             var stopSignal = false;
-            var zmqOut = new NetMQMessage();
-            bool hasMore = true;
-
-            // var address = string.Empty;
-            // byte[] messageAsBytes = null;
-            int frameCount = 0;
-            MethodInfo methodinfo = null;
             var methodParameters = new List<object>();
             var serializer = new BinarySerializer();
-            var typeParameter = true;
-            Type type = null;
             MethodInfo returnedMethodInfo = null;
-            string messageType, returnedMessageType = string.Empty;
-            string address, returnedAddress = string.Empty;
-            
-            var buffer = subscriber.Receive(out hasMore);
+            var returnedMessageType = string.Empty;
+            var returnedAddress = string.Empty;
 
-            while (hasMore)
+
+            returnedAddress = getString(subscriber, serializer);
+            returnedMessageType = getString(subscriber, serializer);
+
+            if (returnedMessageType == "MethodInfo")
             {
-                stopSignal = UnPackNetMQFrame(frameCount, serializer, buffer, out address, ref methodinfo, methodParameters, ref typeParameter, ref type, out messageType);
-                if (frameCount == 0)
-                {
-                    returnedAddress = address;
-                } 
+                returnedMethodInfo = getMethodInfo(subscriber, serializer);
+                while (AddParameter(subscriber, serializer, methodParameters)) ;
                 
-                if (frameCount == 1)
-                {
-                    returnedMessageType = messageType;
-                }
-
-                if (frameCount == 2)
-                {
-                    returnedMethodInfo = methodinfo;
-                }
-
-                frameCount++;
-                zmqOut.Append(new NetMQFrame(buffer));
-                buffer = subscriber.Receive(out hasMore);
-            }
-
-            //if (returnedMessageType.ToLower() == "raw")
-            //{
-            //    var inputParameters = new object[4];
-            //    inputParameters[0] = returnedAddress;
-            //    inputParameters[1] = methodParameters;
-            //    inputParameters[3] = this;
-            //    this.Workload.DynamicInvoke(inputParameters);
-            //}
-            //else
-            //{
                 var target = (T)Activator.CreateInstance(typeof(T));
                 var result = returnedMethodInfo.Invoke(target, methodParameters.ToArray());
-            //}
+
+            }
+
+            if (returnedMessageType == "Workload")
+            {
+                var inputParameters = new object[4];
+                inputParameters[0] = returnedAddress;
+                inputParameters[1] = returnedMethodInfo;
+                inputParameters[2] = methodParameters;
+                inputParameters[3] = this;
+
+                this.Workload.DynamicInvoke(inputParameters);
+            }
+
+            //zmqOut.Append(new NetMQFrame(buffer));
+            if (returnedMessageType.ToLower() == "stop")
+            {
+                stopSignal = true;
+            }
+
             return stopSignal;
         }
+
+        //public override bool ReceiveMessage(NetMQSocket subscriber)
+        //{
+        //    var stopSignal = false;
+        //    var zmqOut = new NetMQMessage();
+        //    bool hasMore = true;
+
+        //    // var address = string.Empty;
+        //    // byte[] messageAsBytes = null;
+        //    int frameCount = 0;
+        //    MethodInfo methodinfo = null;
+        //    var methodParameters = new List<object>();
+        //    var serializer = new BinarySerializer();
+        //    var typeParameter = true;
+        //    Type type = null;
+        //    MethodInfo returnedMethodInfo = null;
+        //    string messageType, returnedMessageType = string.Empty;
+        //    string address, returnedAddress = string.Empty;
+            
+        //    var buffer = subscriber.Receive(out hasMore);
+
+        //    while (hasMore)
+        //    {
+        //        stopSignal = UnPackNetMQFrame(frameCount, serializer, buffer, out address, ref methodinfo, methodParameters, ref typeParameter, ref type, out messageType);
+        //        if (frameCount == 0)
+        //        {
+        //            returnedAddress = address;
+        //        } 
+                
+        //        if (frameCount == 1)
+        //        {
+        //            returnedMessageType = messageType;
+        //        }
+
+        //        if (frameCount == 2)
+        //        {
+        //            returnedMethodInfo = methodinfo;
+        //        }
+
+        //        frameCount++;
+        //        zmqOut.Append(new NetMQFrame(buffer));
+        //        buffer = subscriber.Receive(out hasMore);
+        //    }
+
+        //    //if (returnedMessageType.ToLower() == "raw")
+        //    //{
+        //    //    var inputParameters = new object[4];
+        //    //    inputParameters[0] = returnedAddress;
+        //    //    inputParameters[1] = methodParameters;
+        //    //    inputParameters[3] = this;
+        //    //    this.Workload.DynamicInvoke(inputParameters);
+        //    //}
+        //    //else
+        //    //{
+        //        var target = (T)Activator.CreateInstance(typeof(T));
+        //        var result = returnedMethodInfo.Invoke(target, methodParameters.ToArray());
+        //    //}
+        //    return stopSignal;
+        //}
 
         public void SendMessage(object[] parameters, MethodInfo methodInfo, string TypeFullName)
         {

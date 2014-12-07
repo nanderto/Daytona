@@ -1,93 +1,84 @@
 ﻿namespace Daytona
 {
     using System;
+    using System.Text;
+
     using NetMQ;
     using NetMQ.Devices;
 
-    /// <summary>
-    /// Collects messages from a set of publishers and forwards these to a set of subscribers.
-    /// </summary>
-    /// <remarks>
-    /// Generally used to bridge networks. E.g. read on TCP unicast and forward on multicast.
-    /// This device is part of the publish-subscribe pattern. The frontend speaks to publishers
-    /// and the backend speaks to subscribers.
-    /// In order to use the <see cref="Exchange"/> please make sure you subscribe the FrontendSocket 
-    /// using the <see cref="Exchange.FrontendSetup"/>.
-    /// </remarks>
-    /// <example>
-    /// var device = new ForwarderDevice(ctx, "inproc://frontend", "inproc://backend");
-    /// device.FrontendSetup.Subscribe("topic");
-    /// </example>
-    public class Exchange : DeviceBase
+    public class Exchange : IDisposable
     {
+        public XForwarder XForwarder = null;
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Exchange"/> class.
-        /// </summary>
-        /// <param name="context">The <see cref="NetMQContext"/> to use when creating the sockets.</param>
-        /// <param name="frontendBindAddress">The endpoint used to bind the frontend socket.</param>
-        /// <param name="backendBindAddress">The endpoint used to bind the backend socket.</param>
-        /// <param name="mode">The <see cref="DeviceMode"/> for the device.</param>
-        public Exchange(NetMQContext context, string frontendBindAddress, string backendBindAddress,
-            DeviceMode mode = DeviceMode.Threaded)
-            : base(context.CreateXSubscriberSocket(), context.CreateXPublisherSocket(), mode)
+        public static string MonitorAddressClient = "tcp://localhost:5560";  ////"inproc://pubsubcontrol";//
+
+        public static string MonitorAddressServer = "tcp://*:5560";
+
+        public static string PublishAddress = "inproc://PublishAddress";
+
+        public static string PublishAddressClient = "tcp://localhost:5550";
+
+        public static string PublishAddressServer = "tcp://*:5550";
+
+        public static string PubSubControlBackAddress = "inproc://PubSubControlBackAddress";
+
+        public static string PubSubControlBackAddressClient = "tcp://localhost:5552"; ////"inproc://pubsubcontrol";//
+
+        public static string PubSubControlBackAddressServer = "tcp://*:5552"; ////"inproc://pubsubcontrol";//
+
+        public static string PubSubControlFrontAddress = "inproc://PubSubControlFrontAddress";
+
+        public static string PubSubControlFrontAddressServer = "tcp://*:5551";
+
+        public static string PubSubControlFrontAddressClient = "tcp://localhost:5551";
+
+        public static string SubscribeAddress = "inproc://SubscribeAddress"; ////"inproc://back";
+
+        public static string SubscribeAddressClient = "tcp://localhost:5553"; ////"inproc://back";
+
+        public static string SubscribeAddressServer = "tcp://*:5553"; ////"inproc://back";
+
+        public static string SubscriberCountAddress = "SubscriberCountAddress";
+
+        public static Encoding ControlChannelEncoding = Encoding.Unicode;
+
+        private bool disposed;
+
+        public Exchange(NetMQContext context)
         {
-
-            FrontendSetup.Bind(frontendBindAddress);
-            BackendSetup.Bind(backendBindAddress);
+            this.XForwarder = new XForwarder(context, PublishAddress, SubscribeAddress, DeviceMode.Threaded);
         }
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Exchange"/> class.
-        /// </summary>
-        /// <param name="context">The <see cref="NetMQContext"/> to use when creating the sockets.</param>
-        /// <param name="poller">The <see cref="Poller"/> to use.</param>
-        /// <param name="frontendBindAddress">The endpoint used to bind the frontend socket.</param>
-        /// <param name="backendBindAddress">The endpoint used to bind the backend socket.</param>
-        /// <param name="mode">The <see cref="DeviceMode"/> for the device.</param>		
-        public Exchange(NetMQContext context, Poller poller, string frontendBindAddress, string backendBindAddress,
-            DeviceMode mode = DeviceMode.Threaded)
-            : base(poller, context.CreateXSubscriberSocket(), context.CreateXPublisherSocket(), mode)
+        public void Dispose()
         {
-
-            FrontendSetup.Bind(frontendBindAddress);
-            BackendSetup.Bind(backendBindAddress);
+            this.Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
-        protected override void FrontendHandler(object sender, NetMQSocketEventArgs args)
+        private void Dispose(bool disposing)
         {
-            bool more;
-
-            do
+            if (!this.disposed)
             {
-                var data = args.Socket.Receive(out more);
-
-                if (more)
-                    BackendSocket.SendMore(data);
-                else
+                if (disposing)
                 {
-                    BackendSocket.Send(data);
+                    this.XForwarder.Stop(true);
                 }
 
-            } while (more);
+                //// There are no unmanaged resources to release, but
+                //// if we add them, they need to be released here.
+            }
+
+            this.disposed = true;
         }
 
-        protected override void BackendHandler(object sender, NetMQSocketEventArgs args)
+        public void Start()
         {
-            bool more;
+            this.XForwarder.Start();
+        }
 
-            do
-            {
-                var data = args.Socket.Receive(out more);
-
-                if (more)
-                    FrontendSocket.SendMore(data);
-                else
-                {
-                    FrontendSocket.Send(data);
-                }
-
-            } while (more);
+        public void Stop(bool waitForCloseToComplete)
+        {
+            this.XForwarder.Stop(waitForCloseToComplete);
         }
     }
 }

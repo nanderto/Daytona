@@ -57,53 +57,9 @@
             var id = this.Id == 0 ? this.uniqueGuid.ToString() : this.Id.ToString();
             var address = new StringBuilder(this.actorType.FullName).Append(id);
 
+            var realmethodInfo = this.actorType.GetMethod(methodInfo.Name);
 
-            //var zmqMessage = Actor<string>.PackZmqMessage(parameters, methodInfo, new BinarySerializer(), address.ToString());
-
-
-            //var stopSignal = false;
-            //var zmqOut = new ZmqMessage();
-            //bool hasMore = true;
-
-            //// var address = string.Empty;
-            //// byte[] messageAsBytes = null;
-            //int frameCount = 0;
-            //MethodInfo methodinfo = null;
-            //var methodParameters = new List<object>();
-            //var serializer = new BinarySerializer();
-            //var typeParameter = true;
-            //Type type = null;
-            //MethodInfo returnedMethodInfo = null;
-            //string messageType, returnedMessageType = string.Empty;
-            //string address2, returnedAddress = string.Empty;
-
-            //foreach (var frame in zmqMessage)
-            //{
-            //    stopSignal = Actor.UnPackFrame(frameCount, serializer, frame, out address2, ref methodinfo, methodParameters, ref typeParameter, ref type, out messageType);
-            //    if (frameCount == 0)
-            //    {
-            //        returnedAddress = address2;
-            //    }
-
-            //    if (frameCount == 1)
-            //    {
-            //        returnedMessageType = messageType;
-            //    }
-
-            //    if (frameCount == 2)
-            //    {
-            //        returnedMethodInfo = methodinfo;
-            //    }
-
-            //    frameCount++;
-            //}
-
-
-
-
-
-
-            this.actor.SendMessage(parameters, methodInfo, address.ToString());
+            this.actor.SendMessage(parameters, realmethodInfo, address.ToString());
             return null;
         }
     }

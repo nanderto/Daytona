@@ -8,8 +8,11 @@ namespace Daytona
 {
     using System;
     using System.Collections.Generic;
+    using System.Configuration;
     using System.IO;
+    using System.Net.Sockets;
     using System.Reflection;
+    using System.Runtime.InteropServices;
     using System.Runtime.Serialization;
     using System.Text;
     using System.Threading.Tasks;
@@ -268,6 +271,18 @@ namespace Daytona
         }
 
 
+        /// <summary>
+        /// This constructor is used to handle messages that have been packaged up with a methodinfo object and parameters
+        /// These messages are sent by the proxy of the custom objects.  
+        /// </summary>
+        /// <param name="name">Name of actor</param>
+        /// <param name="inRoute">the address the actor listens to. this will generally be blank so that this methid can handle all me
+        /// messages that are sent</param>
+        /// <param name="outRoute">Generally unused</param>
+        /// <param name="serializer">Serializer</param>
+        /// <param name="workload">the function to execute, this function will typically execute the methodinfo that it is sent 
+        /// with the parameter sent</param>
+        /// <returns>the actor</returns>
         public Actor RegisterActor(string name, string inRoute, string outRoute, ISerializer serializer, Action<string, MethodInfo, List<object>, Actor> workload)
         {
             this.actorTypes.Add(
@@ -335,10 +350,18 @@ namespace Daytona
                     do
                     {
                         var data = this.subscriber.Receive(out more);
-                    
-                    } while (more);
+
+                    }
+                    while (more);
                 }
-                
+                catch (NetMQ.TerminatingException te)
+                {
+                    ////Swallow excptions caused by the socet closing.
+                    //// dont yet have a way to sterminate gracefully
+
+                    break;
+                }
+
                 if (stop)
                 {
                     this.IsRunning = false;
@@ -351,59 +374,20 @@ namespace Daytona
         public virtual bool ReceiveMessage(NetMQSocket subscriber)
         {
             var stopSignal = false;
-            var zmqOut = new NetMQMessage();
-            bool hasMore = true;
-
-            // var address = string.Empty;
-            // byte[] messageAsBytes = null;
-            int frameCount = 0;
-            MethodInfo methodinfo = null;
             var methodParameters = new List<object>();
             var serializer = new BinarySerializer();
-            var typeParameter = true;
-            Type type = null;
             MethodInfo returnedMethodInfo = null;
-            string messageType = string.Empty, returnedMessageType = string.Empty;
-            string address = string.Empty;
+            var returnedMessageType = string.Empty;
             var returnedAddress = string.Empty;
-            var exceptionThrown = false;
-            var buffer = subscriber.Receive(out hasMore);
 
-            while (hasMore)
+
+            returnedAddress = getString(subscriber, serializer);
+            returnedMessageType = getString(subscriber, serializer);
+
+            if (returnedMessageType == "MethodInfo")
             {
-                
-                try
-                {
-                    stopSignal = UnPackNetMQFrame(frameCount, serializer, buffer, out address, ref methodinfo, methodParameters, ref typeParameter, ref type, out messageType);
-                }
-                catch (SerializationException se)
-                {
-                    this.WriteLineToMonitor(string.Format("Serialization Error: {0}", se.Message));
-                    exceptionThrown = true;
-                }
-
-                if (frameCount == 0)
-                {
-                    returnedAddress = address;
-                }
-
-                if (frameCount == 1)
-                {
-                    returnedMessageType = messageType;
-                }
-
-                if (frameCount == 2)
-                {
-                    returnedMethodInfo = methodinfo;
-                }
-
-                frameCount++;
-                zmqOut.Append(new NetMQFrame(buffer));
-                buffer = subscriber.Receive(out hasMore);
-            }
-
-            //if (!exceptionThrown)
-            //{
+                returnedMethodInfo = getMethodInfo(subscriber, serializer);
+                while (AddParameter(subscriber, serializer, methodParameters));
                 var inputParameters = new object[4];
                 inputParameters[0] = returnedAddress;
                 inputParameters[1] = returnedMethodInfo;
@@ -411,17 +395,72 @@ namespace Daytona
                 inputParameters[3] = this;
 
                 this.Workload.DynamicInvoke(inputParameters);
-            //}
-            //else
-            //{
-            //    var target = (T)Activator.CreateInstance(typeof(T));
-            //    var result = returnedMethodInfo.Invoke(target, methodParameters.ToArray());
-            //}
+
+            }
+
+            if (returnedMessageType == "Workload")
+            {
+                var inputParameters = new object[4];
+                inputParameters[0] = returnedAddress;
+                inputParameters[1] = returnedMethodInfo;
+                inputParameters[2] = methodParameters;
+                inputParameters[3] = this;
+
+                this.Workload.DynamicInvoke(inputParameters);
+            }
+
+            //zmqOut.Append(new NetMQFrame(buffer));
+            if (returnedMessageType.ToLower() == "stop")
+            {
+                stopSignal = true;
+            }
+
             return stopSignal;
         }
 
-        public static bool UnPackNetMQFrame(int frameCount, BinarySerializer serializer, byte[] buffer, out string address, ref MethodInfo methodinfo, List<object> methodParameters, ref bool typeParameter, ref Type type, out string messageType)
+        public static Func<NetMQSocket, BinarySerializer, MethodInfo> getMethodInfo = (socket, serializer) =>
+            {
+                var hasMore = false;
+                var buffer = socket.Receive(out hasMore);
+                return (MethodInfo)serializer.Deserializer(buffer, typeof(MethodInfo));
+            };
+
+        public static Func<NetMQSocket, BinarySerializer, string> getString = (socket, serializer) =>
+            {
+                var hasMore = false;
+                var buffer = socket.Receive(out hasMore);
+                return serializer.GetString(buffer);
+            };
+
+        public static Func<NetMQSocket, BinarySerializer, List<object>, bool> AddParameter = (socket, serializer, parameters) =>
         {
+            Type returnedType = getType(socket, serializer);
+            object parameter = null;
+            var result = getParameter(socket, serializer, returnedType);
+            parameters.Add(result.Item1);
+            return result.Item2;
+        };
+
+        public static Func<NetMQSocket, BinarySerializer, Type> getType = (socket, serializer) =>
+        {
+            var hasMore = false;
+            var buffer = socket.Receive(out hasMore);
+            return (Type)serializer.Deserializer(buffer, typeof(Type));
+        };
+
+        public static Func<NetMQSocket, BinarySerializer, Type, Tuple<object, bool>> getParameter = (socket, serializer, type) =>
+        {
+            var hasMore = true;
+            var buffer = socket.Receive(out hasMore);
+            var parameter = serializer.Deserializer(buffer, type);
+            return new Tuple<object, bool>(parameter, hasMore);
+        };
+
+        public static bool UnPackNetMQFrame(NetMQSocket subscriber, int frameCount, BinarySerializer serializer, byte[] buffer, out string address, ref MethodInfo methodinfo, List<object> methodParameters, ref bool typeParameter, ref Type type, out string messageType)
+        {
+            var hasMore = false;
+            buffer = subscriber.Receive(out hasMore);
+
             messageType = string.Empty;
             bool stopSignal = false;
             address = string.Empty;
@@ -484,13 +523,7 @@ namespace Daytona
                 this.WriteLineToMonitor("Waiting for message");
 
                 byte[] messageAsBytes = null;
-                var message = this.ReceiveMessage<T>(
-                    this.subscriber, 
-                    out NetMQMessage, 
-                    out address, 
-                    out stop, 
-                    out messageAsBytes, 
-                    this.Serializer);
+                var message = this.ReceiveMessage<T>(this.subscriber, out NetMQMessage, out address, out stop, out messageAsBytes, this.Serializer);
                 if (stop == true)
                 {
                     this.IsRunning = false;
@@ -523,7 +556,7 @@ namespace Daytona
         {
             foreach (var item in this.actorTypes)
             {
-                Task.Run(() => { item.Value.DynamicInvoke(); });
+                Task.Run(() => {  item.Value.DynamicInvoke(); });
             }
         }
 
@@ -531,8 +564,16 @@ namespace Daytona
         {
             if (this.monitorChannelDisposed == false)
             {
-                this.MonitorChannel.Send(line);
-                 var signal = this.MonitorChannel.Receive();
+                try
+                {
+                    this.MonitorChannel.Send(line, Exchange.ControlChannelEncoding);
+                    var signal = this.MonitorChannel.Receive();
+                }
+                catch (TerminatingException)
+                {
+                    ////swallow exceptions 
+                    ////monitor channel is temporary untill can ensure actors work propery
+                }               
             }
         }
         
@@ -568,34 +609,29 @@ namespace Daytona
 
         private void Dispose(bool disposing)
         {
-            if (!this.disposed)
+            if (disposing)
             {
-                if (disposing)
+                if (this.subscriber != null)
                 {
-                    if (this.subscriber != null)
-                    {
-                        this.subscriberDisposed = true;
-                        this.subscriber.Dispose();
-                    }
-
-                    if (this.OutputChannel != null)
-                    {
-                        this.OutputChannelDisposed = true;
-                        this.OutputChannel.Dispose();
-                    }
-
-                    if (this.MonitorChannel != null)
-                    {
-                        this.monitorChannelDisposed = true;
-                        this.MonitorChannel.Dispose();
-                    }
+                    this.subscriberDisposed = true;
+                    this.subscriber.Dispose();
                 }
+
+                if (this.OutputChannel != null)
+                {
+                    this.OutputChannelDisposed = true;
+                    this.OutputChannel.Dispose();
+                }
+
+                if (this.MonitorChannel != null)
+                {
+                    this.monitorChannelDisposed = true;
+                    this.MonitorChannel.Dispose();
+                }
+            }
 
                 //// There are no unmanaged resources to release, but
                 //// if we add them, they need to be released here.
-            }
-
-            this.disposed = true;
         }
 
         private T ReceiveMessage<T>(
@@ -672,7 +708,7 @@ namespace Daytona
             }
 
             this.MonitorChannel.Send(
-                "Set up Receive channel on " + Pipe.SubscribeAddressClient + " listening on: " + this.InRoute, 
+                "Set up Receive channel on " + Pipe.SubscribeAddress + " listening on: " + this.InRoute, 
                 Pipe.ControlChannelEncoding);
             bool more = false;
             var signal = this.MonitorChannel.Receive(); // Pipe.ControlChannelEncoding, out more);

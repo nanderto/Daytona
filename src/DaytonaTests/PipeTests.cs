@@ -28,7 +28,7 @@ namespace DaytonaTests
 
             using (var context = NetMQContext.Create())
             {
-                var exchange = new Exchange(
+                var exchange = new XForwarder(
                     context,
                     Pipe.PublishAddressServer,
                     Pipe.SubscribeAddressServer,
@@ -65,7 +65,7 @@ namespace DaytonaTests
 
             using (var context = NetMQContext.Create())
             {
-                var exchange = new Exchange(
+                var exchange = new XForwarder(
                     context,
                     "inproc://frontend",
                     "inproc://SubscribeAddress",
@@ -100,7 +100,7 @@ namespace DaytonaTests
             int count = 0;
             using (var context = NetMQContext.Create())
             {
-                var exchange = new Exchange(context, "inproc://frontend", "inproc://SubscribeAddress", DeviceMode.Threaded);
+                var exchange = new XForwarder(context, "inproc://frontend", "inproc://SubscribeAddress", DeviceMode.Threaded);
                 exchange.Start();
                 var queueDevice = new QueueDevice(
                     context,

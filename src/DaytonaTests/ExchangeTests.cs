@@ -24,7 +24,7 @@ namespace Daytona.Tests
         {
             using (var context = NetMQContext.Create())
             {
-                var exchange = new Exchange(
+                var exchange = new XForwarder(
                     context,
                     Pipe.PublishAddressServer,
                     Pipe.SubscribeAddressServer,
