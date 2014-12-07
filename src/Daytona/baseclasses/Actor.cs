@@ -334,7 +334,7 @@ namespace Daytona
                 string address = string.Empty;
                 NetMQMessage NetMQMessage = null;
 
-                this.WriteLineToMonitor("Waiting for message");
+                this.WriteLineToMonitor(string.Format("The {0} Waiting for message", this.Name));
 
                 byte[] messageAsBytes = null;
                 try
@@ -354,7 +354,7 @@ namespace Daytona
                     }
                     while (more);
                 }
-                catch (NetMQ.TerminatingException te)
+                catch (TerminatingException te)
                 {
                     ////Swallow excptions caused by the socet closing.
                     //// dont yet have a way to sterminate gracefully

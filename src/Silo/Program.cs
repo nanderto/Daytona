@@ -24,7 +24,7 @@ namespace SiloConsole
 
             using (var context = NetMQContext.Create())
             {
-                var exchange = new XForwarder(context, Pipe.SubscribeAddress, Pipe.PublishAddress, DeviceMode.Threaded);
+                var exchange = new Exchange(context);
                 exchange.Start();
                 //using (var silo = new Silo(context, new BinarySerializer()))
                 //{
@@ -50,11 +50,13 @@ namespace SiloConsole
                                         runningActors = (List<RunningActors>)returnedObject;
                                         var returnedActor = runningActors.FirstOrDefault(ra => ra.Address == address);
 
-                                        Console.WriteLine("Hey we found an actor");
+                                        
                                         if (returnedActor == null)
                                         {
+                                            Console.WriteLine("We dident find an actor");
                                             var customer = new Actor<Customer>(actor.context, new BinarySerializer());
                                             //customer.StartWithIdAndMethod(address, methodInfo, parameters);
+                                            
                                             Console.WriteLine("I wish I could start a method");
                                             ////start actor
                                             /// 
@@ -109,7 +111,8 @@ namespace SiloConsole
                         Console.ReadLine();
                     }
                 //}
-            }
+                exchange.Stop(true);
+             }
         }
 
         static bool interrupted = false;

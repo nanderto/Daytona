@@ -72,7 +72,7 @@
         
         public override event EventHandler<CallBackEventArgs> SaveCompletedEvent;
         
-        public static NetMQMessage PackZmqMessage(object[] parameters, MethodInfo methodInfo, ISerializer serializer, string addressToSendTo)
+        public static NetMQMessage    PackZmqMessage(object[] parameters, MethodInfo methodInfo, ISerializer serializer, string addressToSendTo)
         {
             var zmqMessage = new NetMQMessage();
             zmqMessage.Append(new NetMQFrame(serializer.GetBuffer(addressToSendTo)));
