@@ -55,7 +55,7 @@
         {
             this.WasCalled = true;
             var id = this.Id == 0 ? this.uniqueGuid.ToString() : this.Id.ToString();
-            var address = new StringBuilder(this.actorType.FullName).Append(id);
+            var address = new StringBuilder(this.actorType.FullName).Append("/").Append(id);
 
             var realmethodInfo = this.actorType.GetMethod(methodInfo.Name);
 

@@ -8,11 +8,8 @@ namespace Daytona
 {
     using System;
     using System.Collections.Generic;
-    using System.Configuration;
     using System.IO;
-    using System.Net.Sockets;
     using System.Reflection;
-    using System.Runtime.InteropServices;
     using System.Runtime.Serialization;
     using System.Text;
     using System.Threading.Tasks;
@@ -22,18 +19,62 @@ namespace Daytona
     [Serializable]
     public class Actor : IDisposable
     {
-        [NonSerialized]
-        public NetMQSocket subscriber;
+        #region Static Fields
 
-        [NonSerialized]
-        public NetMQContext context;
+        public static Func<NetMQSocket, BinarySerializer, List<object>, bool> AddParameter =
+            (socket, serializer, parameters) =>
+                {
+                    Type returnedType = GetObjectType(socket, serializer);
+                    object parameter = null;
+                    var result = GetParameter(socket, serializer, returnedType);
+                    parameters.Add(result.Item1);
+                    return result.Item2;
+                };
 
-        public readonly Dictionary<string, Action> actorTypes = new Dictionary<string, Action>();
+        public static Func<NetMQSocket, BinarySerializer, MethodInfo> GetMethodInfo = (socket, serializer) =>
+            {
+                var hasMore = false;
+                var buffer = socket.Receive(out hasMore);
+                return (MethodInfo)serializer.Deserializer(buffer, typeof(MethodInfo));
+            };
+
+        public static Func<NetMQSocket, BinarySerializer, Type, Tuple<object, bool>> GetParameter =
+            (socket, serializer, type) =>
+                {
+                    var hasMore = true;
+                    var buffer = socket.Receive(out hasMore);
+                    var parameter = serializer.Deserializer(buffer, type);
+                    return new Tuple<object, bool>(parameter, hasMore);
+                };
+
+        public static Func<NetMQSocket, BinarySerializer, string> GetString = (socket, serializer) =>
+            {
+                var hasMore = false;
+                var buffer = socket.Receive(out hasMore);
+                return serializer.GetString(buffer);
+            };
+
+        public static Func<NetMQSocket, BinarySerializer, Type> GetObjectType = (socket, serializer) =>
+            {
+                var hasMore = false;
+                var buffer = socket.Receive(out hasMore);
+                return (Type)serializer.Deserializer(buffer, typeof(Type));
+            };
 
         private static readonly object SynchLock = new object();
 
-        private bool disposed;
+        #endregion
 
+        #region Fields
+
+        public readonly Dictionary<string, Action> actorTypes = new Dictionary<string, Action>();
+
+        [NonSerialized]
+        public NetMQContext Context;
+
+        [NonSerialized]
+        public NetMQSocket Subscriber;
+        
         [NonSerialized]
         private NetMQSocket monitorChannel;
 
@@ -46,7 +87,11 @@ namespace Daytona
         private ISerializer serializer;
 
         private bool subscriberDisposed = false;
-        
+
+        #endregion
+
+        #region Constructors and Destructors
+
         /// <summary>
         ///     Initializes a new instance of the <see cref="Actor{T}" /> class.
         ///     This is generally used when creating a actor to act as a Actor factory.
@@ -55,7 +100,7 @@ namespace Daytona
         public Actor(NetMQContext context)
         {
             this.IsRunning = false;
-            this.context = context;
+            this.Context = context;
             this.Serializer = new DefaultSerializer(Encoding.Unicode);
             this.SetUpMonitorChannel(context);
             this.SetUpOutputChannel(context);
@@ -71,7 +116,7 @@ namespace Daytona
         public Actor(NetMQContext context, ISerializer serializer)
         {
             this.IsRunning = false;
-            this.context = context;
+            this.Context = context;
             this.Serializer = serializer;
             this.PropertyBag = new Dictionary<string, object>();
             this.SetUpMonitorChannel(context);
@@ -81,7 +126,7 @@ namespace Daytona
         public Actor(NetMQContext context, ISerializer serializer, string inRoute)
         {
             this.IsRunning = false;
-            this.context = context;
+            this.Context = context;
             this.Serializer = serializer;
             this.PropertyBag = new Dictionary<string, object>();
             this.SetUpMonitorChannel(context);
@@ -92,7 +137,7 @@ namespace Daytona
         public Actor(NetMQContext context, ISerializer serializer, string name, string inRoute, Action<Actor> workload)
         {
             this.IsRunning = false;
-            this.context = context;
+            this.Context = context;
             this.Serializer = serializer;
             this.Name = name;
             this.InRoute = inRoute;
@@ -103,11 +148,15 @@ namespace Daytona
             this.SetUpReceivers(context, inRoute);
         }
 
-
-        public Actor(NetMQContext context, ISerializer serializer, string name, string inRoute, Action<string, List<object>, Actor> workload)
+        public Actor(
+            NetMQContext context,
+            ISerializer serializer,
+            string name,
+            string inRoute,
+            Action<string, List<object>, Actor> workload)
         {
             this.IsRunning = false;
-            this.context = context;
+            this.Context = context;
             this.Serializer = serializer;
             this.Name = name;
             this.InRoute = inRoute;
@@ -118,10 +167,15 @@ namespace Daytona
             this.SetUpReceivers(context, inRoute);
         }
 
-        public Actor(NetMQContext context, ISerializer serializer, string name, string inRoute, Action<string, MethodInfo, List<object>, Actor> workload)
+        public Actor(
+            NetMQContext context,
+            ISerializer serializer,
+            string name,
+            string inRoute,
+            Action<string, MethodInfo, List<object>, Actor> workload)
         {
             this.IsRunning = false;
-            this.context = context;
+            this.Context = context;
             this.Serializer = serializer;
             this.Name = name;
             this.InRoute = inRoute;
@@ -131,9 +185,17 @@ namespace Daytona
             this.SetUpOutputChannel(context);
             this.SetUpReceivers(context, inRoute);
         }
+
+        #endregion
+
+        #region Public Events
 
         public virtual event EventHandler<CallBackEventArgs> SaveCompletedEvent;
-        
+
+        #endregion
+
+        #region Public Properties
+
         public Delegate Callback { get; set; }
 
         public int Id { get; set; }
@@ -201,6 +263,10 @@ namespace Daytona
         }
 
         public Delegate Workload { get; set; }
+
+        #endregion
+
+        #region Public Methods and Operators
         
         public static void Writeline(string line)
         {
@@ -241,13 +307,62 @@ namespace Daytona
             GC.SuppressFinalize(this);
         }
 
-        public Actor RegisterActor<T>(string name, string inRoute, string outRoute, ISerializer serializer, Action<Actor> workload) where T : IPayload
+        public virtual bool ReceiveMessage(NetMQSocket subscriber)
+        {
+            var stopSignal = false;
+            var methodParameters = new List<object>();
+            var serializer = new BinarySerializer();
+            MethodInfo returnedMethodInfo = null;
+            var returnedMessageType = string.Empty;
+            var returnedAddress = string.Empty;
+
+            returnedAddress = GetString(subscriber, serializer);
+            returnedMessageType = GetString(subscriber, serializer);
+
+            if (returnedMessageType == "MethodInfo")
+            {
+                returnedMethodInfo = GetMethodInfo(subscriber, serializer);
+                while (AddParameter(subscriber, serializer, methodParameters));
+                var inputParameters = new object[4];
+                inputParameters[0] = returnedAddress;
+                inputParameters[1] = returnedMethodInfo;
+                inputParameters[2] = methodParameters;
+                inputParameters[3] = this;
+
+                this.Workload.DynamicInvoke(inputParameters);
+            }
+
+            if (returnedMessageType == "Workload")
+            {
+                var inputParameters = new object[4];
+                inputParameters[0] = returnedAddress;
+                inputParameters[1] = returnedMethodInfo;
+                inputParameters[2] = methodParameters;
+                inputParameters[3] = this;
+
+                this.Workload.DynamicInvoke(inputParameters);
+            }
+
+            if (returnedMessageType.ToLower() == "stop")
+            {
+                stopSignal = true;
+            }
+
+            return stopSignal;
+        }
+
+        public Actor RegisterActor<T>(
+            string name,
+            string inRoute,
+            string outRoute,
+            ISerializer serializer,
+            Action<Actor> workload) where T : IPayload
         {
             this.actorTypes.Add(
-                name, 
+                name,
                 () =>
                     {
-                        using (var actor = new Actor(this.context, serializer, name, inRoute, workload))
+                        using (var actor = new Actor(this.Context, serializer, name, inRoute, workload))
                         {
                             actor.Start<T>();
                         }
@@ -255,46 +370,66 @@ namespace Daytona
             return this;
         }
 
-
-        public Actor RegisterActor(string name, string inRoute, string outRoute, ISerializer serializer, Action<string, List<object>, Actor> workload) 
+        public Actor RegisterActor(
+            string name,
+            string inRoute,
+            string outRoute,
+            ISerializer serializer,
+            Action<string, List<object>, Actor> workload)
         {
             this.actorTypes.Add(
                 name,
                 () =>
-                {
-                    using (var actor = new Actor(this.context, serializer, name, inRoute, workload))
                     {
-                        actor.Start();
-                    }
-                });
+                        using (var actor = new Actor(this.Context, serializer, name, inRoute, workload))
+                        {
+                            actor.Start();
+                        }
+                    });
             return this;
         }
 
-
         /// <summary>
-        /// This constructor is used to handle messages that have been packaged up with a methodinfo object and parameters
-        /// These messages are sent by the proxy of the custom objects.  
+        ///     This constructor is used to handle messages that have been packaged up with a methodinfo object and parameters
+        ///     These messages are sent by the proxy of the custom objects.
         /// </summary>
         /// <param name="name">Name of actor</param>
-        /// <param name="inRoute">the address the actor listens to. this will generally be blank so that this methid can handle all me
-        /// messages that are sent</param>
+        /// <param name="inRoute">
+        ///     the address the actor listens to. this will generally be blank so that this methid can handle all me
+        ///     messages that are sent
+        /// </param>
         /// <param name="outRoute">Generally unused</param>
         /// <param name="serializer">Serializer</param>
-        /// <param name="workload">the function to execute, this function will typically execute the methodinfo that it is sent 
-        /// with the parameter sent</param>
+        /// <param name="workload">
+        ///     the function to execute, this function will typically execute the methodinfo that it is sent
+        ///     with the parameter sent
+        /// </param>
         /// <returns>the actor</returns>
-        public Actor RegisterActor(string name, string inRoute, string outRoute, ISerializer serializer, Action<string, MethodInfo, List<object>, Actor> workload)
+        public Actor RegisterActor(
+            string name,
+            string inRoute,
+            string outRoute,
+            ISerializer serializer,
+            Action<string, MethodInfo, List<object>, Actor> workload)
         {
             this.actorTypes.Add(
                 name,
                 () =>
-                {
-                    using (var actor = new Actor(this.context, serializer, name, inRoute, workload))
                     {
-                        actor.Start();
-                    }
-                });
+                        using (var actor = new Actor(this.Context, serializer, name, inRoute, workload))
+                        {
+                            actor.Start();
+                        }
+                    });
             return this;
+        }
+
+        public void SendKillMe(ISerializer serializer, NetMQSocket socket)
+        {
+            var netMQMessage = new NetMQMessage();
+            netMQMessage.Append(new NetMQFrame(this.InRoute));
+            netMQMessage.Append(new NetMQFrame("stop"));
+            socket.SendMessage(netMQMessage);
         }
 
         public void SendMessage(string address, byte[] message, ISerializer serializer, NetMQSocket socket)
@@ -339,18 +474,18 @@ namespace Daytona
                 byte[] messageAsBytes = null;
                 try
                 {
-                    stop = this.ReceiveMessage(this.subscriber);
+                    stop = this.ReceiveMessage(this.Subscriber);
                     this.WriteLineToMonitor("Received message");
                 }
                 catch (SerializationException se)
                 {
                     this.WriteLineToMonitor(string.Format("Serialization Error: {0}", se.ToString()));
+
                     ////skip to end of message
                     bool more;
                     do
                     {
-                        var data = this.subscriber.Receive(out more);
-
+                        var data = this.Subscriber.Receive(out more);
                     }
                     while (more);
                 }
@@ -371,146 +506,6 @@ namespace Daytona
             this.WriteLineToMonitor("Exiting actor");
         }
 
-        public virtual bool ReceiveMessage(NetMQSocket subscriber)
-        {
-            var stopSignal = false;
-            var methodParameters = new List<object>();
-            var serializer = new BinarySerializer();
-            MethodInfo returnedMethodInfo = null;
-            var returnedMessageType = string.Empty;
-            var returnedAddress = string.Empty;
-
-
-            returnedAddress = getString(subscriber, serializer);
-            returnedMessageType = getString(subscriber, serializer);
-
-            if (returnedMessageType == "MethodInfo")
-            {
-                returnedMethodInfo = getMethodInfo(subscriber, serializer);
-                while (AddParameter(subscriber, serializer, methodParameters));
-                var inputParameters = new object[4];
-                inputParameters[0] = returnedAddress;
-                inputParameters[1] = returnedMethodInfo;
-                inputParameters[2] = methodParameters;
-                inputParameters[3] = this;
-
-                this.Workload.DynamicInvoke(inputParameters);
-
-            }
-
-            if (returnedMessageType == "Workload")
-            {
-                var inputParameters = new object[4];
-                inputParameters[0] = returnedAddress;
-                inputParameters[1] = returnedMethodInfo;
-                inputParameters[2] = methodParameters;
-                inputParameters[3] = this;
-
-                this.Workload.DynamicInvoke(inputParameters);
-            }
-
-            //zmqOut.Append(new NetMQFrame(buffer));
-            if (returnedMessageType.ToLower() == "stop")
-            {
-                stopSignal = true;
-            }
-
-            return stopSignal;
-        }
-
-        public static Func<NetMQSocket, BinarySerializer, MethodInfo> getMethodInfo = (socket, serializer) =>
-            {
-                var hasMore = false;
-                var buffer = socket.Receive(out hasMore);
-                return (MethodInfo)serializer.Deserializer(buffer, typeof(MethodInfo));
-            };
-
-        public static Func<NetMQSocket, BinarySerializer, string> getString = (socket, serializer) =>
-            {
-                var hasMore = false;
-                var buffer = socket.Receive(out hasMore);
-                return serializer.GetString(buffer);
-            };
-
-        public static Func<NetMQSocket, BinarySerializer, List<object>, bool> AddParameter = (socket, serializer, parameters) =>
-        {
-            Type returnedType = getType(socket, serializer);
-            object parameter = null;
-            var result = getParameter(socket, serializer, returnedType);
-            parameters.Add(result.Item1);
-            return result.Item2;
-        };
-
-        public static Func<NetMQSocket, BinarySerializer, Type> getType = (socket, serializer) =>
-        {
-            var hasMore = false;
-            var buffer = socket.Receive(out hasMore);
-            return (Type)serializer.Deserializer(buffer, typeof(Type));
-        };
-
-        public static Func<NetMQSocket, BinarySerializer, Type, Tuple<object, bool>> getParameter = (socket, serializer, type) =>
-        {
-            var hasMore = true;
-            var buffer = socket.Receive(out hasMore);
-            var parameter = serializer.Deserializer(buffer, type);
-            return new Tuple<object, bool>(parameter, hasMore);
-        };
-
-        public static bool UnPackNetMQFrame(NetMQSocket subscriber, int frameCount, BinarySerializer serializer, byte[] buffer, out string address, ref MethodInfo methodinfo, List<object> methodParameters, ref bool typeParameter, ref Type type, out string messageType)
-        {
-            var hasMore = false;
-            buffer = subscriber.Receive(out hasMore);
-
-            messageType = string.Empty;
-            bool stopSignal = false;
-            address = string.Empty;
-            byte[] messageAsBytes;
-            int numberOfParameters;
-
-            if (frameCount == 0)
-            {
-                address = serializer.GetString(buffer);
-            }
-
-            if (frameCount == 1)
-            {
-                messageAsBytes = buffer;
-                messageType = serializer.GetString(messageAsBytes);
-                if (messageType.ToLower() == "stop")
-                {
-                    stopSignal = true;
-                }
-            }
-
-            if (frameCount == 2)
-            {
-                methodinfo = (MethodInfo)serializer.Deserializer(buffer, typeof(MethodInfo));
-            }
-
-            if (frameCount == 3)
-            {
-                numberOfParameters =
-                    int.Parse(serializer.GetString(buffer).Replace("ParameterCount:", string.Empty));
-            }
-
-            if (frameCount > 3)
-            {
-                if (typeParameter)
-                {
-                    type = (Type)serializer.Deserializer(buffer, typeof(Type));
-                    typeParameter = false;
-                }
-                else
-                {
-                    var parameter = serializer.Deserializer(buffer, type);
-                    methodParameters.Add(parameter);
-                    typeParameter = true;
-                }
-            }
-
-            return stopSignal;
-        }
-
         public void Start<T>() where T : IPayload
         {
             bool stop = false;
@@ -523,7 +518,13 @@ namespace Daytona
                 this.WriteLineToMonitor("Waiting for message");
 
                 byte[] messageAsBytes = null;
-                var message = this.ReceiveMessage<T>(this.subscriber, out NetMQMessage, out address, out stop, out messageAsBytes, this.Serializer);
+                var message = this.ReceiveMessage<T>(
+                    this.Subscriber,
+                    out NetMQMessage,
+                    out address,
+                    out stop,
+                    out messageAsBytes,
+                    this.Serializer);
                 if (stop == true)
                 {
                     this.IsRunning = false;
@@ -556,7 +557,7 @@ namespace Daytona
         {
             foreach (var item in this.actorTypes)
             {
-                Task.Run(() => {  item.Value.DynamicInvoke(); });
+                Task.Run(() => { item.Value.DynamicInvoke(); });
             }
         }
 
@@ -573,10 +574,14 @@ namespace Daytona
                 {
                     ////swallow exceptions 
                     ////monitor channel is temporary untill can ensure actors work propery
-                }               
+                }
             }
         }
-        
+
+        #endregion
+
+        #region Methods
+
         protected void SetUpMonitorChannel(NetMQContext context)
         {
             this.MonitorChannel = context.CreateRequestSocket();
@@ -611,16 +616,18 @@ namespace Daytona
         {
             if (disposing)
             {
-                if (this.subscriber != null)
-                {
-                    this.subscriberDisposed = true;
-                    this.subscriber.Dispose();
-                }
-
                 if (this.OutputChannel != null)
                 {
+                    SendKillMe(this.Serializer, this.outputChannel);
+
                     this.OutputChannelDisposed = true;
                     this.OutputChannel.Dispose();
+                }
+
+                if (this.Subscriber != null)
+                {
+                    this.subscriberDisposed = true;
+                    this.Subscriber.Dispose();
                 }
 
                 if (this.MonitorChannel != null)
@@ -630,16 +637,16 @@ namespace Daytona
                 }
             }
 
-                //// There are no unmanaged resources to release, but
-                //// if we add them, they need to be released here.
+            //// There are no unmanaged resources to release, but
+            //// if we add them, they need to be released here.
         }
 
         private T ReceiveMessage<T>(
-            NetMQSocket subscriber, 
-            out NetMQMessage netMqMessage, 
-            out string address, 
-            out bool stopSignal, 
-            out byte[] messageAsBytes, 
+            NetMQSocket subscriber,
+            out NetMQMessage netMqMessage,
+            out string address,
+            out bool stopSignal,
+            out byte[] messageAsBytes,
             ISerializer serializer)
         {
             stopSignal = false;
@@ -654,7 +661,6 @@ namespace Daytona
 
             while (hasMore)
             {
-                
                 if (i == 0)
                 {
                     address = serializer.GetString(buffer);
@@ -669,8 +675,8 @@ namespace Daytona
                     {
                         Writeline("received stop");
                         this.SendMessage(
-                            Pipe.ControlChannelEncoding.GetBytes(Pipe.SubscriberCountAddress), 
-                            Pipe.ControlChannelEncoding.GetBytes("SHUTTINGDOWN"), 
+                            Pipe.ControlChannelEncoding.GetBytes(Pipe.SubscriberCountAddress),
+                            Pipe.ControlChannelEncoding.GetBytes("SHUTTINGDOWN"),
                             this.OutputChannel);
                         stopSignal = true;
                     }
@@ -695,27 +701,29 @@ namespace Daytona
         /// <param name="context">The ZeroMQ context required to create the receivers</param>
         private void SetUpReceivers(NetMQContext context)
         {
-            this.subscriber = context.CreateSubscriberSocket();
-            this.subscriber.Connect(Pipe.SubscribeAddress);
-            
+            this.Subscriber = context.CreateSubscriberSocket();
+            this.Subscriber.Connect(Pipe.SubscribeAddress);
+
             if (string.IsNullOrEmpty(this.InRoute))
             {
-                this.subscriber.Subscribe(string.Empty);
+                this.Subscriber.Subscribe(string.Empty);
             }
             else
             {
-                this.subscriber.Subscribe(this.Serializer.GetBuffer(this.InRoute));
+                this.Subscriber.Subscribe(this.Serializer.GetBuffer(this.InRoute));
             }
 
             this.MonitorChannel.Send(
-                "Set up Receive channel on " + Pipe.SubscribeAddress + " listening on: " + this.InRoute, 
+                "Set up Receive channel on " + Pipe.SubscribeAddress + " listening on: " + this.InRoute,
                 Pipe.ControlChannelEncoding);
             bool more = false;
             var signal = this.MonitorChannel.Receive(); // Pipe.ControlChannelEncoding, out more);
             this.SendMessage(
-                Pipe.ControlChannelEncoding.GetBytes(Pipe.SubscriberCountAddress), 
-                Pipe.ControlChannelEncoding.GetBytes("ADDSUBSCRIBER"), 
+                Pipe.ControlChannelEncoding.GetBytes(Pipe.SubscriberCountAddress),
+                Pipe.ControlChannelEncoding.GetBytes("ADDSUBSCRIBER"),
                 this.OutputChannel);
         }
+
+        #endregion
     }
 }

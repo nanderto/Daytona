@@ -230,12 +230,12 @@
             var returnedAddress = string.Empty;
 
 
-            returnedAddress = getString(subscriber, serializer);
-            returnedMessageType = getString(subscriber, serializer);
+            returnedAddress = GetString(subscriber, serializer);
+            returnedMessageType = GetString(subscriber, serializer);
 
             if (returnedMessageType == "MethodInfo")
             {
-                returnedMethodInfo = getMethodInfo(subscriber, serializer);
+                returnedMethodInfo = GetMethodInfo(subscriber, serializer);
                 while (AddParameter(subscriber, serializer, methodParameters)) ;
                 
                 var target = (T)Activator.CreateInstance(typeof(T));
@@ -341,7 +341,7 @@
                 this.WriteLineToMonitor("Waiting for message");
 
                 byte[] messageAsBytes = null;
-                stop = this.ReceiveMessage(this.subscriber);
+                stop = this.ReceiveMessage(this.Subscriber);
                 if (stop)
                 {
                     this.IsRunning = false;
@@ -364,7 +364,7 @@
                 name,
                 () =>
                 {
-                    using (var actor = new Actor(this.context, serializer, name, inRoute, workload))
+                    using (var actor = new Actor(this.Context, serializer, name, inRoute, workload))
                     {
                         actor.Start();
                     }

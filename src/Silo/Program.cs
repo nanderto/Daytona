@@ -50,12 +50,21 @@ namespace SiloConsole
                                         runningActors = (List<RunningActors>)returnedObject;
                                         var returnedActor = runningActors.FirstOrDefault(ra => ra.Address == address);
 
-                                        
                                         if (returnedActor == null)
                                         {
                                             Console.WriteLine("We dident find an actor");
-                                            var customer = new Actor<Customer>(actor.context, new BinarySerializer());
-                                            //customer.StartWithIdAndMethod(address, methodInfo, parameters);
+                                            var addressAndNumber = address.Split('/');
+                                            if (addressAndNumber[0] == "TestHelpers.Customer")
+                                            {
+                                                var customer = new Actor<Customer>(actor.Context, new BinarySerializer());
+                                                customer.StartWithIdAndMethod(address, methodInfo, parameters);
+                                            }
+
+                                            if (addressAndNumber[0] == "TestHelpers.Order")
+                                            {
+                                                var order = new Actor<Order>(actor.Context, new BinarySerializer());
+                                                order.StartWithIdAndMethod(address, methodInfo, parameters);
+                                            }
                                             
                                             Console.WriteLine("I wish I could start a method");
                                             ////start actor
@@ -68,7 +77,7 @@ namespace SiloConsole
                                     }
                                     else
                                     {
-                                        var customer = new Actor<Customer>(actor.context, new BinarySerializer());
+                                        var customer = new Actor<Customer>(actor.Context, new BinarySerializer());
                                        // customer.StartWithIdAndMethod(address, methodInfo, parameters);
                                         Console.WriteLine("no collection of running actors, So I am creating one and starting a new runner");
                                         ////start actor
@@ -108,7 +117,7 @@ namespace SiloConsole
                             order2.UpdateDescription("ZZZ"); //called without exception
                         }
 
-                        Console.ReadLine();
+                         Console.ReadLine();
                     }
                 //}
                 exchange.Stop(true);

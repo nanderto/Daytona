@@ -64,7 +64,9 @@ namespace Daytona.Tests
                             waitHandle.WaitOne();
                         }
                     }
-                  
+
+                    Thread.Sleep(200);
+
                     queueDevice.Stop(true);
                     exchange.Stop(true);
                 }
@@ -108,6 +110,25 @@ namespace Daytona.Tests
 
            return null;
        }
+
+        [TestMethod]
+        public void CallKillMe()
+        {
+            using (var context = NetMQContext.Create())
+            {
+                using (var exchange = new Exchange(context))
+                {
+                    exchange.Start();
+                    using (var customer = new Actor<Customer>(context, new BinarySerializer()))
+                    {
+                        Thread.Sleep(300);
+                        Task.Run(() => customer.Start());
+                    }
+
+                    exchange.Stop(true);
+                }
+            }
+        }
 
         [TestMethod]
         public void CallMethod_Multiple_ObjectsBinarySerializer()
