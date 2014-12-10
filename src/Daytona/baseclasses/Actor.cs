@@ -15,6 +15,7 @@ namespace Daytona
     using System.Threading.Tasks;
 
     using NetMQ;
+    using NetMQ.zmq;
 
     [Serializable]
     public class Actor : IDisposable
@@ -87,6 +88,8 @@ namespace Daytona
         private ISerializer serializer;
 
         private bool subscriberDisposed = false;
+
+        public Type TypeOfActor;
 
         #endregion
 
@@ -280,6 +283,15 @@ namespace Daytona
             }
         }
 
+        public void WriteLineToSelf(string line, string PathSegment)
+        {   
+            var fi = new FileInfo(string.Format(@"c:\dev\persistence\{0}.log", PathSegment));
+            var stream = fi.AppendText();
+            stream.WriteLine("{0}{1}", line, DateTime.Now);
+            stream.Flush();
+            stream.Close();
+        }
+
         public void CallBack(int result, List<IPayload> payload, Exception exception)
         {
             var eventArgs = new CallBackEventArgs { Result = result, Error = exception, Payload = payload };
@@ -426,10 +438,15 @@ namespace Daytona
 
         public void SendKillMe(ISerializer serializer, NetMQSocket socket)
         {
-            var netMQMessage = new NetMQMessage();
-            netMQMessage.Append(new NetMQFrame(this.InRoute));
-            netMQMessage.Append(new NetMQFrame("stop"));
-            socket.SendMessage(netMQMessage);
+            this.SendKillSignal(serializer, socket, this.InRoute);
+        }
+
+        public void SendKillSignal(ISerializer serializer, NetMQSocket socket, string address)
+        {
+            var netMqMessage = new NetMQMessage();
+            netMqMessage.Append(new NetMQFrame(address));
+            netMqMessage.Append(new NetMQFrame("stop"));
+            socket.SendMessage(netMqMessage);
         }
 
         public void SendMessage(string address, byte[] message, ISerializer serializer, NetMQSocket socket)
@@ -496,6 +513,9 @@ namespace Daytona
 
                     break;
                 }
+
+                ////non generic Actors do (should) not have any data to persist.
+                ////this.PersistSelf(this.TypeOfActor, this, this.PersistanceSerializer);
 
                 if (stop)
                 {
@@ -618,7 +638,10 @@ namespace Daytona
             {
                 if (this.OutputChannel != null)
                 {
-                    SendKillMe(this.Serializer, this.outputChannel);
+                    if (IsRunning)
+                    {
+                        SendKillMe(this.Serializer, this.outputChannel);
+                    }
 
                     this.OutputChannelDisposed = true;
                     this.OutputChannel.Dispose();

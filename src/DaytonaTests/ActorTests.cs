@@ -62,6 +62,8 @@ namespace Daytona.Tests
                             Assert.IsInstanceOfType(order, typeof(IOrder));
                             order.UpdateDescription("XXX"); //called without exception    
                             waitHandle.WaitOne();
+
+                            actor.SendKillSignal(actor.Serializer, actor.OutputChannel, string.Empty);
                         }
                     }
 
@@ -352,6 +354,30 @@ namespace Daytona.Tests
                 }
             }
             return methodinfo;
+        }
+
+        [TestMethod()]
+        public void PersistSelfTest()
+        {
+            using (var context = NetMQContext.Create())
+            {
+                using (var exchange = new Exchange(context))
+                {
+                    exchange.Start();
+
+                    using (var actor = new Actor<Customer>(context))
+                    {
+                        var customer = new Customer();
+                        customer.Firstname = "John";
+                        customer.Lastname = "off yer Rocker mate";
+
+                        actor.PersistSelf(typeof(Customer), customer, new DefaultSerializer(Pipe.ControlChannelEncoding));
+                    }
+                    
+                    exchange.Stop(true);
+
+                }
+            }
         }
     }
 }
