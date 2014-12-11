@@ -54,6 +54,19 @@ namespace SiloConsole
                                         {
                                             Console.WriteLine("We dident find an actor");
                                             var addressAndNumber = address.Split('/');
+
+                                            Type generic = typeof(Actor<>);
+
+                                            var type = Type.GetType(addressAndNumber[0]);
+                                            Type[] typeArgs = { type };
+
+                                            // Create a Type object representing the constructed generic 
+                                            // type.
+                                            Type constructed = generic.MakeGenericType(typeArgs);
+
+                                            
+                                            //var customer = new Actor<type>(actor.Context, new BinarySerializer());
+
                                             if (addressAndNumber[0] == "TestHelpers.Customer")
                                             {
                                                 var customer = new Actor<Customer>(actor.Context, new BinarySerializer());

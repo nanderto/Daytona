@@ -95,6 +95,11 @@ namespace Daytona
 
         #region Constructors and Destructors
 
+        public Actor()
+        {
+            
+        }
+
         /// <summary>
         ///     Initializes a new instance of the <see cref="Actor{T}" /> class.
         ///     This is generally used when creating a actor to act as a Actor factory.
@@ -287,7 +292,7 @@ namespace Daytona
         {   
             var fi = new FileInfo(string.Format(@"c:\dev\persistence\{0}.log", PathSegment));
             var stream = fi.AppendText();
-            stream.WriteLine("{0}{1}", line, DateTime.Now);
+            stream.WriteLine("{0}~{1}", line, DateTime.Now);
             stream.Flush();
             stream.Close();
         }

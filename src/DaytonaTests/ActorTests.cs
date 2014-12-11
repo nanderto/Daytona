@@ -375,8 +375,38 @@ namespace Daytona.Tests
                     }
                     
                     exchange.Stop(true);
-
                 }
+            }
+        }
+
+        [TestMethod()]
+        public void ReadfromPersistenceTest()
+        {
+            var dontCreateChannels = true;
+            using (var actor = new Actor<Customer>())
+            {
+                var customer = new Customer();
+                customer.Firstname = "John";
+                customer.Lastname = "off yer Rocker mate";
+                actor.PersistanceSerializer = new DefaultSerializer(Pipe.ControlChannelEncoding);
+                var returnedCustomer = actor.ReadfromPersistence(@"TestHelpers.Customer");
+                Assert.AreEqual(customer.Firstname, returnedCustomer.Firstname);
+
+                Assert.AreEqual(customer.Lastname, returnedCustomer.Lastname);
+            }
+        }
+
+        [TestMethod()]
+        public void WriteAndReadReadfromPersistenceTest()
+        {
+            using (var actor = new Actor<Order>())
+            {
+                var order = new Order();
+                order.Description = "John's new order";
+                actor.PersistSelf(typeof(Order), order, new DefaultSerializer(Pipe.ControlChannelEncoding));
+                actor.PersistanceSerializer = new DefaultSerializer(Pipe.ControlChannelEncoding);
+                var returnedOrder = actor.ReadfromPersistence(@"TestHelpers.Order");
+                Assert.AreEqual(order.Description, returnedOrder.Description);
             }
         }
     }

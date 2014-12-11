@@ -7,6 +7,8 @@ namespace Daytona
 {
     using System;
     using System.Collections.Generic;
+    using System.IO;
+    using System.Linq;
     using System.Reflection;
 
     using NetMQ;
@@ -73,6 +75,11 @@ namespace Daytona
         public Actor(ISerializer serializer)
             : base(serializer)
         {
+        }
+
+        public Actor()
+        {
+            // TODO: Complete member initialization
         }
 
         public override event EventHandler<CallBackEventArgs> SaveCompletedEvent;
@@ -265,7 +272,8 @@ namespace Daytona
                     ;
                 }
 
-                var target = (T)Activator.CreateInstance(typeof(T));
+                var target = this.ReadfromPersistence(returnedAddress);
+                //var target = (T)Activator.CreateInstance(typeof(T));
                 var result = returnedMethodInfo.Invoke(target, methodParameters.ToArray());
             }
 
@@ -287,6 +295,20 @@ namespace Daytona
             }
 
             return stopSignal;
+        }
+
+        public T ReadfromPersistence(string returnedAddress)
+        {
+            //string line = string.Empty;
+            var line = File.ReadLines(string.Format(@"c:\Dev\Persistence\{0}.log", returnedAddress)).Last();
+            //using (var sr = new StreamReader(string.Format(@"c:\Dev\Persistence\{0}.log", returnedAddress)))
+            //{
+            //    line = sr.ReadLine();
+            //}
+            var returnedRecord =  line.Split('~');
+
+            var target = this.PersistanceSerializer.Deserializer<T>(returnedRecord[0]);
+            return target;
         }
 
         public Actor RegisterActor(string name, string inRoute, ISerializer serializer, Action<string, List<object>, Actor> workload)
