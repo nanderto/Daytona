@@ -13,13 +13,15 @@ namespace Daytona
         private NetMQContext context;
         private BinarySerializer binarySerializer;
 
+        private Dictionary<string, Tuple<string, Type>> Actors = new Dictionary<string, Tuple<string, Type>>();
+
         private bool disposed;
 
         public Silo(NetMQContext context, BinarySerializer binarySerializer)
         {
             this.context = context;
             this.binarySerializer = binarySerializer;
-            ActorFactory = new Actor(context, new BinarySerializer(), string.Empty);
+            ActorFactory = new Actor(context, new BinarySerializer(), false);
         }
 
         public Actor ActorFactory { get; set; }
@@ -28,6 +30,13 @@ namespace Daytona
         {
             this.Dispose(true);
             GC.SuppressFinalize(this);
+        }
+
+        public Silo RegisterActor(Type type)
+        {
+            //Type type = actor.GetType();
+            Actors.Add(type.FullName, new Tuple<string, Type>(type.AssemblyQualifiedName, type));
+            return this;
         }
 
         private void Dispose(bool disposing)

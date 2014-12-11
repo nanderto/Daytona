@@ -277,6 +277,9 @@ namespace Daytona
                 var result = returnedMethodInfo.Invoke(target, methodParameters.ToArray());
             }
 
+            ////Should not get to here, this should get called only by Actors<genericobjects>
+            //// they should respond only to messages directed at there address eg generic.object/23
+            //// and they will be sending a method info to invoke. These types of actors do not have workloads to invoke 
             if (returnedMessageType == "Workload")
             {
                 var inputParameters = new object[4];

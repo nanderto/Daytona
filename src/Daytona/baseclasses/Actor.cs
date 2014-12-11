@@ -194,11 +194,21 @@ namespace Daytona
             this.SetUpReceivers(context, inRoute);
         }
 
+        public Actor(NetMQContext context, BinarySerializer binarySerializer, bool dontAcceptMessages)
+        {
+            this.context = context;
+            this.binarySerializer = binarySerializer;
+            this.DontAcceptMessages = dontAcceptMessages;
+        }
+
         #endregion
 
         #region Public Events
 
         public virtual event EventHandler<CallBackEventArgs> SaveCompletedEvent;
+        private NetMQContext context;
+        private BinarySerializer binarySerializer;
+        private bool p;
 
         #endregion
 
@@ -753,5 +763,7 @@ namespace Daytona
         }
 
         #endregion
+
+        public bool DontAcceptMessages { get; set; }
     }
 }
