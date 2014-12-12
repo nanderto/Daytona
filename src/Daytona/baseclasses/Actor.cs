@@ -11,6 +11,7 @@ namespace Daytona
     using System.IO;
     using System.Reflection;
     using System.Runtime.Serialization;
+    using System.Security.Cryptography.X509Certificates;
     using System.Text;
     using System.Threading.Tasks;
 
@@ -64,7 +65,7 @@ namespace Daytona
 
         private static readonly object SynchLock = new object();
 
-        private readonly Dictionary<string, Clown> Clowns = new Dictionary<string, Clown>(); 
+        public readonly Dictionary<string, Clown> Clowns = new Dictionary<string, Clown>(); 
 
         #endregion
 
@@ -183,7 +184,7 @@ namespace Daytona
             string name,
             string inRoute,
             Dictionary<string, Clown> clowns,
-            Action<string, MethodInfo, List<object>, Dictionary<string, Clown>, Actor> workload)
+            Action<string, string, MethodInfo, List<object>, Actor> workload)
         {
             this.IsRunning = false;
             this.Context = context;
@@ -368,6 +369,7 @@ namespace Daytona
             MethodInfo returnedMethodInfo = null;
             var returnedMessageType = string.Empty;
             var returnedAddress = string.Empty;
+            var returnAddress = string.Empty; //need to send the return address in message package
 
             returnedAddress = GetString(subscriber, serializer);
             returnedMessageType = GetString(subscriber, serializer);
@@ -376,11 +378,12 @@ namespace Daytona
             {
                 returnedMethodInfo = GetMethodInfo(subscriber, serializer);
                 while (AddParameter(subscriber, serializer, methodParameters));
-                var inputParameters = new object[4];
+                var inputParameters = new object[5];
                 inputParameters[0] = returnedAddress;
-                inputParameters[1] = returnedMethodInfo;
-                inputParameters[2] = methodParameters;
-                inputParameters[3] = this;
+                inputParameters[1] = returnAddress;
+                inputParameters[2] = returnedMethodInfo;
+                inputParameters[3] = methodParameters;
+                inputParameters[4] = this;
 
                 this.Workload.DynamicInvoke(inputParameters);
             }
@@ -483,7 +486,7 @@ namespace Daytona
             string outRoute,
             Dictionary<string, Clown> clowns,
             ISerializer serializer,
-            Action<string, MethodInfo, List<object>, Dictionary<string, Clown>, Actor> workload)
+            Action<string, string, MethodInfo, List<object>, Actor> workload)
         {
             this.actorTypes.Add(
                 name,

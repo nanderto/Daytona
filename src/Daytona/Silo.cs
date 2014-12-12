@@ -58,7 +58,7 @@ namespace Daytona
                            "ActorLauncher outRoute",
                            this.Clowns,
                            new BinarySerializer(),
-                           (address, methodInfo, parameters, clowns, actor) =>
+                           (address, returnAddress, methodInfo, parameters, actor) =>
                            {
                                object returnedObject = null;
                                List<RunningActors> runningActors = null;
@@ -74,14 +74,18 @@ namespace Daytona
                                        var addressAndNumber = address.Split('/');
                                        
                                        Type generic = typeof(Actor<>);
+                                       Clown clown = null;
+                                       actor.Clowns.TryGetValue(addressAndNumber[0], out clown);
 
-                                       var type = Type.GetType(addressAndNumber[0]);
-                                       Type[] typeArgs = { type };
+                                       //var type = Type.GetType(addressAndNumber[0]);
+                                       Type[] typeArgs = { clown.ClownType };
 
                                        // Create a Type object representing the constructed generic 
                                        // type.
-                                       Type constructed = generic.MakeGenericType(typeArgs);
+                                       var constructed = generic.MakeGenericType(typeArgs);
 
+                                       constructed.GetMethod( m)
+                                       //var customer = new Actor<constructed>(actor.Context, new BinarySerializer());
 
                                        //var customer = new Actor<type>(actor.Context, new BinarySerializer());
 
