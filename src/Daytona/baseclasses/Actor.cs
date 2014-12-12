@@ -64,6 +64,8 @@ namespace Daytona
 
         private static readonly object SynchLock = new object();
 
+        private readonly Dictionary<string, Clown> Clowns = new Dictionary<string, Clown>(); 
+
         #endregion
 
         #region Fields
@@ -180,6 +182,26 @@ namespace Daytona
             ISerializer serializer,
             string name,
             string inRoute,
+            Dictionary<string, Clown> clowns,
+            Action<string, MethodInfo, List<object>, Dictionary<string, Clown>, Actor> workload)
+        {
+            this.IsRunning = false;
+            this.Context = context;
+            this.Serializer = serializer;
+            this.Name = name;
+            this.InRoute = inRoute;
+            this.Workload = workload;
+            this.Clowns = clowns;
+            this.PropertyBag = new Dictionary<string, object>();
+            this.SetUpMonitorChannel(context);
+            this.SetUpOutputChannel(context);
+            this.SetUpReceivers(context, inRoute);
+        }
+        public Actor(
+            NetMQContext context,
+            ISerializer serializer,
+            string name,
+            string inRoute,
             Action<string, MethodInfo, List<object>, Actor> workload)
         {
             this.IsRunning = false;
@@ -194,9 +216,10 @@ namespace Daytona
             this.SetUpReceivers(context, inRoute);
         }
 
+
         public Actor(NetMQContext context, BinarySerializer binarySerializer, bool dontAcceptMessages)
         {
-            this.context = context;
+            this.Context = context;
             this.binarySerializer = binarySerializer;
             this.DontAcceptMessages = dontAcceptMessages;
         }
@@ -206,8 +229,11 @@ namespace Daytona
         #region Public Events
 
         public virtual event EventHandler<CallBackEventArgs> SaveCompletedEvent;
-        private NetMQContext context;
+        
+        //private NetMQContext context;
+        
         private BinarySerializer binarySerializer;
+        
         private bool p;
 
         #endregion
@@ -448,6 +474,26 @@ namespace Daytona
                             actor.Start();
                         }
                     });
+            return this;
+        }
+
+        public Actor RegisterActor(
+            string name,
+            string inRoute,
+            string outRoute,
+            Dictionary<string, Clown> clowns,
+            ISerializer serializer,
+            Action<string, MethodInfo, List<object>, Dictionary<string, Clown>, Actor> workload)
+        {
+            this.actorTypes.Add(
+                name,
+                () =>
+                {
+                    using (var actor = new Actor(this.Context, serializer, name, inRoute, clowns, workload))
+                    {
+                        actor.Start();
+                    }
+                });
             return this;
         }
 
