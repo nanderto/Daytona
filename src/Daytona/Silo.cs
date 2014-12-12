@@ -83,8 +83,10 @@ namespace Daytona
                                        // Create a Type object representing the constructed generic 
                                        // type.
                                        var constructed = generic.MakeGenericType(typeArgs);
-
-                                       constructed.GetMethod( m)
+                                       var x = clown.ClownType.BaseType;
+                                       var target = Activator.CreateInstance(constructed);
+                                       (Actor<>)target.Start();
+                                       constructed.
                                        //var customer = new Actor<constructed>(actor.Context, new BinarySerializer());
 
                                        //var customer = new Actor<type>(actor.Context, new BinarySerializer());
