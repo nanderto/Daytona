@@ -15,8 +15,11 @@ namespace Daytona.Tests
 
     using NetMQ;
     using NetMQ.Devices;
+    using NetMQ.zmq;
 
     using TestHelpers;
+
+    using Pipe = Daytona.Pipe;
 
     [TestClass]
     public class ActorTests
@@ -90,6 +93,7 @@ namespace Daytona.Tests
                         "",
                         "outRoute",
                         new BinarySerializer(),
+                        new DefaultSerializer(Exchange.ControlChannelEncoding),
                         (address, methodinfo, parameters, actr) =>
                         {
                             var firstParameter = string.Empty;
@@ -407,6 +411,41 @@ namespace Daytona.Tests
                 actor.PersistanceSerializer = new DefaultSerializer(Pipe.ControlChannelEncoding);
                 var returnedOrder = actor.ReadfromPersistence(@"TestHelpers.Order");
                 Assert.AreEqual(order.Description, returnedOrder.Description);
+            }
+        }
+
+        [TestMethod]
+        public void CreatingAnActor()
+        {
+
+            Type generic = typeof(Actor<>);
+            //Clown clown = null;
+            //actor.Clowns.TryGetValue(addressAndNumber[0], out clown);
+
+            //var type = Type.GetType(addressAndNumber[0]);
+            Type[] typeArgs = { typeof(Order) };
+
+
+            var obj = Activator.CreateInstance(typeof(Order));
+            var constructed = generic.MakeGenericType(typeArgs);
+
+            // Create a Type object representing the constructed generic 
+            // type.
+            using (var context = NetMQContext.Create())
+            {
+                using (var xchange = new Exchange(context))
+                {
+                    xchange.Start();
+                    var serializer = new DefaultSerializer(Pipe.ControlChannelEncoding);
+
+                    var target = (Actor)Activator.CreateInstance(constructed, context, new BinarySerializer());
+                    
+                    obj = target.ReadfromPersistence(@"TestHelpers.Order", typeof(Order));
+
+                    target.Start();
+
+                    xchange.Stop(true);
+                }
             }
         }
     }

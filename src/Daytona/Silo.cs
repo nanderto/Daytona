@@ -8,6 +8,8 @@ namespace Daytona
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Reflection;
+    using System.Threading.Tasks;
 
     using NetMQ;
     using NetMQ.zmq;
@@ -27,6 +29,7 @@ namespace Daytona
             this.context = context;
             this.binarySerializer = binarySerializer;
             this.ActorFactory = new Actor(context, new BinarySerializer(), false);
+            this.ActorFactory.PersistanceSerializer = new DefaultSerializer(Pipe.ControlChannelEncoding);
             this.ConfigActorLauncher();
             //// need to add additional actors here. they will get configured and started in this constructor.
             //this.exceptionhandler();
@@ -58,10 +61,12 @@ namespace Daytona
                            "ActorLauncher outRoute",
                            this.Clowns,
                            new BinarySerializer(),
+                           new DefaultSerializer(Exchange.ControlChannelEncoding),
                            (address, returnAddress, methodInfo, parameters, actor) =>
                            {
                                object returnedObject = null;
                                List<RunningActors> runningActors = null;
+                               string cleanAddress = address;
 
                                if (actor.PropertyBag.TryGetValue("RunningActors", out returnedObject))
                                {
@@ -70,59 +75,71 @@ namespace Daytona
 
                                    if (returnedActor == null)
                                    {
-                                       //Console.WriteLine("We dident find an actor");
-                                       var addressAndNumber = address.Split('/');
-                                       
-                                       Type generic = typeof(Actor<>);
-                                       Clown clown = null;
-                                       actor.Clowns.TryGetValue(addressAndNumber[0], out clown);
-
-                                       //var type = Type.GetType(addressAndNumber[0]);
-                                       Type[] typeArgs = { clown.ClownType };
-
-                                       // Create a Type object representing the constructed generic 
-                                       // type.
-                                       var constructed = generic.MakeGenericType(typeArgs);
-
-                                       constructed.GetMethod( m)
-                                       //var customer = new Actor<constructed>(actor.Context, new BinarySerializer());
-
-                                       //var customer = new Actor<type>(actor.Context, new BinarySerializer());
-
-                                       if (addressAndNumber[0] == "TestHelpers.Customer")
-                                       {
-                                           //var customer = new Actor<Customer>(actor.Context, new BinarySerializer());
-                                           //customer.StartWithIdAndMethod(address, methodInfo, parameters);
-                                       }
-
-                                       if (addressAndNumber[0] == "TestHelpers.Order")
-                                       {
-                                           //var order = new Actor<Order>(actor.Context, new BinarySerializer());
-                                           //order.StartWithIdAndMethod(address, methodInfo, parameters);
-                                       }
-
-                                       Console.WriteLine("I wish I could start a method");
-                                       ////start actor
-                                       /// 
+                                       //We dident find an actor, so we have to start one
+                                       StartNewActor(address, actor, methodInfo, parameters);
 
                                        runningActors.Add(new RunningActors(address));
                                    }
 
-                                   Console.WriteLine("We found a running actor so er did nothing");
+                                   //"We found a running actor so er did nothing");
                                }
                                else
                                {
-                                   //var customer = new Actor<Customer>(actor.Context, new BinarySerializer());
-                                   // customer.StartWithIdAndMethod(address, methodInfo, parameters);
-                                   Console.WriteLine("no collection of running actors, So I am creating one and starting a new runner");
-                                   ////start actor
-                                   /// 
+                                   //"no collection of running actors, So I am creating one and starting a new runner");
+                                   
                                    runningActors = new List<RunningActors>();
+                                   StartNewActor(address, actor, methodInfo, parameters);
                                    runningActors.Add(new RunningActors(address));
                                    actor.PropertyBag.Add("RunningActors", runningActors);
                                }
                            });
         }
+
+        private static void StartNewActor(string address, Actor actor, MethodInfo methodInfo, List<object> parameters)
+        {
+            string cleanAddress = address;
+            var addressAndId = address.Split('/');
+            var addressWithOutId = addressAndId[0];
+            var id = addressAndId[1];
+
+            if (string.IsNullOrEmpty(addressAndId[1]))
+            {
+                // no number so creating a newone. need to figure that out
+                cleanAddress = addressWithOutId.Replace("/", "");
+            }
+
+            Type generic = typeof(Actor<>);
+            Clown clown = null;
+            actor.Clowns.TryGetValue(addressAndId[0], out clown);
+
+            Type[] typeArgs = { clown.ClownType };
+
+            var clownFromPersistence = actor.ReadfromPersistence(cleanAddress, clown.ClownType);
+            if (clownFromPersistence == null)
+            {
+                clownFromPersistence = Activator.CreateInstance(clown.ClownType);
+            }
+            //actor.PersistanceSerializer.Deserializer(Pipe.ControlChannelEncoding.GetBytes())
+            // Create a Type object representing the constructed generic 
+            // type.
+            var constructed = generic.MakeGenericType(typeArgs);
+
+            var target =
+                (Actor)
+                Activator.CreateInstance(
+                    constructed,
+                    actor.Context,
+                    clownFromPersistence,
+                    cleanAddress,
+                    new BinarySerializer(),
+                    new DefaultSerializer(Exchange.ControlChannelEncoding));
+            var result = methodInfo.Invoke(clownFromPersistence, parameters.ToArray());
+            var dataWriter = new DataWriterReader();
+            dataWriter.PersistSelf(clown.ClownType, clownFromPersistence, actor.PersistanceSerializer);
+            
+            Task.Run(() => target.Start());
+        }
+
         public Silo RegisterClown(Type type)
         {
             // Type type = actor.GetType();

@@ -10,6 +10,7 @@ namespace Daytona
     using System.IO;
     using System.Linq;
     using System.Reflection;
+    using System.Text;
 
     using NetMQ;
 
@@ -24,8 +25,7 @@ namespace Daytona
     ///     The object to compose with this actor
     /// </typeparam>
     [Serializable]
-    public class Actor<T> : Actor
-        where T : class
+    public class Actor<T> : Actor where T : class
     {
         public T Model;
 
@@ -58,18 +58,23 @@ namespace Daytona
         {
             this.Model = model;
             var inRoute = typeof(T).FullName;
-
-            // Name.Replace("{", string.Empty)
-            // .Replace("}", string.Empty)
-            // .Replace("_", string.Empty)
-            // .Replace(".", string.Empty);
             this.SetUpReceivers(context, inRoute);
         }
 
-        public Actor(NetMQContext context, T model, ISerializer serializer)
-            : this(context, model)
+        /// <summary>
+        /// this Constructor is specifically used by the silo to create new instances of user defined objects
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="model"></param>
+        /// <param name="id"></param>
+        /// <param name="messageSerializer"></param>
+        /// <param name="persistenceSerializer"></param>
+        public Actor(NetMQContext context, T model, string address, ISerializer messageSerializer, ISerializer persistenceSerializer)
+            : base(context, messageSerializer, persistenceSerializer)
         {
-            this.Serializer = serializer;
+            this.Model = model;
+            //var inRoute = typeof(T).FullName + id;
+            this.SetUpReceivers(context, address);
         }
 
         public Actor(ISerializer serializer)
@@ -83,8 +88,6 @@ namespace Daytona
         }
 
         public override event EventHandler<CallBackEventArgs> SaveCompletedEvent;
-
-        public ISerializer PersistanceSerializer { get; set; }
 
         public static NetMQMessage PackZmqMessage(object[] parameters, MethodInfo methodInfo, ISerializer serializer, string addressToSendTo)
         {
@@ -234,7 +237,7 @@ namespace Daytona
             return proxyFactory.CreateProxy<TInterface>(Type.EmptyTypes, invocationHandler);
         }
 
-        public void PersistSelf(Type typeToBePersisted, object toBePersisted, ISerializer serializer)
+        public virtual void PersistSelf(Type typeToBePersisted, object toBePersisted, ISerializer serializer)
         {
             if (serializer == null)
             {
@@ -300,7 +303,7 @@ namespace Daytona
             return stopSignal;
         }
 
-        public T ReadfromPersistence(string returnedAddress)
+       public T ReadfromPersistence(string returnedAddress)
         {
             //string line = string.Empty;
             var line = File.ReadLines(string.Format(@"c:\Dev\Persistence\{0}.log", returnedAddress)).Last();

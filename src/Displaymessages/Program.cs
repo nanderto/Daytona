@@ -60,6 +60,7 @@ namespace Monitor
                         "",
                         "outRoute",
                         new BinarySerializer(),
+                        new DefaultSerializer(Exchange.ControlChannelEncoding),
                         (address, methodinfo, parameters, actor) =>
                             {
                                 var firstParameter = string.Empty;

@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="Actor.cs" company="">
-//   
+// <copyright file="Actor.cs" company="Brookfield Global Relocation Services">
+// Copyright © 2014 All Rights Reserved
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -9,14 +9,13 @@ namespace Daytona
     using System;
     using System.Collections.Generic;
     using System.IO;
+    using System.Linq;
     using System.Reflection;
     using System.Runtime.Serialization;
-    using System.Security.Cryptography.X509Certificates;
     using System.Text;
     using System.Threading.Tasks;
 
     using NetMQ;
-    using NetMQ.zmq;
 
     [Serializable]
     public class Actor : IDisposable
@@ -40,6 +39,13 @@ namespace Daytona
                 return (MethodInfo)serializer.Deserializer(buffer, typeof(MethodInfo));
             };
 
+        public static Func<NetMQSocket, BinarySerializer, Type> GetObjectType = (socket, serializer) =>
+            {
+                var hasMore = false;
+                var buffer = socket.Receive(out hasMore);
+                return (Type)serializer.Deserializer(buffer, typeof(Type));
+            };
+
         public static Func<NetMQSocket, BinarySerializer, Type, Tuple<object, bool>> GetParameter =
             (socket, serializer, type) =>
                 {
@@ -56,16 +62,9 @@ namespace Daytona
                 return serializer.GetString(buffer);
             };
 
-        public static Func<NetMQSocket, BinarySerializer, Type> GetObjectType = (socket, serializer) =>
-            {
-                var hasMore = false;
-                var buffer = socket.Receive(out hasMore);
-                return (Type)serializer.Deserializer(buffer, typeof(Type));
-            };
-
         private static readonly object SynchLock = new object();
 
-        public readonly Dictionary<string, Clown> Clowns = new Dictionary<string, Clown>(); 
+        public readonly Dictionary<string, Clown> Clowns = new Dictionary<string, Clown>();
 
         #endregion
 
@@ -78,11 +77,13 @@ namespace Daytona
 
         [NonSerialized]
         public NetMQSocket Subscriber;
-        
+
+        public Type TypeOfActor;
+
         [NonSerialized]
         private NetMQSocket monitorChannel;
 
-        private bool monitorChannelDisposed = false;
+        private bool monitorChannelDisposed;
 
         [NonSerialized]
         private NetMQSocket outputChannel;
@@ -90,9 +91,7 @@ namespace Daytona
         [NonSerialized]
         private ISerializer serializer;
 
-        private bool subscriberDisposed = false;
-
-        public Type TypeOfActor;
+        private bool subscriberDisposed;
 
         #endregion
 
@@ -100,7 +99,6 @@ namespace Daytona
 
         public Actor()
         {
-            
         }
 
         /// <summary>
@@ -159,12 +157,7 @@ namespace Daytona
             this.SetUpReceivers(context, inRoute);
         }
 
-        public Actor(
-            NetMQContext context,
-            ISerializer serializer,
-            string name,
-            string inRoute,
-            Action<string, List<object>, Actor> workload)
+        public Actor(NetMQContext context, ISerializer serializer, string name, string inRoute, Action<string, List<object>, Actor> workload)
         {
             this.IsRunning = false;
             this.Context = context;
@@ -178,6 +171,17 @@ namespace Daytona
             this.SetUpReceivers(context, inRoute);
         }
 
+        public Actor(NetMQContext context, ISerializer messageSerializer, ISerializer persistenceSerializer)
+        {
+            this.IsRunning = false;
+            this.Context = context;
+            this.Serializer = messageSerializer;
+            this.PersistanceSerializer = persistenceSerializer;
+           // this.Workload = workload;
+            this.PropertyBag = new Dictionary<string, object>();
+            this.SetUpMonitorChannel(context);
+            this.SetUpOutputChannel(context);
+        }
         public Actor(
             NetMQContext context,
             ISerializer serializer,
@@ -198,9 +202,11 @@ namespace Daytona
             this.SetUpOutputChannel(context);
             this.SetUpReceivers(context, inRoute);
         }
+
         public Actor(
             NetMQContext context,
             ISerializer serializer,
+            ISerializer persistenceSerializer,
             string name,
             string inRoute,
             Action<string, MethodInfo, List<object>, Actor> workload)
@@ -208,6 +214,7 @@ namespace Daytona
             this.IsRunning = false;
             this.Context = context;
             this.Serializer = serializer;
+            this.PersistanceSerializer = persistenceSerializer;
             this.Name = name;
             this.InRoute = inRoute;
             this.Workload = workload;
@@ -216,8 +223,12 @@ namespace Daytona
             this.SetUpOutputChannel(context);
             this.SetUpReceivers(context, inRoute);
         }
-
-
+        /// <summary>
+        /// This constructor is useful for seting up a Actor factory that does not listen for its own messages
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="binarySerializer"></param>
+        /// <param name="dontAcceptMessages"></param>
         public Actor(NetMQContext context, BinarySerializer binarySerializer, bool dontAcceptMessages)
         {
             this.Context = context;
@@ -225,17 +236,47 @@ namespace Daytona
             this.DontAcceptMessages = dontAcceptMessages;
         }
 
+        public Actor(
+            NetMQContext context,
+            ISerializer serializer,
+            ISerializer persistenceSerializer,
+            string name,
+            string inRoute,
+            Dictionary<string, Clown> clowns,
+            Action<string, string, MethodInfo, List<object>, Actor> workload)
+        {
+            this.Context = context;
+            this.Serializer = serializer;
+            this.PersistanceSerializer = persistenceSerializer;
+            this.Name = name;
+            this.InRoute = inRoute;
+            this.Clowns = clowns;
+            this.Workload = workload;
+            this.PropertyBag = new Dictionary<string, object>();
+            this.SetUpMonitorChannel(context);
+            this.SetUpOutputChannel(context);
+            this.SetUpReceivers(context, inRoute);
+        }
+
         #endregion
 
         #region Public Events
 
-        public virtual event EventHandler<CallBackEventArgs> SaveCompletedEvent;
-        
         //private NetMQContext context;
-        
+
         private BinarySerializer binarySerializer;
-        
+
+        private Dictionary<string, Clown> clowns;
+
+        private NetMQContext netMQContext;
+
         private bool p;
+
+        private ISerializer persistenceSerializer;
+
+        private Action<string, string, MethodInfo, List<object>, Actor> workload;
+
+        public virtual event EventHandler<CallBackEventArgs> SaveCompletedEvent;
 
         #endregion
 
@@ -312,7 +353,7 @@ namespace Daytona
         #endregion
 
         #region Public Methods and Operators
-        
+
         public static void Writeline(string line)
         {
             lock (SynchLock)
@@ -323,15 +364,6 @@ namespace Daytona
                 stream.Flush();
                 stream.Close();
             }
-        }
-
-        public void WriteLineToSelf(string line, string PathSegment)
-        {   
-            var fi = new FileInfo(string.Format(@"c:\dev\persistence\{0}.log", PathSegment));
-            var stream = fi.AppendText();
-            stream.WriteLine("{0}~{1}", line, DateTime.Now);
-            stream.Flush();
-            stream.Close();
         }
 
         public void CallBack(int result, List<IPayload> payload, Exception exception)
@@ -361,7 +393,7 @@ namespace Daytona
             GC.SuppressFinalize(this);
         }
 
-        public virtual bool ReceiveMessage(NetMQSocket subscriber)
+        public virtual bool  ReceiveMessage(NetMQSocket subscriber)
         {
             var stopSignal = false;
             var methodParameters = new List<object>();
@@ -377,7 +409,10 @@ namespace Daytona
             if (returnedMessageType == "MethodInfo")
             {
                 returnedMethodInfo = GetMethodInfo(subscriber, serializer);
-                while (AddParameter(subscriber, serializer, methodParameters));
+                while (AddParameter(subscriber, serializer, methodParameters))
+                {
+                    ;
+                }
                 var inputParameters = new object[5];
                 inputParameters[0] = returnedAddress;
                 inputParameters[1] = returnAddress;
@@ -466,13 +501,14 @@ namespace Daytona
             string inRoute,
             string outRoute,
             ISerializer serializer,
+            ISerializer persistenceSerializer,
             Action<string, MethodInfo, List<object>, Actor> workload)
         {
             this.actorTypes.Add(
                 name,
                 () =>
                     {
-                        using (var actor = new Actor(this.Context, serializer, name, inRoute, workload))
+                        using (var actor = new Actor(this.Context, serializer, persistenceSerializer, name, inRoute, workload))
                         {
                             actor.Start();
                         }
@@ -491,12 +527,41 @@ namespace Daytona
             this.actorTypes.Add(
                 name,
                 () =>
-                {
-                    using (var actor = new Actor(this.Context, serializer, name, inRoute, clowns, workload))
                     {
-                        actor.Start();
-                    }
-                });
+                        using (var actor = new Actor(this.Context, serializer, name, inRoute, clowns, workload))
+                        {
+                            actor.Start();
+                        }
+                    });
+            return this;
+        }
+
+        public Actor RegisterActor(
+            string name,
+            string inRoute,
+            string outRoute,
+            Dictionary<string, Clown> clowns,
+            ISerializer serializer,
+            ISerializer persistenceSerializer,
+            Action<string, string, MethodInfo, List<object>, Actor> workload)
+        {
+            this.actorTypes.Add(
+                name,
+                () =>
+                    {
+                        using (
+                            var actor = new Actor(
+                                this.Context,
+                                serializer,
+                                persistenceSerializer,
+                                name,
+                                inRoute,
+                                clowns,
+                                workload))
+                        {
+                            actor.Start();
+                        }
+                    });
             return this;
         }
 
@@ -560,7 +625,7 @@ namespace Daytona
                 }
                 catch (SerializationException se)
                 {
-                    this.WriteLineToMonitor(string.Format("Serialization Error: {0}", se.ToString()));
+                    this.WriteLineToMonitor(string.Format("Serialization Error: {0}", se));
 
                     ////skip to end of message
                     bool more;
@@ -609,7 +674,7 @@ namespace Daytona
                     out stop,
                     out messageAsBytes,
                     this.Serializer);
-                if (stop == true)
+                if (stop)
                 {
                     this.IsRunning = false;
                 }
@@ -662,9 +727,46 @@ namespace Daytona
             }
         }
 
+        public void WriteLineToSelf(string line, string PathSegment)
+        {
+            var fi = new FileInfo(string.Format(@"c:\dev\persistence\{0}.log", PathSegment));
+            var stream = fi.AppendText();
+            stream.WriteLine("{0}~{1}", line, DateTime.Now);
+            stream.Flush();
+            stream.Close();
+        }
+
         #endregion
 
+        public bool DontAcceptMessages { get; set; }
+
+        public ISerializer PersistanceSerializer { get; set; }
+
+   
+
         #region Methods
+
+        public object ReadfromPersistence(string returnedAddress, Type type)
+        {
+            var fileName = @"c:\Dev\Persistence\" + returnedAddress + ".log";
+            var directoryInfo = new DirectoryInfo(returnedAddress);
+            var fileInfo = new FileInfo(returnedAddress);
+            object target = null;
+
+            if (File.Exists(fileName))
+            {
+                var line = File.ReadLines(fileName).Last();
+                var returnedRecord = line.Split('~');
+                target = this.PersistanceSerializer.Deserializer(
+                    Pipe.ControlChannelEncoding.GetBytes(returnedRecord[0]), type);
+            }
+            else
+            {
+                File.Create(fileName);
+            }
+    
+            return target;
+        }
 
         protected void SetUpMonitorChannel(NetMQContext context)
         {
@@ -702,9 +804,9 @@ namespace Daytona
             {
                 if (this.OutputChannel != null)
                 {
-                    if (IsRunning)
+                    if (this.IsRunning)
                     {
-                        SendKillMe(this.Serializer, this.outputChannel);
+                        this.SendKillMe(this.Serializer, this.outputChannel);
                     }
 
                     this.OutputChannelDisposed = true;
@@ -812,7 +914,5 @@ namespace Daytona
         }
 
         #endregion
-
-        public bool DontAcceptMessages { get; set; }
     }
 }

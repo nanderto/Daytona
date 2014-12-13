@@ -92,6 +92,7 @@
     <Compile Include="BinarySerializer.cs" />
     <Compile Include="CallBackEventArgs.cs" />
     <Compile Include="Clown.cs" />
+    <Compile Include="DataWriterReader.cs" />
     <Compile Include="DefaultSerializer.cs" />
     <Compile Include="Exchange.cs" />
     <Compile Include="IPayload.cs" />
