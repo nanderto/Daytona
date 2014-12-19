@@ -36,6 +36,11 @@
             return JsonConvert.DeserializeObject(encoding.GetString(input), type);
         }
 
+        public object Deserializer(string input, Type type)
+        {
+            return JsonConvert.DeserializeObject(input, type);
+        }
+
         public string GetString(byte[] buffer)
         {
             return encoding.GetString(buffer);

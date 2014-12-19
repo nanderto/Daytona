@@ -11,7 +11,7 @@ namespace Daytona
     using System.Linq;
     using System.Reflection;
     using System.Text;
-
+    
     using NetMQ;
 
     using NProxy.Core;
@@ -239,12 +239,15 @@ namespace Daytona
 
         public virtual void PersistSelf(Type typeToBePersisted, object toBePersisted, ISerializer serializer)
         {
+            
             if (serializer == null)
             {
                 serializer = new DefaultSerializer(Pipe.ControlChannelEncoding);
             }
 
-            var pathSegment = typeToBePersisted.FullName;
+            //var store = new Store(serializer);
+            //store.Persist(typeToBePersisted, toBePersisted);
+            var pathSegment = this.InRoute;
 
             this.WriteLineToSelf(serializer.GetString(serializer.GetBuffer(toBePersisted)), pathSegment);
         }
@@ -263,21 +266,29 @@ namespace Daytona
             MethodInfo returnedMethodInfo = null;
             var returnedMessageType = string.Empty;
             var returnedAddress = string.Empty;
+            var returnAddress = string.Empty;
 
             returnedAddress = GetString(subscriber, serializer);
             returnedMessageType = GetString(subscriber, serializer);
 
             if (returnedMessageType == "MethodInfo")
             {
-                returnedMethodInfo = GetMethodInfo(subscriber, serializer);
-                while (AddParameter(subscriber, serializer, methodParameters))
+                var returned = GetMethodInfo(subscriber, serializer);
+                returnedMethodInfo = returned.Item1;
+                var hasMore = returned.Item2;
+                while (hasMore)
                 {
-                    ;
+                    hasMore = AddParameter(subscriber, serializer, methodParameters);
                 }
 
-                var target = this.ReadfromPersistence(returnedAddress);
+                if (this.Model == null)
+                {
+                    this.Model = this.ReadfromPersistence(returnedAddress);
+                }
                 //var target = (T)Activator.CreateInstance(typeof(T));
-                var result = returnedMethodInfo.Invoke(target, methodParameters.ToArray());
+                var result = returnedMethodInfo.Invoke(this.Model, methodParameters.ToArray());
+                
+                this.PersistSelf(this.Model.GetType(), this.Model, this.PersistanceSerializer);
             }
 
             ////Should not get to here, this should get called only by Actors<genericobjects>
@@ -306,15 +317,20 @@ namespace Daytona
        public T ReadfromPersistence(string returnedAddress)
         {
             //string line = string.Empty;
-            var line = File.ReadLines(string.Format(@"c:\Dev\Persistence\{0}.log", returnedAddress)).Last();
+            var line = File.ReadLines(string.Format(@"c:\Dev\Persistence\{0}.log", returnedAddress)).LastOrDefault();
             //using (var sr = new StreamReader(string.Format(@"c:\Dev\Persistence\{0}.log", returnedAddress)))
             //{
             //    line = sr.ReadLine();
             //}
-            var returnedRecord =  line.Split('~');
+            if (line != null)
+            {
+                var returnedRecord = line.Split('~');
 
-            var target = this.PersistanceSerializer.Deserializer<T>(returnedRecord[0]);
-            return target;
+                var target = this.PersistanceSerializer.Deserializer<T>(returnedRecord[0]);
+                return target; 
+            }
+
+           return null;
         }
 
         public Actor RegisterActor(string name, string inRoute, ISerializer serializer, Action<string, List<object>, Actor> workload)
@@ -414,7 +430,7 @@ namespace Daytona
 
                 this.WriteLineToMonitor("Received message");
 
-                this.PersistSelf(this.TypeOfActor, this.Model, this.PersistanceSerializer);
+                
             }
 
             this.WriteLineToMonitor("Exiting actor");

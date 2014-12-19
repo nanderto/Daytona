@@ -47,5 +47,11 @@ namespace Daytona
             var binaryFormatter = new BinaryFormatter();
             return (string) binaryFormatter.Deserialize(memoryStream);
         }
+
+
+        public object Deserializer(string input, Type type)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

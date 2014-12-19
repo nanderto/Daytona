@@ -10,6 +10,7 @@ namespace SiloConsole
 {
     using System.IO;
     using System.Reflection;
+    using System.Threading;
 
     using NetMQ;
     using NetMQ.Devices;
@@ -32,107 +33,35 @@ namespace SiloConsole
                     silo.RegisterClown(typeof(Order));
                     silo.Start();
                                
-                //using (var pipe = new Pipe())
-                //{
-                //    pipe.Start(context);
-                    //using (var actorFactory = new Actor(context, new BinarySerializer(), string.Empty))
-                    //{
-                        //actorFactory.RegisterActor(
-                        //    "Silo",
-                        //    "",
-                        //    "SilooutRoute",
-                        //    new BinarySerializer(),
-                        //    (address, methodInfo, parameters, actor) =>
-                        //        {
-                        //            object returnedObject = null;
-                        //            List<RunningActors> runningActors = null;
-
-                        //            if (actor.PropertyBag.TryGetValue("RunningActors", out returnedObject))
-                        //            {
-                        //                runningActors = (List<RunningActors>)returnedObject;
-                        //                var returnedActor = runningActors.FirstOrDefault(ra => ra.Address == address);
-
-                        //                if (returnedActor == null)
-                        //                {
-                        //                    Console.WriteLine("We dident find an actor");
-                        //                    var addressAndNumber = address.Split('/');
-
-                        //                    Type generic = typeof(Actor<>);
-
-                        //                    var type = Type.GetType(addressAndNumber[0]);
-                        //                    Type[] typeArgs = { type };
-
-                        //                    // Create a Type object representing the constructed generic 
-                        //                    // type.
-                        //                    Type constructed = generic.MakeGenericType(typeArgs);
-
-                                            
-                        //                    //var customer = new Actor<type>(actor.Context, new BinarySerializer());
-
-                        //                    if (addressAndNumber[0] == "TestHelpers.Customer")
-                        //                    {
-                        //                        var customer = new Actor<Customer>(actor.Context, new BinarySerializer());
-                        //                        customer.StartWithIdAndMethod(address, methodInfo, parameters);
-                        //                    }
-
-                        //                    if (addressAndNumber[0] == "TestHelpers.Order")
-                        //                    {
-                        //                        var order = new Actor<Order>(actor.Context, new BinarySerializer());
-                        //                        order.StartWithIdAndMethod(address, methodInfo, parameters);
-                        //                    }
-                                            
-                        //                    Console.WriteLine("I wish I could start a method");
-                        //                    ////start actor
-                        //                    /// 
-
-                        //                    runningActors.Add(new RunningActors(address));
-                        //                }
-
-                        //                Console.WriteLine("We found a running actor so er did nothing");
-                        //            }
-                        //            else
-                        //            {
-                        //                var customer = new Actor<Customer>(actor.Context, new BinarySerializer());
-                        //               // customer.StartWithIdAndMethod(address, methodInfo, parameters);
-                        //                Console.WriteLine("no collection of running actors, So I am creating one and starting a new runner");
-                        //                ////start actor
-                        //                /// 
-                        //                runningActors = new List<RunningActors>();
-                        //                runningActors.Add(new RunningActors(address));
-                        //                actor.PropertyBag.Add("RunningActors", runningActors);
-                        //            }
-
-                        //            var firstParameter = string.Empty;
-                        //            try
-                        //            {
-                        //                firstParameter = parameters[0].ToString();
-                        //            }
-                        //            catch (Exception)
-                        //            {
-                        //            }
-
-                        //            Console.WriteLine("Address: {0}, {1}", address, firstParameter);
-                        //        });
-                        //actorFactory.StartAllActors();
 
                     Console.WriteLine("Run tests");
                     Console.ReadLine();
                     using (var actor = new Actor<Customer>(context, new BinarySerializer()))
                     {
                         var customer = actor.CreateInstance<ICustomer>(typeof(Customer), 33);
-                        // Assert.IsInstanceOfType(customer, typeof(ICustomer));
-                        customer.UpdateName("XXX"); //called without exception
+                        Thread.Sleep(300);
+                        customer.UpdateName("XXX - AAA");
 
-                        var order = actor.CreateInstance<IOrder>(typeof(Order));
-                        // Assert.IsInstanceOfType(order, typeof(IOrder));
-                        order.UpdateDescription("XXX"); //called without exception
+                        //var order = actor.CreateInstance<IOrder>(typeof(Order));
+                        //order.UpdateDescription("XXX");
 
-                        var order2 = actor.CreateInstance<IOrder>(typeof(Order), Guid.NewGuid());
-                        // Assert.IsInstanceOfType(order2, typeof(IOrder));
-                        order2.UpdateDescription("ZZZ"); //called without exception
+                        //var order2 = actor.CreateInstance<IOrder>(typeof(Order), Guid.NewGuid());
+                        //order2.UpdateDescription("ZZZ");
+
+                        customer.UpdateName("XXX");
+                        for (int i = 0; i < 100; i++)
+                        {
+                            Console.WriteLine("Press Enter to send another message");
+                            Console.ReadLine();
+                            customer.UpdateName("XXX - " + i);
+                        }
+
+
                     }
 
-                        Console.ReadLine();
+                    Console.WriteLine("Press Enter to Exit");
+                    Console.ReadLine();
+                    silo.Stop();
                 }
                 //}
                 exchange.Stop(true);

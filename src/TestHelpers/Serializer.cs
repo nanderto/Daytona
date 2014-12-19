@@ -64,5 +64,11 @@ namespace TestHelpers
         {
             get { return this.encoding; }
         }
+
+
+        public object Deserializer(string input, Type type)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

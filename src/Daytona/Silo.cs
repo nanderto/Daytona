@@ -134,8 +134,10 @@ namespace Daytona
                     new BinarySerializer(),
                     new DefaultSerializer(Exchange.ControlChannelEncoding));
             var result = methodInfo.Invoke(clownFromPersistence, parameters.ToArray());
-            var dataWriter = new DataWriterReader();
-            dataWriter.PersistSelf(clown.ClownType, clownFromPersistence, actor.PersistanceSerializer);
+            var store = new Store(target.PersistanceSerializer);
+            store.Persist(clown.ClownType, clownFromPersistence,cleanAddress);
+            //var dataWriter = new DataWriterReader();
+            //dataWriter.PersistSelf(clown.ClownType, clownFromPersistence, actor.PersistanceSerializer);
             
             Task.Run(() => target.Start());
         }
@@ -161,6 +163,11 @@ namespace Daytona
             }
 
             this.disposed = true;
+        }
+
+        public void Stop()
+        {
+            throw new NotImplementedException();
         }
     }
 }

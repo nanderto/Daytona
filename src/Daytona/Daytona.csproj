@@ -89,6 +89,7 @@
   <ItemGroup>
     <Compile Include="Actor.cs" />
     <Compile Include="baseclasses\Actor.cs" />
+    <Compile Include="baseclasses\Store.cs" />
     <Compile Include="BinarySerializer.cs" />
     <Compile Include="CallBackEventArgs.cs" />
     <Compile Include="Clown.cs" />

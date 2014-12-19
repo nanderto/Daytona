@@ -16,6 +16,7 @@ namespace Daytona
     using System.Threading.Tasks;
 
     using NetMQ;
+    using NetMQ.zmq;
 
     [Serializable]
     public class Actor : IDisposable
@@ -32,11 +33,12 @@ namespace Daytona
                     return result.Item2;
                 };
 
-        public static Func<NetMQSocket, BinarySerializer, MethodInfo> GetMethodInfo = (socket, serializer) =>
+        public static Func<NetMQSocket, BinarySerializer, Tuple<MethodInfo, bool>> GetMethodInfo = (socket, serializer) =>
             {
                 var hasMore = false;
                 var buffer = socket.Receive(out hasMore);
-                return (MethodInfo)serializer.Deserializer(buffer, typeof(MethodInfo));
+                var methodinfo = (MethodInfo)serializer.Deserializer(buffer, typeof(MethodInfo));
+                return new Tuple<MethodInfo, bool>(methodinfo, hasMore);
             };
 
         public static Func<NetMQSocket, BinarySerializer, Type> GetObjectType = (socket, serializer) =>
@@ -49,7 +51,7 @@ namespace Daytona
         public static Func<NetMQSocket, BinarySerializer, Type, Tuple<object, bool>> GetParameter =
             (socket, serializer, type) =>
                 {
-                    var hasMore = true;
+                    var hasMore = false;
                     var buffer = socket.Receive(out hasMore);
                     var parameter = serializer.Deserializer(buffer, type);
                     return new Tuple<object, bool>(parameter, hasMore);
@@ -78,7 +80,7 @@ namespace Daytona
         [NonSerialized]
         public NetMQSocket Subscriber;
 
-        public Type TypeOfActor;
+        //public Type TypeOfActor;
 
         [NonSerialized]
         private NetMQSocket monitorChannel;
@@ -408,11 +410,14 @@ namespace Daytona
 
             if (returnedMessageType == "MethodInfo")
             {
-                returnedMethodInfo = GetMethodInfo(subscriber, serializer);
-                while (AddParameter(subscriber, serializer, methodParameters))
+                var returned = GetMethodInfo(subscriber, serializer);
+                returnedMethodInfo = returned.Item1;
+                var hasMore = returned.Item2;
+                while (hasMore)
                 {
-                    ;
+                    hasMore = AddParameter(subscriber, serializer, methodParameters);
                 }
+
                 var inputParameters = new object[5];
                 inputParameters[0] = returnedAddress;
                 inputParameters[1] = returnAddress;
@@ -717,14 +722,20 @@ namespace Daytona
                 try
                 {
                     this.MonitorChannel.Send(line, Exchange.ControlChannelEncoding);
+                   
                     var signal = this.MonitorChannel.Receive();
                 }
-                catch (TerminatingException)
+                catch (Exception ex)
                 {
-                    ////swallow exceptions 
-                    ////monitor channel is temporary untill can ensure actors work propery
+                    this.AddFault(ex);
                 }
             }
+        }
+
+        private readonly List<Exception> faults = new List<Exception>();
+        private void AddFault(Exception ex)
+        {
+            this.faults.Add(ex);
         }
 
         public void WriteLineToSelf(string line, string PathSegment)
@@ -755,18 +766,32 @@ namespace Daytona
 
             if (File.Exists(fileName))
             {
-                var line = File.ReadLines(fileName).Last();
-                var returnedRecord = line.Split('~');
-                target = this.PersistanceSerializer.Deserializer(
-                    Pipe.ControlChannelEncoding.GetBytes(returnedRecord[0]), type);
+                var line = File.ReadLines(fileName).LastOrDefault();
+
+                if (line != null)
+                {
+                    var returnedRecord = line.Split('~');
+                    target = this.PersistanceSerializer.Deserializer(
+                        Pipe.ControlChannelEncoding.GetBytes(returnedRecord[0]), type); 
+                }
+                else
+                {
+                    target = Activator.CreateInstance(type);
+                    var store = new Store(this.PersistanceSerializer);
+                    store.Persist(type, target, returnedAddress);
+                }
             }
             else
             {
-                File.Create(fileName);
+                //File.Create(fileName);
+                target = Activator.CreateInstance(type);
+                var store = new Store(this.PersistanceSerializer);
+                store.Persist(type, target, returnedAddress);
             }
     
             return target;
         }
+
 
         protected void SetUpMonitorChannel(NetMQContext context)
         {

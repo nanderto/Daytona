@@ -16,6 +16,8 @@ namespace Daytona
 
         T Deserializer<T>(string input);
 
+        object Deserializer(string input, Type type);
+
         object Deserializer(byte[] input, Type type);
 
         byte[] GetBuffer<T>(T message);
