@@ -241,7 +241,7 @@ namespace DaytonaTests
                     using (var sub = Helper.GetConnectedSubscribeSocket(context))
                     {
                         ISerializer serializer = new Serializer(Encoding.Unicode);
-                        Customer cust = new Customer();
+                        Customer cust = new Customer(1);
                         cust.Firstname = "John";
                         cust.Lastname = "Wilson";
 
@@ -283,7 +283,7 @@ namespace DaytonaTests
                                 //using (var sub = GetConnectedSubscribeSocket(context))
                                 //{
                                 ISerializer serializer = new Serializer(Encoding.Unicode);
-                                Customer cust = new Customer();
+                                Customer cust = new Customer(1);
                                 cust.Firstname = "Johnx";
                                 cust.Lastname = "Wilson";
 

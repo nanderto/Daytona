@@ -36,7 +36,7 @@ namespace SiloConsole
 
                     Console.WriteLine("Run tests");
                     Console.ReadLine();
-                    using (var actor = new Actor<Customer>(context, new BinarySerializer()))
+                    using (var actor = new Actor(context, new BinarySerializer()))
                     {
                         var customer = actor.CreateInstance<ICustomer>(typeof(Customer), 33);
                         Thread.Sleep(300);
@@ -52,19 +52,36 @@ namespace SiloConsole
                         for (int i = 0; i < 100; i++)
                         {
                             Console.WriteLine("Press Enter to send another message");
-                            Console.ReadLine();
+                            var exit = Console.ReadLine();
+                            if (exit.ToLower() == "exit")
+                            {
+                                break;
+                            }
+
                             customer.UpdateName("XXX - " + i);
+                            //order2.UpdateDescription("ZZZ" + i);
+
+
+                            var customer2 = actor.CreateInstance<ICustomer>(typeof(Customer), i);
+                            Thread.Sleep(300);
+                            customer2.UpdateName("XXX - AAA" + i);
                         }
-
-
+                 
+                        //var netMqMessage = new NetMQMessage();
+                        //netMqMessage.Append(new NetMQFrame(actor.Serializer.GetBuffer("Aslongasitissomething")));
+                        //netMqMessage.Append(new NetMQFrame(actor.Serializer.GetBuffer("shutdownallactors")));
+                        //actor.OutputChannel.SendMessage(netMqMessage);
+                        //Console.WriteLine("Press Enter to Exit");
+                        //Console.ReadLine();
                     }
-
-                    Console.WriteLine("Press Enter to Exit");
-                    Console.ReadLine();
+                    
                     silo.Stop();
                 }
-                //}
+                
                 exchange.Stop(true);
+
+                Console.WriteLine("Press Enter to Exit");
+                Console.ReadLine();
              }
         }
 

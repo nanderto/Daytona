@@ -28,7 +28,7 @@ namespace Daytona
         {
             this.context = context;
             this.binarySerializer = binarySerializer;
-            this.ActorFactory = new Actor(context, new BinarySerializer(), false);
+            this.ActorFactory = new Actor(context, new BinarySerializer());
             this.ActorFactory.PersistanceSerializer = new DefaultSerializer(Pipe.ControlChannelEncoding);
             this.ConfigActorLauncher();
             //// need to add additional actors here. they will get configured and started in this constructor.
@@ -55,14 +55,37 @@ namespace Daytona
 
         public void ConfigActorLauncher()
         {
+            var actions = new Dictionary<string, Delegate>();
+            actions.Add("LaunchActors", LaunchActors);
+            actions.Add("ShutDownAllActors", ShutDownAllActors);
             this.ActorFactory.RegisterActor(
-                           "ActorLauncher",
-                           string.Empty,
-                           "ActorLauncher outRoute",
-                           this.Clowns,
-                           new BinarySerializer(),
-                           new DefaultSerializer(Exchange.ControlChannelEncoding),
-                           (address, returnAddress, methodInfo, parameters, actor) =>
+                "ActorLauncher",
+                string.Empty,
+                "ActorLauncher outRoute",
+                this.Clowns,
+                new BinarySerializer(),
+                new DefaultSerializer(Exchange.ControlChannelEncoding),
+                actions);
+
+        }
+
+        public static Action<string, Actor> ShutDownAllActors = (instruction, actor) =>
+                    {
+                        object returnedObject = null;
+                        List<RunningActors> runningActors = null;
+
+                        if (actor.PropertyBag.TryGetValue("RunningActors", out returnedObject))
+                        {
+                            runningActors = (List<RunningActors>)returnedObject;
+                            foreach (var actr in runningActors)
+                            {
+                                actor.SendKillSignal(actor.Serializer, actor.OutputChannel, actr.Address);
+                            }
+                        }
+                    };
+ 
+        public static Action<string, string, MethodInfo, List<object>, Actor> LaunchActors =
+            (address, returnAddress, methodInfo, parameters, actor) =>
                            {
                                object returnedObject = null;
                                List<RunningActors> runningActors = null;
@@ -80,8 +103,12 @@ namespace Daytona
 
                                        runningActors.Add(new RunningActors(address));
                                    }
-
-                                   //"We found a running actor so er did nothing");
+                                   else
+                                   {
+                                       //"We found a running actor so er updated the time of the last heartbeat.");
+                                       returnedActor.LastHeartbeat = DateTime.UtcNow;
+                                   }
+                                   
                                }
                                else
                                {
@@ -92,8 +119,7 @@ namespace Daytona
                                    runningActors.Add(new RunningActors(address));
                                    actor.PropertyBag.Add("RunningActors", runningActors);
                                }
-                           });
-        }
+                           };
 
         private static void StartNewActor(string address, Actor actor, MethodInfo methodInfo, List<object> parameters)
         {
@@ -167,7 +193,18 @@ namespace Daytona
 
         public void Stop()
         {
-            throw new NotImplementedException();
+            //we should stop all active actors
+            var netMqMessage = new NetMQMessage();
+            var serializer = new BinarySerializer();
+            netMqMessage.Append(new NetMQFrame(serializer.GetBuffer("Aslongasitissomething")));
+            netMqMessage.Append(new NetMQFrame(serializer.GetBuffer("shutdownallactors")));
+            this.ActorFactory.OutputChannel.SendMessage(netMqMessage);
+
+            //need to stop
+            var netMqMessage2 = new NetMQMessage();
+            netMqMessage2.Append(new NetMQFrame(serializer.GetBuffer("Aslongasitissomething")));
+            netMqMessage2.Append(new NetMQFrame(serializer.GetBuffer("stop")));
+            this.ActorFactory.OutputChannel.SendMessage(netMqMessage2);
         }
     }
 }

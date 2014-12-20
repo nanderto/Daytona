@@ -20,7 +20,7 @@
         public void GetBuffer_UseGeneric()
         {
             var binarySerializer = new BinarySerializer();
-            var buffer = binarySerializer.GetBuffer(new TestHelpers.Customer());
+            var buffer = binarySerializer.GetBuffer(new TestHelpers.Customer(32));
             var customer = binarySerializer.Deserializer<Customer>(buffer);
             Assert.IsInstanceOfType(customer, typeof(Customer));
         }
@@ -29,7 +29,7 @@
         public void GetBufferTest()
         {
             var binarySerializer = new BinarySerializer();
-            var buffer = binarySerializer.GetBuffer(new TestHelpers.Customer());
+            var buffer = binarySerializer.GetBuffer(new TestHelpers.Customer(21));
             var customer = binarySerializer.Deserializer(buffer, typeof(Customer));
             Assert.IsInstanceOfType(customer, typeof(Customer));
         }
@@ -37,7 +37,7 @@
         [TestMethod]
         public void SerializeMethodInfo()
         {
-            var customer = new Customer();
+            var customer = new Customer(12);
             var method = typeof(Customer).GetMethod("UpdateName");
             var binarySerializer = new BinarySerializer();
             var buffer = binarySerializer.GetBuffer(method);
@@ -49,7 +49,7 @@
         [TestMethod]
         public void Call_SerializeandDeserialisedMethodInfo_Method_Successful()
         {
-            var customer = new Customer();
+            var customer = new Customer(-1);
             var method = typeof(Customer).GetMethod("UpdateName");
             var binarySerializer = new BinarySerializer();
             var buffer = binarySerializer.GetBuffer(method);

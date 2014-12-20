@@ -89,24 +89,7 @@ namespace Daytona
 
         public override event EventHandler<CallBackEventArgs> SaveCompletedEvent;
 
-        public static NetMQMessage PackZmqMessage(object[] parameters, MethodInfo methodInfo, ISerializer serializer, string addressToSendTo)
-        {
-            var zmqMessage = new NetMQMessage();
-            zmqMessage.Append(new NetMQFrame(serializer.GetBuffer(addressToSendTo)));
-            zmqMessage.Append(new NetMQFrame(serializer.GetBuffer("MethodInfo")));
 
-            var serializedMethodInfo = serializer.GetBuffer(methodInfo);
-            zmqMessage.Append(new NetMQFrame(serializedMethodInfo));
-
-            // zmqMessage.Append(new NetMQFrame(serializer.GetBuffer(string.Format("ParameterCount:{0}", parameters.Length))));
-            foreach (var parameter in parameters)
-            {
-                zmqMessage.Append(serializer.GetBuffer(parameter.GetType()));
-                zmqMessage.Append(serializer.GetBuffer(parameter));
-            }
-
-            return zmqMessage;
-        }
 
         public static bool UnPackNetMQFrame(int frameCount, BinarySerializer serializer, byte[] buffer, out string address, ref MethodInfo methodinfo, List<object> methodParameters, ref bool typeParameter, ref Type type, out string messageType)
         {
@@ -216,27 +199,7 @@ namespace Daytona
         // }
         // }
         // }
-        public TInterface CreateInstance<TInterface>(Type actoryType) where TInterface : class
-        {
-            var invocationHandler = new MessageSenderProxy<T>(this, actoryType);
-            var proxyFactory = new ProxyFactory();
-            return proxyFactory.CreateProxy<TInterface>(Type.EmptyTypes, invocationHandler);
-        }
-
-        public TInterface CreateInstance<TInterface>(Type actoryType, long id) where TInterface : class
-        {
-            var invocationHandler = new MessageSenderProxy<T>(this, actoryType, id);
-            var proxyFactory = new ProxyFactory();
-            return proxyFactory.CreateProxy<TInterface>(Type.EmptyTypes, invocationHandler);
-        }
-
-        public TInterface CreateInstance<TInterface>(Type actoryType, Guid uniqueGuid) where TInterface : class
-        {
-            var invocationHandler = new MessageSenderProxy<T>(this, actoryType, uniqueGuid);
-            var proxyFactory = new ProxyFactory();
-            return proxyFactory.CreateProxy<TInterface>(Type.EmptyTypes, invocationHandler);
-        }
-
+       
         public virtual void PersistSelf(Type typeToBePersisted, object toBePersisted, ISerializer serializer)
         {
             
@@ -403,12 +366,7 @@ namespace Daytona
         // //}
         // return stopSignal;
         // }
-        public void SendMessage(object[] parameters, MethodInfo methodInfo, string TypeFullName)
-        {
-            var zmqMessage = PackZmqMessage(parameters, methodInfo, this.Serializer, TypeFullName);
 
-            this.OutputChannel.SendMessage(zmqMessage);
-        }
 
         public override void Start()
         {
@@ -422,18 +380,27 @@ namespace Daytona
                 this.WriteLineToMonitor("Waiting for message");
 
                 byte[] messageAsBytes = null;
-                stop = this.ReceiveMessage(this.Subscriber);
+                try
+                {
+                    stop = this.ReceiveMessage(this.Subscriber);
+                }
+                catch (TerminatingException te)
+                {
+                    ////Swallow excptions caused by the socet closing.
+                    //// dont yet have a way to terminate gracefully
+                    this.AddFault(te);
+                    break;
+                }
+                
                 if (stop)
                 {
                     this.IsRunning = false;
                 }
 
-                this.WriteLineToMonitor("Received message");
-
-                
+                //this.WriteLineToMonitor("Received message");              
             }
 
-            this.WriteLineToMonitor("Exiting actor");
+            //this.WriteLineToMonitor("Exiting actor");
         }
 
         public void StartWithIdAndMethod(string address, MethodInfo methodInfo, List<object> parameters)
@@ -447,6 +414,5 @@ namespace Daytona
         {
             throw new NotImplementedException();
         }
-
     }
 }

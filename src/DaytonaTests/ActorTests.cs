@@ -50,7 +50,7 @@ namespace Daytona.Tests
                         return RunSubscriber(context);
                     });
 
-                    using (var actor = new Actor<Order>(context, new BinarySerializer()))
+                    using (var actor = new Actor(context, new BinarySerializer()))
                     {
                         using (var syncService = context.CreateResponseSocket())
                         {
@@ -58,7 +58,7 @@ namespace Daytona.Tests
                             for (int i = 0; i < 1; i++)
                             {
                                 syncService.Receive();
-                                syncService.Send("");
+                                syncService.Send(string.Empty);
                             }
 
                             var order = actor.CreateInstance<IOrder>(typeof(Order));
@@ -66,7 +66,12 @@ namespace Daytona.Tests
                             order.UpdateDescription("XXX"); //called without exception    
                             waitHandle.WaitOne();
 
-                            actor.SendKillSignal(actor.Serializer, actor.OutputChannel, string.Empty);
+                            var netMqMessage = new NetMQMessage();
+                            netMqMessage.Append(new NetMQFrame(string.Empty));
+                            netMqMessage.Append(new NetMQFrame("shutdownallactors"));
+                            actor.OutputChannel.SendMessage(netMqMessage);
+
+                            //actor.SendKillSignal(actor.Serializer, actor.OutputChannel, string.Empty);
                         }
                     }
 
@@ -83,18 +88,48 @@ namespace Daytona.Tests
             using (NetMQSocket syncClient = context.CreateRequestSocket())
             {
                 syncClient.Connect(Pipe.PubSubControlBackAddressClient);
-                syncClient.Send("");
+                syncClient.Send(string.Empty);
                 syncClient.Receive();
+                
+                var actions = new Dictionary<string, Delegate>();
+                actions.Add("LaunchActors", TestActors);
+                actions.Add("ShutDownAllActors", ShutDownAllActors);
 
                 using (var actor = new Actor<Order>(context, new BinarySerializer()))
                 {
                     actor.RegisterActor(
                         "Display",
-                        "",
+                        string.Empty,
                         "outRoute",
+                        null,
                         new BinarySerializer(),
                         new DefaultSerializer(Exchange.ControlChannelEncoding),
-                        (address, methodinfo, parameters, actr) =>
+                        actions);
+
+                    actor.StartAllActors();
+                }               
+            }    
+
+            return null;
+        }
+
+       public static Action<string, Actor> ShutDownAllActors = (instruction, actor) =>
+       {
+           object returnedObject = null;
+           List<RunningActors> runningActors = null;
+
+           if (actor.PropertyBag.TryGetValue("RunningActors", out returnedObject))
+           {
+               runningActors = (List<RunningActors>)returnedObject;
+               foreach (var actr in runningActors)
+               {
+                   actor.SendKillSignal(actor.Serializer, actor.OutputChannel, actr.Address);
+               }
+           }
+       };
+
+       public static Action<string, string, MethodInfo, List<object>, Actor> TestActors =
+            (address, returnAddress, methodinfo, parameters, actr) =>
                         {
                             var firstParameter = string.Empty;
                             try
@@ -108,14 +143,7 @@ namespace Daytona.Tests
                             Console.WriteLine("Address: {0}, {1}", address, firstParameter);
                             actr.WriteLineToMonitor(string.Format("Address: {0}, {1}", address, firstParameter));
                             waitHandle.Set();
-                        });
-
-                    actor.StartAllActors();
-                }               
-           }
-
-           return null;
-       }
+                        };
 
         [TestMethod]
         public void CallKillMe()
@@ -207,7 +235,7 @@ namespace Daytona.Tests
 
             //var customer = new Actor<Customer>(new BinarySerializer());
 
-            var zmqMessage = Actor<Customer>.PackZmqMessage(parmeters, methodInfo, new BinarySerializer(), x.FullName);
+            var zmqMessage = Actor.PackZmqMessage(parmeters, methodInfo, new BinarySerializer(), x.FullName);
 
 
             int frameCount = 0;
@@ -371,7 +399,7 @@ namespace Daytona.Tests
 
                     using (var actor = new Actor<Customer>(context))
                     {
-                        var customer = new Customer();
+                        var customer = new Customer(1);
                         customer.Firstname = "John";
                         customer.Lastname = "off yer Rocker mate";
 
@@ -389,7 +417,7 @@ namespace Daytona.Tests
             var dontCreateChannels = true;
             using (var actor = new Actor<Customer>())
             {
-                var customer = new Customer();
+                var customer = new Customer(1);
                 customer.Firstname = "John";
                 customer.Lastname = "off yer Rocker mate";
                 actor.PersistanceSerializer = new DefaultSerializer(Pipe.ControlChannelEncoding);

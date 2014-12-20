@@ -37,6 +37,17 @@ namespace TestHelpers
         {
             this.id = id;
         }
+
+        public Customer()
+        {
+            
+        }
+        //public Customer(string id)
+        //{
+        //    long longId = 0;
+        //    long.TryParse(id, out longId);
+        //    this.id = longId;
+        //}
     }
 
     public interface IOrder
@@ -56,10 +67,16 @@ namespace TestHelpers
             this.Id = Guid.NewGuid();
         }
 
+        public Order(Guid id)
+        {
+            this.Id = id;
+        }
+
         public void UpdateDescription(string description)
         {
             this.Description = description;
         }
+
         public string Description { get; set; }
 
         public Guid Id { get; private set; }

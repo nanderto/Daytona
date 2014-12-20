@@ -18,6 +18,8 @@ namespace Daytona
     using NetMQ;
     using NetMQ.zmq;
 
+    using NProxy.Core;
+
     [Serializable]
     public class Actor : IDisposable
     {
@@ -184,6 +186,7 @@ namespace Daytona
             this.SetUpMonitorChannel(context);
             this.SetUpOutputChannel(context);
         }
+
         public Actor(
             NetMQContext context,
             ISerializer serializer,
@@ -260,6 +263,27 @@ namespace Daytona
             this.SetUpReceivers(context, inRoute);
         }
 
+        public Actor(
+            NetMQContext context,
+            ISerializer serializer,
+            ISerializer persistenceSerializer,
+            string name,
+            string inRoute,
+            Dictionary<string, Clown> clowns,
+            Dictionary<string, Delegate> actions)
+        {
+            this.Context = context;
+            this.Serializer = serializer;
+            this.PersistanceSerializer = persistenceSerializer;
+            this.Name = name;
+            this.InRoute = inRoute;
+            this.Clowns = clowns;
+            this.Actions = actions;
+            this.PropertyBag = new Dictionary<string, object>();
+            this.SetUpMonitorChannel(context);
+            this.SetUpOutputChannel(context);
+            this.SetUpReceivers(context, inRoute);
+        }
         #endregion
 
         #region Public Events
@@ -401,9 +425,9 @@ namespace Daytona
             var methodParameters = new List<object>();
             var serializer = new BinarySerializer();
             MethodInfo returnedMethodInfo = null;
-            var returnedMessageType = string.Empty;
-            var returnedAddress = string.Empty;
-            var returnAddress = string.Empty; //need to send the return address in message package
+            var returnedMessageType = String.Empty;
+            var returnedAddress = String.Empty;
+            var returnAddress = String.Empty; //need to send the return address in message package
 
             returnedAddress = GetString(subscriber, serializer);
             returnedMessageType = GetString(subscriber, serializer);
@@ -425,7 +449,11 @@ namespace Daytona
                 inputParameters[3] = methodParameters;
                 inputParameters[4] = this;
 
-                this.Workload.DynamicInvoke(inputParameters);
+                Delegate action = null;
+                this.Actions.TryGetValue("LaunchActors", out action);
+                action.DynamicInvoke(inputParameters);
+
+                //this.Workload.DynamicInvoke(inputParameters);
             }
 
             if (returnedMessageType == "Workload")
@@ -444,6 +472,16 @@ namespace Daytona
                 stopSignal = true;
             }
 
+            if (returnedMessageType.ToLower() == "shutdownallactors")
+            {
+                var inputParameters = new object[2];
+                inputParameters[0] = "shutdownallactors";
+                inputParameters[1] = this;
+                Delegate action = null;
+                this.Actions.TryGetValue("ShutDownAllActors", out action);
+                action.DynamicInvoke(inputParameters);
+                //this.Workload.DynamicInvoke(inputParameters);
+            }
             return stopSignal;
         }
 
@@ -570,6 +608,34 @@ namespace Daytona
             return this;
         }
 
+        public Actor RegisterActor(
+            string name,
+            string inRoute,
+            string outRoute,
+            Dictionary<string, Clown> clowns,
+            ISerializer serializer,
+            ISerializer persistenceSerializer,
+            Dictionary<string, Delegate> actions)
+        {
+            this.actorTypes.Add(
+                name,
+                () =>
+                {
+                    using (var actor = new Actor(
+                            this.Context,
+                            serializer,
+                            persistenceSerializer,
+                            name,
+                            inRoute,
+                            clowns,
+                            actions))
+                    {
+                        actor.Start();
+                    }
+                });
+            return this;
+        }
+
         public void SendKillMe(ISerializer serializer, NetMQSocket socket)
         {
             this.SendKillSignal(serializer, socket, this.InRoute);
@@ -578,8 +644,8 @@ namespace Daytona
         public void SendKillSignal(ISerializer serializer, NetMQSocket socket, string address)
         {
             var netMqMessage = new NetMQMessage();
-            netMqMessage.Append(new NetMQFrame(address));
-            netMqMessage.Append(new NetMQFrame("stop"));
+            netMqMessage.Append(new NetMQFrame(serializer.GetBuffer(address)));
+            netMqMessage.Append(new NetMQFrame(serializer.GetBuffer("stop")));
             socket.SendMessage(netMqMessage);
         }
 
@@ -594,6 +660,53 @@ namespace Daytona
             netMQMessage.Append(new NetMQFrame(address));
             netMQMessage.Append(new NetMQFrame(message));
             socket.SendMessage(netMQMessage);
+        }
+
+        public void SendMessage(object[] parameters, MethodInfo methodInfo, string TypeFullName)
+        {
+            var zmqMessage = PackZmqMessage(parameters, methodInfo, this.Serializer, TypeFullName);
+
+            this.OutputChannel.SendMessage(zmqMessage);
+        }
+
+        public static NetMQMessage PackZmqMessage(object[] parameters, MethodInfo methodInfo, ISerializer serializer, string addressToSendTo)
+        {
+            var zmqMessage = new NetMQMessage();
+            zmqMessage.Append(new NetMQFrame(serializer.GetBuffer(addressToSendTo)));
+            zmqMessage.Append(new NetMQFrame(serializer.GetBuffer("MethodInfo")));
+
+            var serializedMethodInfo = serializer.GetBuffer(methodInfo);
+            zmqMessage.Append(new NetMQFrame(serializedMethodInfo));
+
+            // zmqMessage.Append(new NetMQFrame(serializer.GetBuffer(string.Format("ParameterCount:{0}", parameters.Length))));
+            foreach (var parameter in parameters)
+            {
+                zmqMessage.Append(serializer.GetBuffer(parameter.GetType()));
+                zmqMessage.Append(serializer.GetBuffer(parameter));
+            }
+
+            return zmqMessage;
+        }
+
+        public TInterface CreateInstance<TInterface>(Type actoryType) where TInterface : class
+        {
+            var invocationHandler = new MessageSenderProxy(this, actoryType);
+            var proxyFactory = new ProxyFactory();
+            return proxyFactory.CreateProxy<TInterface>(Type.EmptyTypes, invocationHandler);
+        }
+
+        public TInterface CreateInstance<TInterface>(Type actoryType, long id) where TInterface : class
+        {
+            var invocationHandler = new MessageSenderProxy(this, actoryType, id);
+            var proxyFactory = new ProxyFactory();
+            return proxyFactory.CreateProxy<TInterface>(Type.EmptyTypes, invocationHandler);
+        }
+
+        public TInterface CreateInstance<TInterface>(Type actoryType, Guid uniqueGuid) where TInterface : class
+        {
+            var invocationHandler = new MessageSenderProxy(this, actoryType, uniqueGuid);
+            var proxyFactory = new ProxyFactory();
+            return proxyFactory.CreateProxy<TInterface>(Type.EmptyTypes, invocationHandler);
         }
 
         public void SendOneMessageOfType<T>(string address, T message, ISerializer serializer, NetMQSocket socket)
@@ -617,10 +730,10 @@ namespace Daytona
             while (stop == false)
             {
                 this.IsRunning = true;
-                string address = string.Empty;
+                string address = String.Empty;
                 NetMQMessage NetMQMessage = null;
 
-                this.WriteLineToMonitor(string.Format("The {0} Waiting for message", this.Name));
+                this.WriteLineToMonitor(String.Format("The {0} Waiting for message", this.Name));
 
                 byte[] messageAsBytes = null;
                 try
@@ -630,7 +743,7 @@ namespace Daytona
                 }
                 catch (SerializationException se)
                 {
-                    this.WriteLineToMonitor(string.Format("Serialization Error: {0}", se));
+                    this.WriteLineToMonitor(String.Format("Serialization Error: {0}", se));
 
                     ////skip to end of message
                     bool more;
@@ -643,7 +756,7 @@ namespace Daytona
                 catch (TerminatingException te)
                 {
                     ////Swallow excptions caused by the socet closing.
-                    //// dont yet have a way to sterminate gracefully
+                    //// dont yet have a way to terminate gracefully
 
                     break;
                 }
@@ -666,7 +779,7 @@ namespace Daytona
             while (stop == false)
             {
                 this.IsRunning = true;
-                string address = string.Empty;
+                string address = String.Empty;
                 NetMQMessage NetMQMessage = null;
 
                 this.WriteLineToMonitor("Waiting for message");
@@ -733,14 +846,14 @@ namespace Daytona
         }
 
         private readonly List<Exception> faults = new List<Exception>();
-        private void AddFault(Exception ex)
+        public void AddFault(Exception ex)
         {
             this.faults.Add(ex);
         }
 
         public void WriteLineToSelf(string line, string PathSegment)
         {
-            var fi = new FileInfo(string.Format(@"c:\dev\persistence\{0}.log", PathSegment));
+            var fi = new FileInfo(String.Format(@"c:\dev\persistence\{0}.log", PathSegment));
             var stream = fi.AppendText();
             stream.WriteLine("{0}~{1}", line, DateTime.Now);
             stream.Flush();
@@ -784,7 +897,19 @@ namespace Daytona
             else
             {
                 //File.Create(fileName);
-                target = Activator.CreateInstance(type);
+                var addressAndNumber = returnedAddress.Split('/');
+                var id = addressAndNumber[1];
+                long longId = 0;
+                if (Int64.TryParse(id, out longId))
+                {
+                    target = Activator.CreateInstance(type, longId);
+                }
+                else
+                {
+                    var guidId = new Guid(id);
+                    target = Activator.CreateInstance(type, guidId);
+                }
+
                 var store = new Store(this.PersistanceSerializer);
                 store.Persist(type, target, returnedAddress);
             }
@@ -867,7 +992,7 @@ namespace Daytona
             T result = default(T);
             var zmqOut = new NetMQMessage();
             bool hasMore = true;
-            address = string.Empty;
+            address = String.Empty;
             messageAsBytes = null;
             int i = 0;
 
@@ -918,9 +1043,9 @@ namespace Daytona
             this.Subscriber = context.CreateSubscriberSocket();
             this.Subscriber.Connect(Pipe.SubscribeAddress);
 
-            if (string.IsNullOrEmpty(this.InRoute))
+            if (String.IsNullOrEmpty(this.InRoute))
             {
-                this.Subscriber.Subscribe(string.Empty);
+                this.Subscriber.Subscribe(String.Empty);
             }
             else
             {
@@ -939,5 +1064,7 @@ namespace Daytona
         }
 
         #endregion
+
+        public Dictionary<string, Delegate> Actions { get; set; }
     }
 }

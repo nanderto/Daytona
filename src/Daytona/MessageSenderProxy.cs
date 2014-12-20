@@ -14,9 +14,9 @@
     /// <typeparam name="T">Type that this is sent from, allows us to save a strongly typed reference to the actor that is sending the message
     /// </typeparam>
     [Serializable]
-    public class MessageSenderProxy<T> : IInvocationHandler where T : class
+    public class MessageSenderProxy : IInvocationHandler 
     {
-        private Actor<T> actor;
+        private Actor actor;
 
         public bool WasCalled = false;
 
@@ -31,20 +31,20 @@
         /// </summary>
         /// <param name="actor"></param>
         /// <param name="actorType"></param>
-        public MessageSenderProxy(Actor<T> actor, Type actorType)
+        public MessageSenderProxy(Actor actor, Type actorType)
         {
             this.actorType = actorType;
             this.actor = actor;
         }
 
-        public MessageSenderProxy(Actor<T> actor, Type actorType, long Id)
+        public MessageSenderProxy(Actor actor, Type actorType, long Id)
         {
             this.actor = actor;
             this.actorType = actorType;
             this.Id = Id;
         }
 
-        public MessageSenderProxy(Actor<T> actor, Type actorType, Guid uniqueGuid)
+        public MessageSenderProxy(Actor actor, Type actorType, Guid uniqueGuid)
         {
             this.actor = actor;
             this.actorType = actorType;
