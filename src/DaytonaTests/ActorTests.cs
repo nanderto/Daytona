@@ -92,7 +92,7 @@ namespace Daytona.Tests
                 syncClient.Receive();
                 
                 var actions = new Dictionary<string, Delegate>();
-                actions.Add("LaunchActors", TestActors);
+                actions.Add("MethodInfo", TestActors);
                 actions.Add("ShutDownAllActors", ShutDownAllActors);
 
                 using (var actor = new Actor<Order>(context, new BinarySerializer()))

@@ -450,7 +450,7 @@ namespace Daytona
                 inputParameters[4] = this;
 
                 Delegate action = null;
-                this.Actions.TryGetValue("LaunchActors", out action);
+                this.Actions.TryGetValue("MethodInfo", out action);
                 action.DynamicInvoke(inputParameters);
 
                 //this.Workload.DynamicInvoke(inputParameters);
@@ -739,7 +739,6 @@ namespace Daytona
                 try
                 {
                     stop = this.ReceiveMessage(this.Subscriber);
-                    this.WriteLineToMonitor("Received message");
                 }
                 catch (SerializationException se)
                 {

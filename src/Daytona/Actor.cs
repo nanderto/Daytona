@@ -215,12 +215,6 @@ namespace Daytona
             this.WriteLineToSelf(serializer.GetString(serializer.GetBuffer(toBePersisted)), pathSegment);
         }
 
-        // public Action<Type, ISerializer> PersistSelf = (toBePersisted, serializer) =>
-        // {
-        // var pathSegment = typeof(T).FullName;
-
-        // WriteLineToSelf(serializer.GetString(serializer.GetBuffer(toBePersisted)), pathSegment);
-        // };
         public virtual bool ReceiveMessage(NetMQSocket subscriber)
         {
             var stopSignal = false;
@@ -377,7 +371,7 @@ namespace Daytona
                 string address = string.Empty;
                 NetMQMessage zmqmessage = null;
 
-                this.WriteLineToMonitor("Waiting for message");
+                this.WriteLineToMonitor(String.Format("The {0} Waiting for message", this.Name));
 
                 byte[] messageAsBytes = null;
                 try

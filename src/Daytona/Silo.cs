@@ -3,6 +3,7 @@
 // Copyright © 2014 All Rights Reserved
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
+
 namespace Daytona
 {
     using System;
@@ -12,10 +13,64 @@ namespace Daytona
     using System.Threading.Tasks;
 
     using NetMQ;
-    using NetMQ.zmq;
 
     public class Silo : IDisposable
     {
+        /// <summary>
+        /// This function is used to start and manage all of the running Actors. 
+        /// It is set up on a listener that listens to all messages on the channel. 
+        /// Each actor is checked if it does not exist it is started for the client
+        /// </summary>
+        public static Action<string, string, MethodInfo, List<object>, Actor> LaunchActors =
+            (address, returnAddress, methodInfo, parameters, actor) =>
+                {
+                    object returnedObject = null;
+                    List<RunningActors> runningActors = null;
+                    string cleanAddress = address;
+
+                    if (actor.PropertyBag.TryGetValue("RunningActors", out returnedObject))
+                    {
+                        runningActors = (List<RunningActors>)returnedObject;
+                        var returnedActor = runningActors.FirstOrDefault(ra => ra.Address == address);
+
+                        if (returnedActor == null)
+                        {
+                            //We dident find an actor, so we have to start one
+                            StartNewActor(address, actor, methodInfo, parameters);
+
+                            runningActors.Add(new RunningActors(address));
+                        }
+                        else
+                        {
+                            //"We found a running actor so er updated the time of the last heartbeat.");
+                            returnedActor.LastHeartbeat = DateTime.UtcNow;
+                        }
+                    }
+                    else
+                    {
+                        //"no collection of running actors, So I am creating one and starting a new runner");
+
+                        runningActors = new List<RunningActors>();
+                        StartNewActor(address, actor, methodInfo, parameters);
+                        runningActors.Add(new RunningActors(address));
+                        actor.PropertyBag.Add("RunningActors", runningActors);
+                    }
+                };
+
+        public static Action<string, Actor> ShutDownAllActors = (instruction, actor) =>
+            {
+                object returnedObject = null;
+
+                if (actor.PropertyBag.TryGetValue("RunningActors", out returnedObject))
+                {
+                    var runningActors = (List<RunningActors>)returnedObject;
+                    foreach (var actr in runningActors)
+                    {
+                        actor.SendKillSignal(actor.Serializer, actor.OutputChannel, actr.Address);
+                    }
+                }
+            };
+
         private readonly Dictionary<string, Clown> Clowns = new Dictionary<string, Clown>();
 
         private BinarySerializer binarySerializer;
@@ -31,33 +86,28 @@ namespace Daytona
             this.ActorFactory = new Actor(context, new BinarySerializer());
             this.ActorFactory.PersistanceSerializer = new DefaultSerializer(Pipe.ControlChannelEncoding);
             this.ConfigActorLauncher();
+
             //// need to add additional actors here. they will get configured and started in this constructor.
             //this.exceptionhandler();
         }
 
         /// <summary>
-        /// Actor factory is an actor that is set up so it will not isten to any messages. 
+        /// Actor factory is an actor that is set up so it will not listen to any messages. 
         /// this is created to register and start sub-actors which perform the roles necessary for the Silo to function.
         /// the Sub actors will listen on there own channels for messages
+        /// the output channel is alson set up, so the Actotfactory can (and is used) to send messages.
         /// </summary>
         public Actor ActorFactory { get; set; }
 
-        public void Dispose()
-        {
-            this.Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        public void Start()
-        {
-            this.ActorFactory.StartAllActors();
-        }
-
+        /// <summary>
+        /// Sets up the correct registration for the function that runs and controls the Actors.
+        /// </summary>
         public void ConfigActorLauncher()
         {
             var actions = new Dictionary<string, Delegate>();
-            actions.Add("LaunchActors", LaunchActors);
+            actions.Add("MethodInfo", LaunchActors);
             actions.Add("ShutDownAllActors", ShutDownAllActors);
+            
             this.ActorFactory.RegisterActor(
                 "ActorLauncher",
                 string.Empty,
@@ -66,60 +116,41 @@ namespace Daytona
                 new BinarySerializer(),
                 new DefaultSerializer(Exchange.ControlChannelEncoding),
                 actions);
-
         }
 
-        public static Action<string, Actor> ShutDownAllActors = (instruction, actor) =>
-                    {
-                        object returnedObject = null;
-                        List<RunningActors> runningActors = null;
+        public void Dispose()
+        {
+            this.Dispose(true);
+            GC.SuppressFinalize(this);
+        }
 
-                        if (actor.PropertyBag.TryGetValue("RunningActors", out returnedObject))
-                        {
-                            runningActors = (List<RunningActors>)returnedObject;
-                            foreach (var actr in runningActors)
-                            {
-                                actor.SendKillSignal(actor.Serializer, actor.OutputChannel, actr.Address);
-                            }
-                        }
-                    };
- 
-        public static Action<string, string, MethodInfo, List<object>, Actor> LaunchActors =
-            (address, returnAddress, methodInfo, parameters, actor) =>
-                           {
-                               object returnedObject = null;
-                               List<RunningActors> runningActors = null;
-                               string cleanAddress = address;
+        public Silo RegisterClown(Type type)
+        {
+            // Type type = actor.GetType();
+            this.Clowns.Add(type.FullName, new Clown(type));
+            return this;
+        }
 
-                               if (actor.PropertyBag.TryGetValue("RunningActors", out returnedObject))
-                               {
-                                   runningActors = (List<RunningActors>)returnedObject;
-                                   var returnedActor = runningActors.FirstOrDefault(ra => ra.Address == address);
+        public void Start()
+        {
+            this.ActorFactory.StartAllActors();
+        }
 
-                                   if (returnedActor == null)
-                                   {
-                                       //We dident find an actor, so we have to start one
-                                       StartNewActor(address, actor, methodInfo, parameters);
+        public void Stop()
+        {
+            //we should stop all active actors
+            var netMqMessage = new NetMQMessage();
+            var serializer = new BinarySerializer();
+            netMqMessage.Append(new NetMQFrame(serializer.GetBuffer("Aslongasitissomething")));
+            netMqMessage.Append(new NetMQFrame(serializer.GetBuffer("shutdownallactors")));
+            this.ActorFactory.OutputChannel.SendMessage(netMqMessage);
 
-                                       runningActors.Add(new RunningActors(address));
-                                   }
-                                   else
-                                   {
-                                       //"We found a running actor so er updated the time of the last heartbeat.");
-                                       returnedActor.LastHeartbeat = DateTime.UtcNow;
-                                   }
-                                   
-                               }
-                               else
-                               {
-                                   //"no collection of running actors, So I am creating one and starting a new runner");
-                                   
-                                   runningActors = new List<RunningActors>();
-                                   StartNewActor(address, actor, methodInfo, parameters);
-                                   runningActors.Add(new RunningActors(address));
-                                   actor.PropertyBag.Add("RunningActors", runningActors);
-                               }
-                           };
+            //need to stop
+            var netMqMessage2 = new NetMQMessage();
+            netMqMessage2.Append(new NetMQFrame(serializer.GetBuffer("Aslongasitissomething")));
+            netMqMessage2.Append(new NetMQFrame(serializer.GetBuffer("stop")));
+            this.ActorFactory.OutputChannel.SendMessage(netMqMessage2);
+        }
 
         private static void StartNewActor(string address, Actor actor, MethodInfo methodInfo, List<object> parameters)
         {
@@ -145,6 +176,7 @@ namespace Daytona
             {
                 clownFromPersistence = Activator.CreateInstance(clown.ClownType);
             }
+
             //actor.PersistanceSerializer.Deserializer(Pipe.ControlChannelEncoding.GetBytes())
             // Create a Type object representing the constructed generic 
             // type.
@@ -161,18 +193,12 @@ namespace Daytona
                     new DefaultSerializer(Exchange.ControlChannelEncoding));
             var result = methodInfo.Invoke(clownFromPersistence, parameters.ToArray());
             var store = new Store(target.PersistanceSerializer);
-            store.Persist(clown.ClownType, clownFromPersistence,cleanAddress);
+            store.Persist(clown.ClownType, clownFromPersistence, cleanAddress);
+
             //var dataWriter = new DataWriterReader();
             //dataWriter.PersistSelf(clown.ClownType, clownFromPersistence, actor.PersistanceSerializer);
-            
-            Task.Run(() => target.Start());
-        }
 
-        public Silo RegisterClown(Type type)
-        {
-            // Type type = actor.GetType();
-            this.Clowns.Add(type.FullName, new Clown(type));
-            return this;
+            Task.Run(() => target.Start());
         }
 
         private void Dispose(bool disposing)
@@ -189,22 +215,6 @@ namespace Daytona
             }
 
             this.disposed = true;
-        }
-
-        public void Stop()
-        {
-            //we should stop all active actors
-            var netMqMessage = new NetMQMessage();
-            var serializer = new BinarySerializer();
-            netMqMessage.Append(new NetMQFrame(serializer.GetBuffer("Aslongasitissomething")));
-            netMqMessage.Append(new NetMQFrame(serializer.GetBuffer("shutdownallactors")));
-            this.ActorFactory.OutputChannel.SendMessage(netMqMessage);
-
-            //need to stop
-            var netMqMessage2 = new NetMQMessage();
-            netMqMessage2.Append(new NetMQFrame(serializer.GetBuffer("Aslongasitissomething")));
-            netMqMessage2.Append(new NetMQFrame(serializer.GetBuffer("stop")));
-            this.ActorFactory.OutputChannel.SendMessage(netMqMessage2);
         }
     }
 }
