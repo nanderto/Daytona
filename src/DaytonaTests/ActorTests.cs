@@ -476,5 +476,18 @@ namespace Daytona.Tests
                 }
             }
         }
+
+        [TestMethod]
+        public void CreatingAClown()
+        {
+
+            Type typeInfo = typeof(Customer);
+            Assert.IsTrue((typeInfo.GetConstructors().Any(c => c.GetParameters().Any(p => p.ParameterType == typeof(Actor)))));
+            
+            Type typeInfo2 = typeof(Order);
+            Assert.IsFalse((typeInfo2.GetConstructors().Any(c => c.GetParameters().Any(p => p.ParameterType == typeof(Actor)))));
+
+            Assert.IsTrue(typeInfo.BaseType == typeof(ActorFactory));
+        }
     }
 }

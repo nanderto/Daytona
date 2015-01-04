@@ -6,6 +6,8 @@ using System.Text;
 
 namespace TestHelpers
 {
+    using Newtonsoft.Json;
+
     public interface ICustomer : IPayload
     {
         long Id { get; set; }
@@ -15,12 +17,37 @@ namespace TestHelpers
         string Lastname { get; set; }
 
         void UpdateName(string name);
+
+        void CreateOrder();
     }
 
     [Serializable]
-    public class Customer : ICustomer
+    public class Customer : ActorFactory, ICustomer 
     {
-        private readonly long id;
+        private readonly List<Guid> orders = new List<Guid>();
+
+        public List<Guid> Orders
+        {
+            get
+            {            
+                return this.orders;
+            }
+        }
+ 
+        public Customer(long id)
+        {
+            this.Id = id;
+        }
+
+        public Customer(Actor factory)
+            : base(factory)
+        {
+        }
+
+        public Customer()
+        {
+            
+        }
 
         public long Id { get; set; }
 
@@ -28,19 +55,20 @@ namespace TestHelpers
 
         public string Lastname { get; set; }
 
+        [JsonIgnore]
+        public override Actor Factory { get; set; }
+
         public void UpdateName(string name)
         {
             this.Lastname = name;
         }
 
-        public Customer(long id)
+        public void CreateOrder()
         {
-            this.id = id;
-        }
+            var order = this.Factory.CreateInstance<IOrder>(typeof(Order), Guid.NewGuid());
+            this.Orders.Add(order.Id);
+            order.CreateOrder("this is totally my description", 3, Guid.NewGuid().ToString().Replace("-", ""), 33);
 
-        public Customer()
-        {
-            
         }
         //public Customer(string id)
         //{
@@ -54,7 +82,13 @@ namespace TestHelpers
     {
         string Description { get; set; }
 
-        Guid Id { get; }
+        int Quantity { get; set; }
+
+        string ProductID { get; set; }
+
+        Guid Id { get; set; }
+
+        void CreateOrder(string description, int quantity, string productId, long customerId);
 
         void UpdateDescription(string description);
     }
@@ -72,6 +106,14 @@ namespace TestHelpers
             this.Id = id;
         }
 
+        public void CreateOrder(string description, int quantity, string productId, long customerId)
+        {
+            this.Description = description;
+            this.Quantity = quantity;
+            this.ProductID = productId;
+            this.CustomerID = customerId;
+        }
+
         public void UpdateDescription(string description)
         {
             this.Description = description;
@@ -79,6 +121,12 @@ namespace TestHelpers
 
         public string Description { get; set; }
 
-        public Guid Id { get; private set; }
+        public int Quantity { get; set; }
+
+        public string ProductID { get; set; }
+
+        public Guid Id { get; set; }
+
+        public long CustomerID { get; set; }
     }
 }

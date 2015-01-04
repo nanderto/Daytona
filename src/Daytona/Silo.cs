@@ -170,11 +170,18 @@ namespace Daytona
             actor.Clowns.TryGetValue(addressAndId[0], out clown);
 
             Type[] typeArgs = { clown.ClownType };
-
+            
             var clownFromPersistence = actor.ReadfromPersistence(cleanAddress, clown.ClownType);
+            
+
             if (clownFromPersistence == null)
             {
                 clownFromPersistence = Activator.CreateInstance(clown.ClownType);
+            }
+
+            if (clown.ClownType.BaseType == typeof(ActorFactory))
+            {
+                ((ActorFactory)clownFromPersistence).Factory = actor;
             }
 
             //actor.PersistanceSerializer.Deserializer(Pipe.ControlChannelEncoding.GetBytes())

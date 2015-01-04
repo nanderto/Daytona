@@ -473,7 +473,7 @@ namespace Daytona
             }
 
             if (returnedMessageType.ToLower() == "shutdownallactors")
-            {
+             {
                 var inputParameters = new object[2];
                 inputParameters[0] = "shutdownallactors";
                 inputParameters[1] = this;
@@ -854,7 +854,7 @@ namespace Daytona
         {
             var fi = new FileInfo(String.Format(@"c:\dev\persistence\{0}.log", PathSegment));
             var stream = fi.AppendText();
-            stream.WriteLine("{0}~{1}", line, DateTime.Now);
+            stream.WriteLine("{0}~{1}", line, DateTime.Now.Ticks);
             stream.Flush();
             stream.Close();
         }

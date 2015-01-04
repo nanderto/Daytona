@@ -210,6 +210,7 @@ namespace Daytona
 
             //var store = new Store(serializer);
             //store.Persist(typeToBePersisted, toBePersisted);
+
             var pathSegment = this.InRoute;
 
             this.WriteLineToSelf(serializer.GetString(serializer.GetBuffer(toBePersisted)), pathSegment);
@@ -241,6 +242,11 @@ namespace Daytona
                 if (this.Model == null)
                 {
                     this.Model = this.ReadfromPersistence(returnedAddress);
+                     var modelType = this.Model.GetType();
+                    if (modelType.BaseType == typeof(ActorFactory))
+                    {
+                        ((ActorFactory)(object)this.Model).Factory = this;
+                    }
                 }
                 //var target = (T)Activator.CreateInstance(typeof(T));
                 var result = returnedMethodInfo.Invoke(this.Model, methodParameters.ToArray());
