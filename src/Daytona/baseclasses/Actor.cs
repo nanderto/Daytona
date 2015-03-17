@@ -68,7 +68,7 @@ namespace Daytona
 
         private static readonly object SynchLock = new object();
 
-        public readonly Dictionary<string, Clown> Clowns = new Dictionary<string, Clown>();
+        public readonly Dictionary<string, Entity> Entities = new Dictionary<string, Entity>();
 
         #endregion
 
@@ -192,7 +192,7 @@ namespace Daytona
             ISerializer serializer,
             string name,
             string inRoute,
-            Dictionary<string, Clown> clowns,
+            Dictionary<string, Entity> entities,
             Action<string, string, MethodInfo, List<object>, Actor> workload)
         {
             this.IsRunning = false;
@@ -201,7 +201,7 @@ namespace Daytona
             this.Name = name;
             this.InRoute = inRoute;
             this.Workload = workload;
-            this.Clowns = clowns;
+            this.Entities = entities;
             this.PropertyBag = new Dictionary<string, object>();
             this.SetUpMonitorChannel(context);
             this.SetUpOutputChannel(context);
@@ -247,7 +247,7 @@ namespace Daytona
             ISerializer persistenceSerializer,
             string name,
             string inRoute,
-            Dictionary<string, Clown> clowns,
+            Dictionary<string, Entity> clowns,
             Action<string, string, MethodInfo, List<object>, Actor> workload)
         {
             this.Context = context;
@@ -255,7 +255,7 @@ namespace Daytona
             this.PersistanceSerializer = persistenceSerializer;
             this.Name = name;
             this.InRoute = inRoute;
-            this.Clowns = clowns;
+            this.Entities = clowns;
             this.Workload = workload;
             this.PropertyBag = new Dictionary<string, object>();
             this.SetUpMonitorChannel(context);
@@ -269,7 +269,7 @@ namespace Daytona
             ISerializer persistenceSerializer,
             string name,
             string inRoute,
-            Dictionary<string, Clown> clowns,
+            Dictionary<string, Entity> clowns,
             Dictionary<string, Delegate> actions)
         {
             this.Context = context;
@@ -277,7 +277,7 @@ namespace Daytona
             this.PersistanceSerializer = persistenceSerializer;
             this.Name = name;
             this.InRoute = inRoute;
-            this.Clowns = clowns;
+            this.Entities = clowns;
             this.Actions = actions;
             this.PropertyBag = new Dictionary<string, object>();
             this.SetUpMonitorChannel(context);
@@ -292,7 +292,7 @@ namespace Daytona
 
         private BinarySerializer binarySerializer;
 
-        private Dictionary<string, Clown> clowns;
+        private Dictionary<string, Entity> clowns;
 
         private NetMQContext netMQContext;
 
@@ -563,7 +563,7 @@ namespace Daytona
             string name,
             string inRoute,
             string outRoute,
-            Dictionary<string, Clown> clowns,
+            Dictionary<string, Entity> clowns,
             ISerializer serializer,
             Action<string, string, MethodInfo, List<object>, Actor> workload)
         {
@@ -583,7 +583,7 @@ namespace Daytona
             string name,
             string inRoute,
             string outRoute,
-            Dictionary<string, Clown> clowns,
+            Dictionary<string, Entity> clowns,
             ISerializer serializer,
             ISerializer persistenceSerializer,
             Action<string, string, MethodInfo, List<object>, Actor> workload)
@@ -612,7 +612,7 @@ namespace Daytona
             string name,
             string inRoute,
             string outRoute,
-            Dictionary<string, Clown> clowns,
+            Dictionary<string, Entity> clowns,
             ISerializer serializer,
             ISerializer persistenceSerializer,
             Dictionary<string, Delegate> actions)
@@ -691,7 +691,7 @@ namespace Daytona
         public TInterface CreateInstance<TInterface>(Type actoryType) where TInterface : class
         {
             var invocationHandler = new MessageSenderProxy(this, actoryType);
-            var proxyFactory = new ProxyFactory();
+            var proxyFactory = new ProxyFactory(new MethodsOnlyInterceptionFilter());
             return proxyFactory.CreateProxy<TInterface>(Type.EmptyTypes, invocationHandler);
         }
 
@@ -699,25 +699,34 @@ namespace Daytona
         {
             var invocationHandler = new MessageSenderProxy(this, actoryType, id);
             var proxyFactory = new ProxyFactory();
-            return proxyFactory.CreateProxy<TInterface>(Type.EmptyTypes, invocationHandler);
+            return proxyFactory.CreateProxy<TInterface>(Type.EmptyTypes, invocationHandler, new object[] { id });
         }
 
         public TInterface CreateInstance<TInterface>(Type actoryType, Guid uniqueGuid) where TInterface : class
         {
             var invocationHandler = new MessageSenderProxy(this, actoryType, uniqueGuid);
-            var proxyFactory = new ProxyFactory();
-            return proxyFactory.CreateProxy<TInterface>(Type.EmptyTypes, invocationHandler);
+            var proxyFactory = new ProxyFactory(new MethodsOnlyInterceptionFilter());
+            var instance =  proxyFactory.CreateProxy<TInterface>(Type.EmptyTypes, invocationHandler, new object[]{uniqueGuid});
+            return instance;
+        }
+
+        public TInterface CreateInstance<TInterface>(Type actoryType, string uniqueId) where TInterface : class
+        {
+            var invocationHandler = new MessageSenderProxy(this, actoryType, uniqueId);
+            var proxyFactory = new ProxyFactory(new MethodsOnlyInterceptionFilter());
+            var instance = proxyFactory.CreateProxy<TInterface>(Type.EmptyTypes, invocationHandler, new object[] { uniqueId });
+            return instance;
         }
 
         public void SendOneMessageOfType<T>(string address, T message, ISerializer serializer, NetMQSocket socket)
             where T : IPayload
         {
-            var netMQMessage = new NetMQMessage();
-            netMQMessage.Append(new NetMQFrame(serializer.GetBuffer(address)));
-            netMQMessage.Append(new NetMQFrame(serializer.GetBuffer(message)));
+            var netMqMessage = new NetMQMessage();
+            netMqMessage.Append(new NetMQFrame(serializer.GetBuffer(address)));
+            netMqMessage.Append(new NetMQFrame(serializer.GetBuffer(message)));
 
             ////var replySignal = this.sendControlChannel.Receive(Pipe.ControlChannelEncoding);
-            socket.SendMessage(netMQMessage);
+            socket.SendMessage(netMqMessage);
 
             ////this.sendControlChannel.Send("Just sent message to " + address + " Message is: " + message, Pipe.ControlChannelEncoding);
             ////replySignal = this.sendControlChannel.Receive(Pipe.ControlChannelEncoding);
@@ -871,7 +880,7 @@ namespace Daytona
 
         public object ReadfromPersistence(string returnedAddress, Type type)
         {
-            var fileName = @"c:\Dev\Persistence\" + returnedAddress + ".log";
+            var fileName = @"c:\Dev\Persistence\" + returnedAddress.Replace(@"/", @"\") + ".log";
             var directoryInfo = new DirectoryInfo(returnedAddress);
             var fileInfo = new FileInfo(returnedAddress);
             object target = null;

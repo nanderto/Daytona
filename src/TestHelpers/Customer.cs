@@ -10,7 +10,7 @@ namespace TestHelpers
 
     public interface ICustomer : IPayload
     {
-        long Id { get; set; }
+        long Id { set; }
 
         string Firstname { get; set; }
 
@@ -49,7 +49,7 @@ namespace TestHelpers
             
         }
 
-        public long Id { get; set; }
+        public long Id { private get; set; }
 
         public string Firstname { get; set; }
 
@@ -65,10 +65,10 @@ namespace TestHelpers
 
         public void CreateOrder()
         {
-            var order = this.Factory.CreateInstance<IOrder>(typeof(Order), Guid.NewGuid());
-            this.Orders.Add(order.Id);
-            order.CreateOrder("this is totally my description", 3, Guid.NewGuid().ToString().Replace("-", ""), 33);
-
+            var newId = Guid.NewGuid();
+            var order = this.Factory.CreateInstance<Order>(typeof(Order), newId);          
+            order.CreateOrder("this is totally my description", 3, Guid.NewGuid().ToString().Replace("-", string.Empty), this.Id);
+            this.Orders.Add(newId);
         }
         //public Customer(string id)
         //{
@@ -84,6 +84,10 @@ namespace TestHelpers
 
         int Quantity { get; set; }
 
+        string StringID { get; set; }
+
+        long CustomerID { get; set; }
+       
         string ProductID { get; set; }
 
         Guid Id { get; set; }
@@ -91,6 +95,8 @@ namespace TestHelpers
         void CreateOrder(string description, int quantity, string productId, long customerId);
 
         void UpdateDescription(string description);
+        
+        void UpdateOrder(Guid uniqueGuid, string description, int quantity, string productId, long customerId);
     }
 
     [Serializable]
@@ -125,8 +131,21 @@ namespace TestHelpers
 
         public string ProductID { get; set; }
 
+
+
+        public string StringID { get; set; }
+
         public Guid Id { get; set; }
 
         public long CustomerID { get; set; }
+
+
+        public void UpdateOrder(Guid uniqueGuid, string description, int quantity, string productId, long customerId)
+        {
+            this.Description = description;
+            this.Quantity = quantity;
+            this.ProductID = productId;
+            this.CustomerID = customerId;
+        }
     }
 }

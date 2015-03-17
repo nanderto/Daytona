@@ -29,17 +29,20 @@ namespace SiloConsole
                 exchange.Start();
                 using (var silo = new Silo(context, new BinarySerializer()))
                 {
-                    silo.RegisterClown(typeof(Customer));
-                    silo.RegisterClown(typeof(Order));
+                    silo.RegisterEntity(typeof(Customer));
+                    silo.RegisterEntity(typeof(Order));
                     silo.Start();
                                
 
                     Console.WriteLine("Run tests");
+                    
                     Console.ReadLine();
                     //silo.ActorFactory.CreateInstance<>()
                     using (var actor = new Actor(context, new BinarySerializer()))
                     {
                         var customer = silo.ActorFactory.CreateInstance<ICustomer>(typeof(Customer), 33);
+                        customer.CreateOrder();
+
                         var uniqueGuid = Guid.NewGuid();
 
                         var order = silo.ActorFactory.CreateInstance<IOrder>(typeof(Order), uniqueGuid);
@@ -57,8 +60,9 @@ namespace SiloConsole
                             productId,
                             12);
 
+
                         //customer.UpdateName("XXX - AAA");
-                        customer.CreateOrder();
+                       // customer.CreateOrder();
 
                         //var order = actor.CreateInstance<IOrder>(typeof(Order));
                         //order.UpdateDescription("XXX");
@@ -72,7 +76,7 @@ namespace SiloConsole
                         {
                             if (exit.ToLower() != "runtoend")
                             {
-                                Console.WriteLine("Press Enter to send another message, or type exit to stop");
+                                 Console.WriteLine("Press Enter to send another message, or type exit to stop");
                                 exit = Console.ReadLine();
                                 if (exit.ToLower() == "exit")
                                 {
@@ -80,6 +84,10 @@ namespace SiloConsole
                                 }
                             }
 
+                            order.UpdateOrder(uniqueGuid, "Updated order",
+                            23 + i * 2,
+                            productId,
+                            12 + i); 
                             //var customer2 = actor.CreateInstance<ICustomer>(typeof(Customer), i);
                             ////Thread.Sleep(500);
                             //customer2.UpdateName("XXX - AAA" + i);
