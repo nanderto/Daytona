@@ -67,7 +67,7 @@ namespace TestHelpers
         {
             var uniqueGuid = Guid.NewGuid();
             var order = this.Factory.CreateInstance<IOrder>(typeof(Order), uniqueGuid);
-            order.CreateOrder("this is totally my description", 3, Guid.NewGuid().ToString().Replace("-", ""), 33);
+            order.CreateOrder("this is totally my description", 3, Guid.NewGuid().ToString().Replace("-", string.Empty), this.Id);
             this.Orders.Add(uniqueGuid);
         }
         //public Customer(string id)

@@ -124,7 +124,7 @@ namespace Daytona
             GC.SuppressFinalize(this);
         }
 
-        public Silo RegisterClown(Type type)
+        public Silo RegisterEntity(Type type)
         {
             // Type type = actor.GetType();
             this.Clowns.Add(type.FullName, new Entity(type));

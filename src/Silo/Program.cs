@@ -30,78 +30,65 @@ namespace SiloConsole
                 exchange.Start();
                 using (var silo = new Silo(context, new BinarySerializer()))
                 {
-                    silo.RegisterClown(typeof(Customer));
-                    silo.RegisterClown(typeof(Order));
+                    silo.RegisterEntity(typeof(Customer));
+                    silo.RegisterEntity(typeof(Order));
                     silo.Start();
                                
-
                     Console.WriteLine("Run tests");
                     Console.ReadLine();
-                    //silo.ActorFactory.CreateInstance<>()
-                    using (var actor = new Actor(context, new BinarySerializer()))
+
+                    var customer = silo.ActorFactory.CreateInstance<ICustomer>(typeof(Customer), 33);
+                        
+                    customer.CreateOrder();
+
+                    var uniqueGuid = Guid.NewGuid();
+                    var order = silo.ActorFactory.CreateInstance<IOrder>(typeof(Order), uniqueGuid);
+                    Thread.Sleep(300);
+                    var productId = Guid.NewGuid()
+                        .ToString()
+                        .Replace("-", "")
+                        .Replace("{", "")
+                        .Replace("}", "")
+                        .Substring(0, 10);
+
+                    order.CreateOrder("Another order", 23, productId, 12);
+
+                    var exit = string.Empty;
+                    var description = "XXXX";
+
+                    for (int i = 0; i < 100; i++)
                     {
-                        var customer = silo.ActorFactory.CreateInstance<ICustomer>(typeof(Customer), 33);
-                        
-                        var uniqueGuid = Guid.NewGuid();
-                        var order = silo.ActorFactory.CreateInstance<IOrder>(typeof(Order), uniqueGuid);
-                        Thread.Sleep(300);
-                        var productId = Guid.NewGuid()
-                            .ToString()
-                            .Replace("-", "")
-                            .Replace("{", "")
-                            .Replace("}", "")
-                            .Substring(0, 10);
-
-                        
-
-                        //customer.UpdateName("XXX - AAA");
-                        
-
-                        //var order = actor.CreateInstance<IOrder>(typeof(Order));
-                        //order.UpdateDescription("XXX");
-
-                        //var order2 = actor.CreateInstance<IOrder>(typeof(Order), Guid.NewGuid());
-                        //order2.UpdateDescription("ZZZ");
-
-                        var exit = string.Empty;
-                       // customer.UpdateName("XXX");
-                        for (int i = 0; i < 100; i++)
-                        {
-                            if (exit.ToLower() != "runtoend")
+                        Console.WriteLine(
+                               "Last order created was {0}, its description was {1}",
+                               uniqueGuid,
+                               description);
+                        if (exit != null && exit.ToLower() != "runtoend")
+                        {     
+                            Console.WriteLine("Press Enter to send another message, or type exit to stop");
+                            exit = Console.ReadLine();
+                            if (exit != null && exit.ToLower() == "exit")
                             {
-                                Console.WriteLine("Last order created was {0}", uniqueGuid);
-                                Console.WriteLine("Press Enter to send another message, or type exit to stop");
-                                exit = Console.ReadLine();
-                                if (exit.ToLower() == "exit")
-                                {
-                                    break;
-                                }
+                                break;
                             }
-
-                            order.CreateOrder("Another order", 23 + (i * 2), productId + i, 12);
-                            customer.UpdateName(string.Format("new name, {0}", i.ToString(CultureInfo.InvariantCulture)));
-                            //var customer2 = actor.CreateInstance<ICustomer>(typeof(Customer), i);
-                            ////Thread.Sleep(500);
-                            //customer2.UpdateName("XXX - AAA" + i);
-
-                            //if (exit.ToLower() == "update100")
-                            //{
-
-                            //    for (int j = 0; j < 1000; j++)
-                            //    {
-                            //        customer2.UpdateName("XXX - " + j); 
-                            //    }   
-                            //}                           
                         }
-                 
-                        //var netMqMessage = new NetMQMessage();
-                        //netMqMessage.Append(new NetMQFrame(actor.Serializer.GetBuffer("Aslongasitissomething")));
-                        //netMqMessage.Append(new NetMQFrame(actor.Serializer.GetBuffer("shutdownallactors")));
-                        //actor.OutputChannel.SendMessage(netMqMessage);
-                        //Console.WriteLine("Press Enter to Exit");
-                        //Console.ReadLine();
+
+                        description = "New Description " + 23 + (i * 2);
+                        order.UpdateDescription(description);
+
+                        customer.UpdateName(string.Format("new name, {0}", i.ToString(CultureInfo.InvariantCulture)));
+                        var customer2 = silo.ActorFactory.CreateInstance<ICustomer>(typeof(Customer), i);
+                        ////Thread.Sleep(500);
+                        customer2.UpdateName("XXX - AAA" + i);
+                        Console.WriteLine("Customer {0} was updated", i);
                     }
-                    
+
+                    //var netMqMessage = new NetMQMessage();
+                    //netMqMessage.Append(new NetMQFrame(actor.Serializer.GetBuffer("Aslongasitissomething")));
+                    //netMqMessage.Append(new NetMQFrame(actor.Serializer.GetBuffer("shutdownallactors")));
+                    //actor.OutputChannel.SendMessage(netMqMessage);
+
+                    Console.WriteLine("Out of loop; Press Enter to stop silo");
+                    Console.ReadLine();
                     silo.Stop();
                 }
                 

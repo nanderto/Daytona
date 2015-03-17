@@ -192,7 +192,7 @@ namespace Daytona
             ISerializer serializer,
             string name,
             string inRoute,
-            Dictionary<string, Entity> clowns,
+            Dictionary<string, Entity> entities,
             Action<string, string, MethodInfo, List<object>, Actor> workload)
         {
             this.IsRunning = false;
@@ -201,7 +201,7 @@ namespace Daytona
             this.Name = name;
             this.InRoute = inRoute;
             this.Workload = workload;
-            this.Clowns = clowns;
+            this.Clowns = entities;
             this.PropertyBag = new Dictionary<string, object>();
             this.SetUpMonitorChannel(context);
             this.SetUpOutputChannel(context);
@@ -247,7 +247,7 @@ namespace Daytona
             ISerializer persistenceSerializer,
             string name,
             string inRoute,
-            Dictionary<string, Entity> clowns,
+            Dictionary<string, Entity> entities,
             Action<string, string, MethodInfo, List<object>, Actor> workload)
         {
             this.Context = context;
@@ -255,7 +255,7 @@ namespace Daytona
             this.PersistanceSerializer = persistenceSerializer;
             this.Name = name;
             this.InRoute = inRoute;
-            this.Clowns = clowns;
+            this.Clowns = entities;
             this.Workload = workload;
             this.PropertyBag = new Dictionary<string, object>();
             this.SetUpMonitorChannel(context);
@@ -269,7 +269,7 @@ namespace Daytona
             ISerializer persistenceSerializer,
             string name,
             string inRoute,
-            Dictionary<string, Entity> clowns,
+            Dictionary<string, Entity> entities,
             Dictionary<string, Delegate> actions)
         {
             this.Context = context;
@@ -277,7 +277,7 @@ namespace Daytona
             this.PersistanceSerializer = persistenceSerializer;
             this.Name = name;
             this.InRoute = inRoute;
-            this.Clowns = clowns;
+            this.Clowns = entities;
             this.Actions = actions;
             this.PropertyBag = new Dictionary<string, object>();
             this.SetUpMonitorChannel(context);
@@ -292,12 +292,10 @@ namespace Daytona
 
         private BinarySerializer binarySerializer;
 
-        private Dictionary<string, Entity> clowns;
+        private Dictionary<string, Entity> entities;
 
         private NetMQContext netMQContext;
-
-        private bool p;
-
+        
         private ISerializer persistenceSerializer;
 
         private Action<string, string, MethodInfo, List<object>, Actor> workload;
@@ -563,7 +561,7 @@ namespace Daytona
             string name,
             string inRoute,
             string outRoute,
-            Dictionary<string, Entity> clowns,
+            Dictionary<string, Entity> entities,
             ISerializer serializer,
             Action<string, string, MethodInfo, List<object>, Actor> workload)
         {
@@ -571,7 +569,7 @@ namespace Daytona
                 name,
                 () =>
                     {
-                        using (var actor = new Actor(this.Context, serializer, name, inRoute, clowns, workload))
+                        using (var actor = new Actor(this.Context, serializer, name, inRoute, entities, workload))
                         {
                             actor.Start();
                         }
@@ -583,7 +581,7 @@ namespace Daytona
             string name,
             string inRoute,
             string outRoute,
-            Dictionary<string, Entity> clowns,
+            Dictionary<string, Entity> entities,
             ISerializer serializer,
             ISerializer persistenceSerializer,
             Action<string, string, MethodInfo, List<object>, Actor> workload)
@@ -599,7 +597,7 @@ namespace Daytona
                                 persistenceSerializer,
                                 name,
                                 inRoute,
-                                clowns,
+                                entities,
                                 workload))
                         {
                             actor.Start();
@@ -612,7 +610,7 @@ namespace Daytona
             string name,
             string inRoute,
             string outRoute,
-            Dictionary<string, Entity> clowns,
+            Dictionary<string, Entity> entities,
             ISerializer serializer,
             ISerializer persistenceSerializer,
             Dictionary<string, Delegate> actions)
@@ -627,7 +625,7 @@ namespace Daytona
                             persistenceSerializer,
                             name,
                             inRoute,
-                            clowns,
+                            entities,
                             actions))
                     {
                         actor.Start();
@@ -691,21 +689,21 @@ namespace Daytona
         public TInterface CreateInstance<TInterface>(Type actoryType) where TInterface : class
         {
             var invocationHandler = new MessageSenderProxy(this, actoryType);
-            var proxyFactory = new ProxyFactory();
+            var proxyFactory = new ProxyFactory(new MethodsOnlyInterceptionFilter());
             return proxyFactory.CreateProxy<TInterface>(Type.EmptyTypes, invocationHandler);
         }
 
         public TInterface CreateInstance<TInterface>(Type actoryType, long id) where TInterface : class
         {
             var invocationHandler = new MessageSenderProxy(this, actoryType, id);
-            var proxyFactory = new ProxyFactory();
+            var proxyFactory = new ProxyFactory(new MethodsOnlyInterceptionFilter());
             return proxyFactory.CreateProxy<TInterface>(Type.EmptyTypes, invocationHandler);
         }
 
         public TInterface CreateInstance<TInterface>(Type actoryType, Guid uniqueGuid) where TInterface : class
         {
             var invocationHandler = new MessageSenderProxy(this, actoryType, uniqueGuid);
-            var proxyFactory = new ProxyFactory();
+            var proxyFactory = new ProxyFactory(new MethodsOnlyInterceptionFilter());
             return proxyFactory.CreateProxy<TInterface>(Type.EmptyTypes, invocationHandler);
         }
 
