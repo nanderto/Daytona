@@ -14,10 +14,6 @@ namespace Daytona
 
     using NetMQ;
 
-    /// <summary>
-    /// A Silo is a container that your application runs in. It manages all of the actors, starting them and tracking that they exist and are running
-    /// Eventually silos will beable to collaborate with other silos to form a distributed application
-    /// </summary>
     public class Silo : IDisposable
     {
         /// <summary>
@@ -61,9 +57,6 @@ namespace Daytona
                     }
                 };
 
-        /// <summary>
-        /// This function shuts down all actors by getting the list of running actors and sending them a shut down message
-        /// </summary>
         public static Action<string, Actor> ShutDownAllActors = (instruction, actor) =>
             {
                 object returnedObject = null;
@@ -78,7 +71,7 @@ namespace Daytona
                 }
             };
 
-        private readonly Dictionary<string, Entity> Entities = new Dictionary<string, Entity>();
+        private readonly Dictionary<string, Clown> Clowns = new Dictionary<string, Clown>();
 
         private BinarySerializer binarySerializer;
 
@@ -94,7 +87,7 @@ namespace Daytona
             this.ActorFactory.PersistanceSerializer = new DefaultSerializer(Pipe.ControlChannelEncoding);
             this.ConfigActorLauncher();
 
-            //// If we need to add additional actors here. they will get configured and started in this constructor.
+            //// need to add additional actors here. they will get configured and started in this constructor.
             //this.exceptionhandler();
         }
 
@@ -102,7 +95,7 @@ namespace Daytona
         /// Actor factory is an actor that is set up so it will not listen to any messages. 
         /// this is created to register and start sub-actors which perform the roles necessary for the Silo to function.
         /// the Sub actors will listen on there own channels for messages
-        /// the output channel is also set up, so the Actor factory can (and is used) to send messages.
+        /// the output channel is alson set up, so the Actotfactory can (and is used) to send messages.
         /// </summary>
         public Actor ActorFactory { get; set; }
 
@@ -119,7 +112,7 @@ namespace Daytona
                 "ActorLauncher",
                 string.Empty,
                 "ActorLauncher outRoute",
-                this.Entities,
+                this.Clowns,
                 new BinarySerializer(),
                 new DefaultSerializer(Exchange.ControlChannelEncoding),
                 actions);
@@ -131,10 +124,10 @@ namespace Daytona
             GC.SuppressFinalize(this);
         }
 
-        public Silo RegisterEntity(Type type)
+        public Silo RegisterClown(Type type)
         {
             // Type type = actor.GetType();
-            this.Entities.Add(type.FullName, new Entity(type));
+            this.Clowns.Add(type.FullName, new Clown(type));
             return this;
         }
 
@@ -173,22 +166,22 @@ namespace Daytona
             }
 
             Type generic = typeof(Actor<>);
-            Entity entity = null;
-            actor.Entities.TryGetValue(addressAndId[0], out entity);
+            Clown clown = null;
+            actor.Clowns.TryGetValue(addressAndId[0], out clown);
 
-            Type[] typeArgs = { entity.EntityType };
+            Type[] typeArgs = { clown.ClownType };
             
-            var entityFromPersistence = actor.ReadfromPersistence(cleanAddress, entity.EntityType);
+            var clownFromPersistence = actor.ReadfromPersistence(cleanAddress, clown.ClownType);
             
 
-            if (entityFromPersistence == null)
+            if (clownFromPersistence == null)
             {
-                entityFromPersistence = Activator.CreateInstance(entity.EntityType);
+                clownFromPersistence = Activator.CreateInstance(clown.ClownType);
             }
 
-            if (entity.EntityType.BaseType == typeof(ActorFactory))
+            if (clown.ClownType.BaseType == typeof(ActorFactory))
             {
-                ((ActorFactory)entityFromPersistence).Factory = actor;
+                ((ActorFactory)clownFromPersistence).Factory = actor;
             }
 
             //actor.PersistanceSerializer.Deserializer(Pipe.ControlChannelEncoding.GetBytes())
@@ -201,13 +194,13 @@ namespace Daytona
                 Activator.CreateInstance(
                     constructed,
                     actor.Context,
-                    entityFromPersistence,
+                    clownFromPersistence,
                     cleanAddress,
                     new BinarySerializer(),
                     new DefaultSerializer(Exchange.ControlChannelEncoding));
-            var result = methodInfo.Invoke(entityFromPersistence, parameters.ToArray());
+            var result = methodInfo.Invoke(clownFromPersistence, parameters.ToArray());
             var store = new Store(target.PersistanceSerializer);
-            store.Persist(entity.EntityType, entityFromPersistence, cleanAddress);
+            store.Persist(clown.ClownType, clownFromPersistence, cleanAddress);
 
             //var dataWriter = new DataWriterReader();
             //dataWriter.PersistSelf(clown.ClownType, clownFromPersistence, actor.PersistanceSerializer);

@@ -2,19 +2,16 @@
 {
     using System;
 
-    /// <summary>
-    /// The entity is the business object you want to run as a Actor
-    /// </summary>
-    public class Entity 
+    public class Clown 
     {
-        public Entity(Type type)
+        public Clown(Type type)
         {
-            this.EntityType = type;
+            this.ClownType = type;
             this.Name = type.FullName;
             this.AssemblyQualifiedName = type.AssemblyQualifiedName;
         }
 
-        public Type EntityType { get; set; }
+        public Type ClownType { get; set; }
 
         public string Name { get; set; }
 
