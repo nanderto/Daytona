@@ -65,10 +65,10 @@ namespace TestHelpers
 
         public void CreateOrder()
         {
-            var order = this.Factory.CreateInstance<IOrder>(typeof(Order), Guid.NewGuid());
-            this.Orders.Add(order.Id);
+            var uniqueGuid = Guid.NewGuid();
+            var order = this.Factory.CreateInstance<IOrder>(typeof(Order), uniqueGuid);
             order.CreateOrder("this is totally my description", 3, Guid.NewGuid().ToString().Replace("-", ""), 33);
-
+            this.Orders.Add(uniqueGuid);
         }
         //public Customer(string id)
         //{

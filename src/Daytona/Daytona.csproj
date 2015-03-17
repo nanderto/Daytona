@@ -90,7 +90,7 @@
     <Compile Include="baseclasses\Store.cs" />
     <Compile Include="BinarySerializer.cs" />
     <Compile Include="CallBackEventArgs.cs" />
-    <Compile Include="Clown.cs" />
+    <Compile Include="Entity.cs" />
     <Compile Include="DataWriterReader.cs" />
     <Compile Include="DefaultSerializer.cs" />
     <Compile Include="Exchange.cs" />

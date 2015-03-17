@@ -71,7 +71,7 @@ namespace Daytona
                 }
             };
 
-        private readonly Dictionary<string, Clown> Clowns = new Dictionary<string, Clown>();
+        private readonly Dictionary<string, Entity> Clowns = new Dictionary<string, Entity>();
 
         private BinarySerializer binarySerializer;
 
@@ -127,7 +127,7 @@ namespace Daytona
         public Silo RegisterClown(Type type)
         {
             // Type type = actor.GetType();
-            this.Clowns.Add(type.FullName, new Clown(type));
+            this.Clowns.Add(type.FullName, new Entity(type));
             return this;
         }
 
@@ -166,20 +166,20 @@ namespace Daytona
             }
 
             Type generic = typeof(Actor<>);
-            Clown clown = null;
+            Entity clown = null;
             actor.Clowns.TryGetValue(addressAndId[0], out clown);
 
-            Type[] typeArgs = { clown.ClownType };
+            Type[] typeArgs = { clown.EntityType };
             
-            var clownFromPersistence = actor.ReadfromPersistence(cleanAddress, clown.ClownType);
+            var clownFromPersistence = actor.ReadfromPersistence(cleanAddress, clown.EntityType);
             
 
             if (clownFromPersistence == null)
             {
-                clownFromPersistence = Activator.CreateInstance(clown.ClownType);
+                clownFromPersistence = Activator.CreateInstance(clown.EntityType);
             }
 
-            if (clown.ClownType.BaseType == typeof(ActorFactory))
+            if (clown.EntityType.BaseType == typeof(ActorFactory))
             {
                 ((ActorFactory)clownFromPersistence).Factory = actor;
             }
@@ -200,7 +200,7 @@ namespace Daytona
                     new DefaultSerializer(Exchange.ControlChannelEncoding));
             var result = methodInfo.Invoke(clownFromPersistence, parameters.ToArray());
             var store = new Store(target.PersistanceSerializer);
-            store.Persist(clown.ClownType, clownFromPersistence, cleanAddress);
+            store.Persist(clown.EntityType, clownFromPersistence, cleanAddress);
 
             //var dataWriter = new DataWriterReader();
             //dataWriter.PersistSelf(clown.ClownType, clownFromPersistence, actor.PersistanceSerializer);

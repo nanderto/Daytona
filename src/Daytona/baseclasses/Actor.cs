@@ -68,7 +68,7 @@ namespace Daytona
 
         private static readonly object SynchLock = new object();
 
-        public readonly Dictionary<string, Clown> Clowns = new Dictionary<string, Clown>();
+        public readonly Dictionary<string, Entity> Clowns = new Dictionary<string, Entity>();
 
         #endregion
 
@@ -192,7 +192,7 @@ namespace Daytona
             ISerializer serializer,
             string name,
             string inRoute,
-            Dictionary<string, Clown> clowns,
+            Dictionary<string, Entity> clowns,
             Action<string, string, MethodInfo, List<object>, Actor> workload)
         {
             this.IsRunning = false;
@@ -247,7 +247,7 @@ namespace Daytona
             ISerializer persistenceSerializer,
             string name,
             string inRoute,
-            Dictionary<string, Clown> clowns,
+            Dictionary<string, Entity> clowns,
             Action<string, string, MethodInfo, List<object>, Actor> workload)
         {
             this.Context = context;
@@ -269,7 +269,7 @@ namespace Daytona
             ISerializer persistenceSerializer,
             string name,
             string inRoute,
-            Dictionary<string, Clown> clowns,
+            Dictionary<string, Entity> clowns,
             Dictionary<string, Delegate> actions)
         {
             this.Context = context;
@@ -292,7 +292,7 @@ namespace Daytona
 
         private BinarySerializer binarySerializer;
 
-        private Dictionary<string, Clown> clowns;
+        private Dictionary<string, Entity> clowns;
 
         private NetMQContext netMQContext;
 
@@ -563,7 +563,7 @@ namespace Daytona
             string name,
             string inRoute,
             string outRoute,
-            Dictionary<string, Clown> clowns,
+            Dictionary<string, Entity> clowns,
             ISerializer serializer,
             Action<string, string, MethodInfo, List<object>, Actor> workload)
         {
@@ -583,7 +583,7 @@ namespace Daytona
             string name,
             string inRoute,
             string outRoute,
-            Dictionary<string, Clown> clowns,
+            Dictionary<string, Entity> clowns,
             ISerializer serializer,
             ISerializer persistenceSerializer,
             Action<string, string, MethodInfo, List<object>, Actor> workload)
@@ -612,7 +612,7 @@ namespace Daytona
             string name,
             string inRoute,
             string outRoute,
-            Dictionary<string, Clown> clowns,
+            Dictionary<string, Entity> clowns,
             ISerializer serializer,
             ISerializer persistenceSerializer,
             Dictionary<string, Delegate> actions)

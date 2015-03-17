@@ -8,6 +8,7 @@ using TestHelpers;
 
 namespace SiloConsole
 {
+    using System.Globalization;
     using System.IO;
     using System.Reflection;
     using System.Threading;
@@ -40,8 +41,8 @@ namespace SiloConsole
                     using (var actor = new Actor(context, new BinarySerializer()))
                     {
                         var customer = silo.ActorFactory.CreateInstance<ICustomer>(typeof(Customer), 33);
+                        
                         var uniqueGuid = Guid.NewGuid();
-
                         var order = silo.ActorFactory.CreateInstance<IOrder>(typeof(Order), uniqueGuid);
                         Thread.Sleep(300);
                         var productId = Guid.NewGuid()
@@ -51,14 +52,10 @@ namespace SiloConsole
                             .Replace("}", "")
                             .Substring(0, 10);
 
-                        order.CreateOrder(
-                            "Another order",
-                            23,
-                            productId,
-                            12);
+                        
 
                         //customer.UpdateName("XXX - AAA");
-                        customer.CreateOrder();
+                        
 
                         //var order = actor.CreateInstance<IOrder>(typeof(Order));
                         //order.UpdateDescription("XXX");
@@ -72,6 +69,7 @@ namespace SiloConsole
                         {
                             if (exit.ToLower() != "runtoend")
                             {
+                                Console.WriteLine("Last order created was {0}", uniqueGuid);
                                 Console.WriteLine("Press Enter to send another message, or type exit to stop");
                                 exit = Console.ReadLine();
                                 if (exit.ToLower() == "exit")
@@ -80,6 +78,8 @@ namespace SiloConsole
                                 }
                             }
 
+                            order.CreateOrder("Another order", 23 + (i * 2), productId + i, 12);
+                            customer.UpdateName(string.Format("new name, {0}", i.ToString(CultureInfo.InvariantCulture)));
                             //var customer2 = actor.CreateInstance<ICustomer>(typeof(Customer), i);
                             ////Thread.Sleep(500);
                             //customer2.UpdateName("XXX - AAA" + i);
