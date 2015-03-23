@@ -386,6 +386,12 @@ namespace Daytona
                 }
                 catch (TerminatingException te)
                 {
+                    var thrownException = ((NetMQ.NetMQException)(te)).ErrorCode.ToString().ToUpper();
+                    if (thrownException == "ETERM" || thrownException == "CONTEXTTERMINATED")
+                    {
+                        this.Subscriber.Close();
+                        this.IsRunning = false;
+                    }
                     ////Swallow excptions caused by the socet closing.
                     //// dont yet have a way to terminate gracefully
                     this.AddFault(te);

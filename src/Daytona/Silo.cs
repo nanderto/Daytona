@@ -145,7 +145,7 @@ namespace Daytona
             netMqMessage.Append(new NetMQFrame(serializer.GetBuffer("shutdownallactors")));
             this.ActorFactory.OutputChannel.SendMessage(netMqMessage);
 
-            //need to stop
+            //need to stop the axtor launcher
             var netMqMessage2 = new NetMQMessage();
             netMqMessage2.Append(new NetMQFrame(serializer.GetBuffer("Aslongasitissomething")));
             netMqMessage2.Append(new NetMQFrame(serializer.GetBuffer("stop")));
@@ -155,33 +155,37 @@ namespace Daytona
         private static void StartNewActor(string address, Actor actor, MethodInfo methodInfo, List<object> parameters)
         {
             string cleanAddress = address;
+            string id;
             var addressAndId = address.Split('/');
             var addressWithOutId = addressAndId[0];
-            var id = addressAndId[1];
-
-            if (string.IsNullOrEmpty(addressAndId[1]))
+            if (addressAndId.Length > 1)
             {
-                // no number so creating a newone. need to figure that out
-                cleanAddress = addressWithOutId.Replace("/", "");
+                id = addressAndId[1];
+
+                if (string.IsNullOrEmpty(id))
+                {
+                    // no number so creating a newone. need to figure that out
+                    cleanAddress = addressWithOutId.Replace("/", "");
+                }
             }
 
             Type generic = typeof(Actor<>);
-            Entity clown = null;
-            actor.Clowns.TryGetValue(addressAndId[0], out clown);
+            Entity entity = null;
+            actor.Clowns.TryGetValue(addressAndId[0], out entity);
 
-            Type[] typeArgs = { clown.EntityType };
+            Type[] typeArgs = { entity.EntityType };
             
-            var clownFromPersistence = actor.ReadfromPersistence(cleanAddress, clown.EntityType);
+            var entityFromPersistence = actor.ReadfromPersistence(cleanAddress, entity.EntityType);
             
 
-            if (clownFromPersistence == null)
+            if (entityFromPersistence == null)
             {
-                clownFromPersistence = Activator.CreateInstance(clown.EntityType);
+                entityFromPersistence = Activator.CreateInstance(entity.EntityType);
             }
 
-            if (clown.EntityType.BaseType == typeof(ActorFactory))
+            if (entity.EntityType.BaseType == typeof(ActorFactory))
             {
-                ((ActorFactory)clownFromPersistence).Factory = actor;
+                ((ActorFactory)entityFromPersistence).Factory = actor;
             }
 
             //actor.PersistanceSerializer.Deserializer(Pipe.ControlChannelEncoding.GetBytes())
@@ -194,18 +198,23 @@ namespace Daytona
                 Activator.CreateInstance(
                     constructed,
                     actor.Context,
-                    clownFromPersistence,
+                    entityFromPersistence,
                     cleanAddress,
                     new BinarySerializer(),
                     new DefaultSerializer(Exchange.ControlChannelEncoding));
-            var result = methodInfo.Invoke(clownFromPersistence, parameters.ToArray());
+            var result = methodInfo.Invoke(entityFromPersistence, parameters.ToArray());
             var store = new Store(target.PersistanceSerializer);
-            store.Persist(clown.EntityType, clownFromPersistence, cleanAddress);
+            store.Persist(entity.EntityType, entityFromPersistence, cleanAddress);
 
             //var dataWriter = new DataWriterReader();
             //dataWriter.PersistSelf(clown.ClownType, clownFromPersistence, actor.PersistanceSerializer);
 
-            Task.Run(() => target.Start());
+            Task.Run(
+                () =>
+                    {
+                        target.Start();
+                        target.Dispose();
+                    });
         }
 
         private void Dispose(bool disposing)

@@ -23,7 +23,10 @@ namespace SiloConsole
             Console.CancelKeyPress += new ConsoleCancelEventHandler(ConsoleCancelHandler);
             var binarySerializer = new BinarySerializer();
             var useActor = true;
-
+            var task = Task.Run(
+                () =>
+                    {
+                   
             using (var context = NetMQContext.Create())
             {
                 var exchange = new Exchange(context);
@@ -32,18 +35,22 @@ namespace SiloConsole
                 {
                     silo.RegisterEntity(typeof(Customer));
                     silo.RegisterEntity(typeof(Order));
+                    silo.RegisterEntity(typeof(DiagnosticMessage));
                     silo.Start();
-                               
-                    Console.WriteLine("Run tests");
-                    Console.ReadLine();
 
-                    var customer = silo.ActorFactory.CreateInstance<ICustomer>(typeof(Customer), 33);
+                    var diagnosticMessage = silo.ActorFactory.CreateInstance<IDiagnosticMessage>(typeof(DiagnosticMessage));
+                          
+                    diagnosticMessage.WriteToConsole("Yeah this works");
+                    //Console.WriteLine("Run tests");
+                    //Console.ReadLine();
+
+                    //var customer = silo.ActorFactory.CreateInstance<ICustomer>(typeof(Customer), 33);
                         
-                    customer.CreateOrder();
+                    //customer.CreateOrder();
 
                     var uniqueGuid = Guid.NewGuid();
                     var order = silo.ActorFactory.CreateInstance<IOrder>(typeof(Order), uniqueGuid);
-                    Thread.Sleep(300);
+
                     var productId = Guid.NewGuid()
                         .ToString()
                         .Replace("-", "")
@@ -75,17 +82,17 @@ namespace SiloConsole
                         description = "New Description " + 23 + (i * 2);
                         order.UpdateDescription(description);
 
-                        customer.UpdateName(string.Format("new name, {0}", i.ToString(CultureInfo.InvariantCulture)));
-                        var customer2 = silo.ActorFactory.CreateInstance<ICustomer>(typeof(Customer), i);
-                        ////Thread.Sleep(500);
-                        customer2.UpdateName("XXX - AAA" + i);
-                        Console.WriteLine("Customer {0} was updated", i);
+                    //    customer.UpdateName(string.Format("new name, {0}", i.ToString(CultureInfo.InvariantCulture)));
+                    //    var customer2 = silo.ActorFactory.CreateInstance<ICustomer>(typeof(Customer), i);
+                    //    ////Thread.Sleep(500);
+                    //    customer2.UpdateName("XXX - AAA" + i);
+                    //    Console.WriteLine("Customer {0} was updated", i);
                     }
 
-                    //var netMqMessage = new NetMQMessage();
-                    //netMqMessage.Append(new NetMQFrame(actor.Serializer.GetBuffer("Aslongasitissomething")));
-                    //netMqMessage.Append(new NetMQFrame(actor.Serializer.GetBuffer("shutdownallactors")));
-                    //actor.OutputChannel.SendMessage(netMqMessage);
+                    ////var netMqMessage = new NetMQMessage();
+                    ////netMqMessage.Append(new NetMQFrame(actor.Serializer.GetBuffer("Aslongasitissomething")));
+                    ////netMqMessage.Append(new NetMQFrame(actor.Serializer.GetBuffer("shutdownallactors")));
+                    ////actor.OutputChannel.SendMessage(netMqMessage);
 
                     Console.WriteLine("Out of loop; Press Enter to stop silo");
                     Console.ReadLine();
@@ -97,6 +104,8 @@ namespace SiloConsole
                 Console.WriteLine("Press Enter to Exit");
                 Console.ReadLine();
              }
+                });
+            task.Wait();
         }
 
         static bool interrupted = false;

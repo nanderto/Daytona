@@ -34,10 +34,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="NetMQ, Version=3.3.0.11, Culture=neutral, PublicKeyToken=a6decef4ddc58b3a, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\NetMQ.3.3.0.11\lib\net40\NetMQ.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -53,9 +49,12 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
-    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\..\..\Git\Repos\netmq\src\NetMQ\NetMQ.csproj">
+      <Project>{82934bac-07fb-41ac-ae59-46fee6026a40}</Project>
+      <Name>NetMQ</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Daytona\Daytona.csproj">
       <Project>{626cb1e5-251f-4a23-8d7d-c3a7b35f67d2}</Project>
       <Name>Daytona</Name>

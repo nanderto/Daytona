@@ -679,6 +679,7 @@ namespace Daytona
             // zmqMessage.Append(new NetMQFrame(serializer.GetBuffer(string.Format("ParameterCount:{0}", parameters.Length))));
             foreach (var parameter in parameters)
             {
+                //todo cant handle null parameters
                 zmqMessage.Append(serializer.GetBuffer(parameter.GetType()));
                 zmqMessage.Append(serializer.GetBuffer(parameter));
             }
@@ -732,7 +733,7 @@ namespace Daytona
                 NetMQMessage NetMQMessage = null;
 
                 this.WriteLineToMonitor(String.Format("The {0} Waiting for message", this.Name));
-
+                   
                 byte[] messageAsBytes = null;
                 try
                 {
@@ -767,7 +768,7 @@ namespace Daytona
                 }
             }
 
-            this.WriteLineToMonitor("Exiting actor");
+            this.WriteLineToMonitor(string.Format( "Exiting actor {0}", this.Name));
         }
 
         public void Start<T>() where T : IPayload
@@ -832,8 +833,8 @@ namespace Daytona
                 try
                 {
                     this.MonitorChannel.Send(line, Exchange.ControlChannelEncoding);
-                   
                     var signal = this.MonitorChannel.Receive();
+                    //var signal = this.MonitorChannel.Receive(SendReceiveOptions.DontWait);
                 }
                 catch (Exception ex)
                 {
@@ -894,21 +895,25 @@ namespace Daytona
             else
             {
                 //File.Create(fileName);
-                var addressAndNumber = returnedAddress.Split('/');
-                var id = addressAndNumber[1];
-                long longId = 0;
-                if (Int64.TryParse(id, out longId))
+                if (returnedAddress.Contains(@"/"))
                 {
-                    target = Activator.CreateInstance(type, longId);
-                }
-                else
-                {
-                    var guidId = new Guid(id);
-                    target = Activator.CreateInstance(type, guidId);
+                    var addressAndNumber = returnedAddress.Split('/');
+                    var id = addressAndNumber[1];
+                    long longId = 0;
+                    if (Int64.TryParse(id, out longId))
+                    {
+                        target = Activator.CreateInstance(type, longId);
+                    }
+                    else
+                    {
+                        var guidId = new Guid(id);
+                        target = Activator.CreateInstance(type, guidId);
+                    }
+
+                    var store = new Store(this.PersistanceSerializer);
+                    store.Persist(type, target, returnedAddress); 
                 }
 
-                var store = new Store(this.PersistanceSerializer);
-                store.Persist(type, target, returnedAddress);
             }
     
             return target;

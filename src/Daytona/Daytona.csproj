@@ -68,10 +68,6 @@
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="NetMQ, Version=3.3.0.11, Culture=neutral, PublicKeyToken=a6decef4ddc58b3a, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\NetMQ.3.3.0.11\lib\net40\NetMQ.dll</HintPath>
-    </Reference>
     <Reference Include="Newtonsoft.Json, Version=4.5.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\packages\Newtonsoft.Json.4.5.11\lib\net40\Newtonsoft.Json.dll</HintPath>
     </Reference>
@@ -90,6 +86,7 @@
     <Compile Include="baseclasses\Store.cs" />
     <Compile Include="BinarySerializer.cs" />
     <Compile Include="CallBackEventArgs.cs" />
+    <Compile Include="DiagnosticMessage.cs" />
     <Compile Include="Entity.cs" />
     <Compile Include="DataWriterReader.cs" />
     <Compile Include="DefaultSerializer.cs" />
@@ -110,6 +107,10 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\..\..\Git\Repos\netmq\src\NetMQ\NetMQ.csproj">
+      <Project>{82934bac-07fb-41ac-ae59-46fee6026a40}</Project>
+      <Name>NetMQ</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\..\..\Git\Repos\NProxy\Source\Main\NProxy.Core\NProxy.Core.csproj">
       <Project>{e4d8e5ab-7233-4a6f-9763-54931e7580b4}</Project>
       <Name>NProxy.Core</Name>

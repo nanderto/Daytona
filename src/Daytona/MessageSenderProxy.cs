@@ -3,6 +3,7 @@
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Linq.Expressions;
     using System.Reflection;
     using System.Text;
 
@@ -51,15 +52,40 @@
             this.uniqueGuid = uniqueGuid;
         }
 
-        public object Invoke(object target, System.Reflection.MethodInfo methodInfo, object[] parameters)
+        public object Invoke(object target, MethodInfo methodInfo, object[] parameters)
         {
             this.WasCalled = true;
             var id = this.Id == 0 ? this.uniqueGuid.ToString() : this.Id.ToString();
-            var address = new StringBuilder(this.actorType.FullName).Append("/").Append(id);
+            string address;
 
-            var realmethodInfo = this.actorType.GetMethod(methodInfo.Name);
+            if (!string.IsNullOrEmpty(id))
+            {
+                address = new StringBuilder(this.actorType.FullName).Append("/").Append(id).ToString();
+            }
+            else
+            {
+                address = this.actorType.FullName;
+            }
 
-            this.actor.SendMessage(parameters, realmethodInfo, address.ToString());
+            MethodInfo realmethodInfo = null;
+
+            if (parameters.Length > 0)
+            {
+                var parametrs = new Type[parameters.Length];
+
+                for (var i = 0; i < parameters.Length; i++)
+                {
+                    parametrs[i] = parameters[i].GetType();
+                }
+
+                realmethodInfo = this.actorType.GetMethod(methodInfo.Name, parametrs);
+            }
+            else
+            {
+                realmethodInfo = this.actorType.GetMethod(methodInfo.Name);
+            }
+
+            this.actor.SendMessage(parameters, realmethodInfo, address);
             return null;
         }
     }
