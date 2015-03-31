@@ -68,7 +68,7 @@ namespace Daytona
 
         private static readonly object SynchLock = new object();
 
-        public readonly Dictionary<string, Entity> Clowns = new Dictionary<string, Entity>();
+        public readonly Dictionary<string, Entity> Entities = new Dictionary<string, Entity>();
 
         #endregion
 
@@ -118,6 +118,12 @@ namespace Daytona
             this.SetUpMonitorChannel(context);
             this.SetUpOutputChannel(context);
             this.PropertyBag = new Dictionary<string, object>();
+            this.Subscriber.ReceiveReady += Subscriber_ReceiveReady;
+        }
+
+        public void Subscriber_ReceiveReady(object sender, NetMQSocketEventArgs e)
+        {
+            Console.WriteLine("hey I fired");
         }
 
         public Actor(ISerializer serializer)
@@ -201,7 +207,7 @@ namespace Daytona
             this.Name = name;
             this.InRoute = inRoute;
             this.Workload = workload;
-            this.Clowns = entities;
+            this.Entities = entities;
             this.PropertyBag = new Dictionary<string, object>();
             this.SetUpMonitorChannel(context);
             this.SetUpOutputChannel(context);
@@ -255,7 +261,7 @@ namespace Daytona
             this.PersistanceSerializer = persistenceSerializer;
             this.Name = name;
             this.InRoute = inRoute;
-            this.Clowns = entities;
+            this.Entities = entities;
             this.Workload = workload;
             this.PropertyBag = new Dictionary<string, object>();
             this.SetUpMonitorChannel(context);
@@ -277,7 +283,7 @@ namespace Daytona
             this.PersistanceSerializer = persistenceSerializer;
             this.Name = name;
             this.InRoute = inRoute;
-            this.Clowns = entities;
+            this.Entities = entities;
             this.Actions = actions;
             this.PropertyBag = new Dictionary<string, object>();
             this.SetUpMonitorChannel(context);

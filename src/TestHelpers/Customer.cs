@@ -129,4 +129,31 @@ namespace TestHelpers
 
         public long CustomerID { get; set; }
     }
+
+    public interface ICounter
+    {
+        Guid Id { set; }
+
+        int TheCount { set; }
+
+        void Add();
+    }
+
+    [Serializable]
+    public class Counter : ICounter
+    {
+        public Counter(Guid id)
+        {
+            this.Id = id;
+        }
+
+        public Guid Id { get; set; }
+
+        public void Add()
+        {
+            this.TheCount ++;
+        }
+
+        public int TheCount { get; set; }
+    }
 }

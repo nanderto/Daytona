@@ -171,7 +171,7 @@ namespace Daytona
 
             Type generic = typeof(Actor<>);
             Entity entity = null;
-            actor.Clowns.TryGetValue(addressAndId[0], out entity);
+            actor.Entities.TryGetValue(addressAndId[0], out entity);
 
             Type[] typeArgs = { entity.EntityType };
             
@@ -202,6 +202,7 @@ namespace Daytona
                     cleanAddress,
                     new BinarySerializer(),
                     new DefaultSerializer(Exchange.ControlChannelEncoding));
+            target.Name = cleanAddress;
             var result = methodInfo.Invoke(entityFromPersistence, parameters.ToArray());
             var store = new Store(target.PersistanceSerializer);
             store.Persist(entity.EntityType, entityFromPersistence, cleanAddress);

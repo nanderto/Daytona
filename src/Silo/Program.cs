@@ -21,11 +21,6 @@ namespace SiloConsole
         public static void Main(string[] args)
         {
             Console.CancelKeyPress += new ConsoleCancelEventHandler(ConsoleCancelHandler);
-            var binarySerializer = new BinarySerializer();
-            var useActor = true;
-            var task = Task.Run(
-                () =>
-                    {
                    
             using (var context = NetMQContext.Create())
             {
@@ -44,7 +39,7 @@ namespace SiloConsole
                     //Console.WriteLine("Run tests");
                     //Console.ReadLine();
 
-                    //var customer = silo.ActorFactory.CreateInstance<ICustomer>(typeof(Customer), 33);
+                    var customer = silo.ActorFactory.CreateInstance<ICustomer>(typeof(Customer), 99);
                         
                     //customer.CreateOrder();
 
@@ -66,9 +61,13 @@ namespace SiloConsole
                     for (int i = 0; i < 100; i++)
                     {
                         Console.WriteLine(
-                               "Last order created was {0}, its description was {1}",
+                               "({0}) Last order created was {1}, its description was {2}", i,
                                uniqueGuid,
                                description);
+
+                       // uniqueGuid = Guid.NewGuid();
+                        customer.CreateOrder();
+
                         if (exit != null && exit.ToLower() != "runtoend")
                         {     
                             Console.WriteLine("Press Enter to send another message, or type exit to stop");
@@ -104,8 +103,6 @@ namespace SiloConsole
                 Console.WriteLine("Press Enter to Exit");
                 Console.ReadLine();
              }
-                });
-            task.Wait();
         }
 
         static bool interrupted = false;

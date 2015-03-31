@@ -75,7 +75,13 @@ namespace Daytona
             this.Model = model;
             //var inRoute = typeof(T).FullName + id;
             this.SetUpReceivers(context, address);
+            this.Subscriber.ReceiveReady += base.Subscriber_ReceiveReady;
         }
+
+        //void Subscriber_ReceiveReady(object sender, NetMQSocketEventArgs e)
+        //{
+        //    throw new NotImplementedException();
+        //}
 
         public Actor(ISerializer serializer)
             : base(serializer)

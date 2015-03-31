@@ -41,6 +41,11 @@ namespace TestHelpers
             return encoding.GetString(buffer);
         }
 
+        public string GetString<T>(T message)
+        {
+            return this.Serialize(message);
+        }
+
         public T Deserializer<T>(string input)
         {
             return JsonConvert.DeserializeObject<T>(input);

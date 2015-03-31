@@ -19,7 +19,7 @@ namespace Daytona
         public void Persist(Type type, object target, string filename)
         {
             var pathSegment = type.FullName;
-            var line = this.serializer.GetString(serializer.GetBuffer(target));
+            var line = this.serializer.GetString(target);
             var fi = new FileInfo(string.Format(@"c:\dev\persistence\{0}.log", filename));
             var stream = fi.AppendText();
             stream.WriteLine("{0}~{1}", line, DateTime.Now);

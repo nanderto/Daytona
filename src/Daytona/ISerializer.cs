@@ -23,5 +23,7 @@ namespace Daytona
         byte[] GetBuffer<T>(T message);
 
         string GetString(byte[] buffer);
+
+        string GetString<T>(T message);
     }
 }
