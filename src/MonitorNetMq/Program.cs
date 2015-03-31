@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 
 namespace MonitorNetMq
 {
-    using Daytona;
 
     using NetMQ;
 
@@ -16,20 +15,29 @@ namespace MonitorNetMq
     {
         private static void Main(string[] args)
         {
-            using (NetMQContext contex = NetMQContext.Create())
+            using (NetMQContext context = NetMQContext.Create())
             {
-                using (var rep = contex.CreateSubscriberSocket())
-                {
-                    rep.Bind(Pipe.PublishAddressServer);
-                    while (true)
+                
+                    using (var rep = context.CreateResponseSocket())
                     {
-                        var str = rep.ReceiveString();
-                        Console.Out.WriteLine(str);
-
+                        rep.Bind(MonitorAddressServer);
+                        while (true)
+                        {
+                            var signal = rep.ReceiveString(ControlChannelEncoding);
+                            Console.WriteLine("::> " + signal);
+                            rep.Send(string.Empty, Encoding.Unicode);
+                        }
                     }
-                }
+               
 
             }
         }
+
+        public static string MonitorAddressClient = "tcp://localhost:5560";  ////"inproc://pubsubcontrol";//
+
+        public static string MonitorAddressServer = "tcp://*:5560";
+
+
+        public static Encoding ControlChannelEncoding = Encoding.Unicode;
     }
 }

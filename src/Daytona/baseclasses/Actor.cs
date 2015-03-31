@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="Actor.cs" company="">
-//   
+// <copyright file="Actor.cs" company="Brookfield Global Relocation Services">
+// Copyright © 2014 All Rights Reserved
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -9,54 +9,121 @@ namespace Daytona
     using System;
     using System.Collections.Generic;
     using System.IO;
+    using System.Linq;
     using System.Reflection;
     using System.Runtime.Serialization;
     using System.Text;
     using System.Threading.Tasks;
 
-    using ZeroMQ;
+    using NetMQ;
+    using NetMQ.zmq;
+
+    using NProxy.Core;
 
     [Serializable]
     public class Actor : IDisposable
     {
-        [NonSerialized]
-        public ZmqSocket subscriber;
+        #region Static Fields
 
-        [NonSerialized]
-        public ZmqContext context;
+        public static Func<NetMQSocket, BinarySerializer, List<object>, bool> AddParameter =
+            (socket, serializer, parameters) =>
+                {
+                    Type returnedType = GetObjectType(socket, serializer);
+                    object parameter = null;
+                    var result = GetParameter(socket, serializer, returnedType);
+                    parameters.Add(result.Item1);
+                    return result.Item2;
+                };
 
-        public readonly Dictionary<string, Action> actorTypes = new Dictionary<string, Action>();
+        public static Func<NetMQSocket, BinarySerializer, Tuple<MethodInfo, bool>> GetMethodInfo = (socket, serializer) =>
+            {
+                var hasMore = false;
+                var buffer = socket.Receive(out hasMore);
+                var methodinfo = (MethodInfo)serializer.Deserializer(buffer, typeof(MethodInfo));
+                return new Tuple<MethodInfo, bool>(methodinfo, hasMore);
+            };
+
+        public static Func<NetMQSocket, BinarySerializer, Type> GetObjectType = (socket, serializer) =>
+            {
+                var hasMore = false;
+                var buffer = socket.Receive(out hasMore);
+                return (Type)serializer.Deserializer(buffer, typeof(Type));
+            };
+
+        public static Func<NetMQSocket, BinarySerializer, Type, Tuple<object, bool>> GetParameter =
+            (socket, serializer, type) =>
+                {
+                    var hasMore = false;
+                    var buffer = socket.Receive(out hasMore);
+                    var parameter = serializer.Deserializer(buffer, type);
+                    return new Tuple<object, bool>(parameter, hasMore);
+                };
+
+        public static Func<NetMQSocket, BinarySerializer, string> GetString = (socket, serializer) =>
+            {
+                var hasMore = false;
+                var buffer = socket.Receive(out hasMore);
+                return serializer.GetString(buffer);
+            };
 
         private static readonly object SynchLock = new object();
 
-        private bool disposed;
+        public readonly Dictionary<string, Entity> Entities = new Dictionary<string, Entity>();
+
+        #endregion
+
+        #region Fields
+
+        public readonly Dictionary<string, Action> actorTypes = new Dictionary<string, Action>();
 
         [NonSerialized]
-        private ZmqSocket monitorChannel;
-
-        private bool monitorChannelDisposed = false;
+        public NetMQContext Context;
 
         [NonSerialized]
-        private ZmqSocket outputChannel;
+        public NetMQSocket Subscriber;
+
+        //public Type TypeOfActor;
+
+        [NonSerialized]
+        private NetMQSocket monitorChannel;
+
+        private bool monitorChannelDisposed;
+
+        [NonSerialized]
+        private NetMQSocket outputChannel;
 
         [NonSerialized]
         private ISerializer serializer;
 
-        private bool subscriberDisposed = false;
-        
+        private bool subscriberDisposed;
+
+        #endregion
+
+        #region Constructors and Destructors
+
+        public Actor()
+        {
+        }
+
         /// <summary>
         ///     Initializes a new instance of the <see cref="Actor{T}" /> class.
         ///     This is generally used when creating a actor to act as a Actor factory.
         /// </summary>
         /// <param name="context">The context.</param>
-        public Actor(ZmqContext context)
+        public Actor(NetMQContext context)
         {
             this.IsRunning = false;
-            this.context = context;
+            this.Context = context;
             this.Serializer = new DefaultSerializer(Encoding.Unicode);
             this.SetUpMonitorChannel(context);
             this.SetUpOutputChannel(context);
             this.PropertyBag = new Dictionary<string, object>();
+            this.Subscriber.ReceiveReady += Subscriber_ReceiveReady;
+        }
+
+        public void Subscriber_ReceiveReady(object sender, NetMQSocketEventArgs e)
+        {
+            Console.WriteLine("hey I fired");
         }
 
         public Actor(ISerializer serializer)
@@ -65,20 +132,20 @@ namespace Daytona
             this.Serializer = serializer;
         }
 
-        public Actor(ZmqContext context, ISerializer serializer)
+        public Actor(NetMQContext context, ISerializer serializer)
         {
             this.IsRunning = false;
-            this.context = context;
+            this.Context = context;
             this.Serializer = serializer;
             this.PropertyBag = new Dictionary<string, object>();
             this.SetUpMonitorChannel(context);
             this.SetUpOutputChannel(context);
         }
 
-        public Actor(ZmqContext context, ISerializer serializer, string inRoute)
+        public Actor(NetMQContext context, ISerializer serializer, string inRoute)
         {
             this.IsRunning = false;
-            this.context = context;
+            this.Context = context;
             this.Serializer = serializer;
             this.PropertyBag = new Dictionary<string, object>();
             this.SetUpMonitorChannel(context);
@@ -86,10 +153,10 @@ namespace Daytona
             this.SetUpReceivers(context, inRoute);
         }
 
-        public Actor(ZmqContext context, ISerializer serializer, string name, string inRoute, Action<Actor> workload)
+        public Actor(NetMQContext context, ISerializer serializer, string name, string inRoute, Action<Actor> workload)
         {
             this.IsRunning = false;
-            this.context = context;
+            this.Context = context;
             this.Serializer = serializer;
             this.Name = name;
             this.InRoute = inRoute;
@@ -100,11 +167,10 @@ namespace Daytona
             this.SetUpReceivers(context, inRoute);
         }
 
-
-        public Actor(ZmqContext context, ISerializer serializer, string name, string inRoute, Action<string, List<object>, Actor> workload)
+        public Actor(NetMQContext context, ISerializer serializer, string name, string inRoute, Action<string, List<object>, Actor> workload)
         {
             this.IsRunning = false;
-            this.context = context;
+            this.Context = context;
             this.Serializer = serializer;
             this.Name = name;
             this.InRoute = inRoute;
@@ -115,11 +181,51 @@ namespace Daytona
             this.SetUpReceivers(context, inRoute);
         }
 
-        public Actor(ZmqContext context, ISerializer serializer, string name, string inRoute, Action<string, MethodInfo, List<object>, Actor> workload)
+        public Actor(NetMQContext context, ISerializer messageSerializer, ISerializer persistenceSerializer)
         {
             this.IsRunning = false;
-            this.context = context;
+            this.Context = context;
+            this.Serializer = messageSerializer;
+            this.PersistanceSerializer = persistenceSerializer;
+           // this.Workload = workload;
+            this.PropertyBag = new Dictionary<string, object>();
+            this.SetUpMonitorChannel(context);
+            this.SetUpOutputChannel(context);
+        }
+
+        public Actor(
+            NetMQContext context,
+            ISerializer serializer,
+            string name,
+            string inRoute,
+            Dictionary<string, Entity> entities,
+            Action<string, string, MethodInfo, List<object>, Actor> workload)
+        {
+            this.IsRunning = false;
+            this.Context = context;
             this.Serializer = serializer;
+            this.Name = name;
+            this.InRoute = inRoute;
+            this.Workload = workload;
+            this.Entities = entities;
+            this.PropertyBag = new Dictionary<string, object>();
+            this.SetUpMonitorChannel(context);
+            this.SetUpOutputChannel(context);
+            this.SetUpReceivers(context, inRoute);
+        }
+
+        public Actor(
+            NetMQContext context,
+            ISerializer serializer,
+            ISerializer persistenceSerializer,
+            string name,
+            string inRoute,
+            Action<string, MethodInfo, List<object>, Actor> workload)
+        {
+            this.IsRunning = false;
+            this.Context = context;
+            this.Serializer = serializer;
+            this.PersistanceSerializer = persistenceSerializer;
             this.Name = name;
             this.InRoute = inRoute;
             this.Workload = workload;
@@ -128,9 +234,84 @@ namespace Daytona
             this.SetUpOutputChannel(context);
             this.SetUpReceivers(context, inRoute);
         }
+        /// <summary>
+        /// This constructor is useful for seting up a Actor factory that does not listen for its own messages
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="binarySerializer"></param>
+        /// <param name="dontAcceptMessages"></param>
+        public Actor(NetMQContext context, BinarySerializer binarySerializer, bool dontAcceptMessages)
+        {
+            this.Context = context;
+            this.binarySerializer = binarySerializer;
+            this.DontAcceptMessages = dontAcceptMessages;
+        }
+
+        public Actor(
+            NetMQContext context,
+            ISerializer serializer,
+            ISerializer persistenceSerializer,
+            string name,
+            string inRoute,
+            Dictionary<string, Entity> entities,
+            Action<string, string, MethodInfo, List<object>, Actor> workload)
+        {
+            this.Context = context;
+            this.Serializer = serializer;
+            this.PersistanceSerializer = persistenceSerializer;
+            this.Name = name;
+            this.InRoute = inRoute;
+            this.Entities = entities;
+            this.Workload = workload;
+            this.PropertyBag = new Dictionary<string, object>();
+            this.SetUpMonitorChannel(context);
+            this.SetUpOutputChannel(context);
+            this.SetUpReceivers(context, inRoute);
+        }
+
+        public Actor(
+            NetMQContext context,
+            ISerializer serializer,
+            ISerializer persistenceSerializer,
+            string name,
+            string inRoute,
+            Dictionary<string, Entity> entities,
+            Dictionary<string, Delegate> actions)
+        {
+            this.Context = context;
+            this.Serializer = serializer;
+            this.PersistanceSerializer = persistenceSerializer;
+            this.Name = name;
+            this.InRoute = inRoute;
+            this.Entities = entities;
+            this.Actions = actions;
+            this.PropertyBag = new Dictionary<string, object>();
+            this.SetUpMonitorChannel(context);
+            this.SetUpOutputChannel(context);
+            this.SetUpReceivers(context, inRoute);
+        }
+        #endregion
+
+        #region Public Events
+
+        //private NetMQContext context;
+
+        private BinarySerializer binarySerializer;
+
+        private Dictionary<string, Entity> entities;
+
+        private NetMQContext netMQContext;
+        
+        private ISerializer persistenceSerializer;
+
+        private Action<string, string, MethodInfo, List<object>, Actor> workload;
 
         public virtual event EventHandler<CallBackEventArgs> SaveCompletedEvent;
-        
+
+        #endregion
+
+        #region Public Properties
+
         public Delegate Callback { get; set; }
 
         public int Id { get; set; }
@@ -139,7 +320,7 @@ namespace Daytona
 
         public bool IsRunning { get; set; }
 
-        public ZmqSocket MonitorChannel
+        public NetMQSocket MonitorChannel
         {
             get
             {
@@ -156,7 +337,7 @@ namespace Daytona
 
         public string OutRoute { get; set; }
 
-        public ZmqSocket OutputChannel
+        public NetMQSocket OutputChannel
         {
             get
             {
@@ -198,7 +379,11 @@ namespace Daytona
         }
 
         public Delegate Workload { get; set; }
-        
+
+        #endregion
+
+        #region Public Methods and Operators
+
         public static void Writeline(string line)
         {
             lock (SynchLock)
@@ -238,13 +423,84 @@ namespace Daytona
             GC.SuppressFinalize(this);
         }
 
-        public Actor RegisterActor<T>(string name, string inRoute, string outRoute, ISerializer serializer, Action<Actor> workload) where T : IPayload
+        public virtual bool  ReceiveMessage(NetMQSocket subscriber)
+        {
+            var stopSignal = false;
+            var methodParameters = new List<object>();
+            var serializer = new BinarySerializer();
+            MethodInfo returnedMethodInfo = null;
+            var returnedMessageType = String.Empty;
+            var returnedAddress = String.Empty;
+            var returnAddress = String.Empty; //need to send the return address in message package
+
+            returnedAddress = GetString(subscriber, serializer);
+            returnedMessageType = GetString(subscriber, serializer);
+
+            if (returnedMessageType == "MethodInfo")
+            {
+                var returned = GetMethodInfo(subscriber, serializer);
+                returnedMethodInfo = returned.Item1;
+                var hasMore = returned.Item2;
+                while (hasMore)
+                {
+                    hasMore = AddParameter(subscriber, serializer, methodParameters);
+                }
+
+                var inputParameters = new object[5];
+                inputParameters[0] = returnedAddress;
+                inputParameters[1] = returnAddress;
+                inputParameters[2] = returnedMethodInfo;
+                inputParameters[3] = methodParameters;
+                inputParameters[4] = this;
+
+                Delegate action = null;
+                this.Actions.TryGetValue("MethodInfo", out action);
+                action.DynamicInvoke(inputParameters);
+
+                //this.Workload.DynamicInvoke(inputParameters);
+            }
+
+            if (returnedMessageType == "Workload")
+            {
+                var inputParameters = new object[4];
+                inputParameters[0] = returnedAddress;
+                inputParameters[1] = returnedMethodInfo;
+                inputParameters[2] = methodParameters;
+                inputParameters[3] = this;
+
+                this.Workload.DynamicInvoke(inputParameters);
+            }
+
+            if (returnedMessageType.ToLower() == "stop")
+            {
+                stopSignal = true;
+            }
+
+            if (returnedMessageType.ToLower() == "shutdownallactors")
+             {
+                var inputParameters = new object[2];
+                inputParameters[0] = "shutdownallactors";
+                inputParameters[1] = this;
+                Delegate action = null;
+                this.Actions.TryGetValue("ShutDownAllActors", out action);
+                action.DynamicInvoke(inputParameters);
+                //this.Workload.DynamicInvoke(inputParameters);
+            }
+            return stopSignal;
+        }
+
+        public Actor RegisterActor<T>(
+            string name,
+            string inRoute,
+            string outRoute,
+            ISerializer serializer,
+            Action<Actor> workload) where T : IPayload
         {
             this.actorTypes.Add(
-                name, 
+                name,
                 () =>
                     {
-                        using (var actor = new Actor(this.context, serializer, name, inRoute, workload))
+                        using (var actor = new Actor(this.Context, serializer, name, inRoute, workload))
                         {
                             actor.Start<T>();
                         }
@@ -252,14 +508,131 @@ namespace Daytona
             return this;
         }
 
+        public Actor RegisterActor(
+            string name,
+            string inRoute,
+            string outRoute,
+            ISerializer serializer,
+            Action<string, List<object>, Actor> workload)
+        {
+            this.actorTypes.Add(
+                name,
+                () =>
+                    {
+                        using (var actor = new Actor(this.Context, serializer, name, inRoute, workload))
+                        {
+                            actor.Start();
+                        }
+                    });
+            return this;
+        }
 
-        public Actor RegisterActor(string name, string inRoute, string outRoute, ISerializer serializer, Action<string, List<object>, Actor> workload) 
+        /// <summary>
+        ///     This constructor is used to handle messages that have been packaged up with a methodinfo object and parameters
+        ///     These messages are sent by the proxy of the custom objects.
+        /// </summary>
+        /// <param name="name">Name of actor</param>
+        /// <param name="inRoute">
+        ///     the address the actor listens to. this will generally be blank so that this methid can handle all me
+        ///     messages that are sent
+        /// </param>
+        /// <param name="outRoute">Generally unused</param>
+        /// <param name="serializer">Serializer</param>
+        /// <param name="workload">
+        ///     the function to execute, this function will typically execute the methodinfo that it is sent
+        ///     with the parameter sent
+        /// </param>
+        /// <returns>the actor</returns>
+        public Actor RegisterActor(
+            string name,
+            string inRoute,
+            string outRoute,
+            ISerializer serializer,
+            ISerializer persistenceSerializer,
+            Action<string, MethodInfo, List<object>, Actor> workload)
+        {
+            this.actorTypes.Add(
+                name,
+                () =>
+                    {
+                        using (var actor = new Actor(this.Context, serializer, persistenceSerializer, name, inRoute, workload))
+                        {
+                            actor.Start();
+                        }
+                    });
+            return this;
+        }
+
+        public Actor RegisterActor(
+            string name,
+            string inRoute,
+            string outRoute,
+            Dictionary<string, Entity> entities,
+            ISerializer serializer,
+            Action<string, string, MethodInfo, List<object>, Actor> workload)
+        {
+            this.actorTypes.Add(
+                name,
+                () =>
+                    {
+                        using (var actor = new Actor(this.Context, serializer, name, inRoute, entities, workload))
+                        {
+                            actor.Start();
+                        }
+                    });
+            return this;
+        }
+
+        public Actor RegisterActor(
+            string name,
+            string inRoute,
+            string outRoute,
+            Dictionary<string, Entity> entities,
+            ISerializer serializer,
+            ISerializer persistenceSerializer,
+            Action<string, string, MethodInfo, List<object>, Actor> workload)
+        {
+            this.actorTypes.Add(
+                name,
+                () =>
+                    {
+                        using (
+                            var actor = new Actor(
+                                this.Context,
+                                serializer,
+                                persistenceSerializer,
+                                name,
+                                inRoute,
+                                entities,
+                                workload))
+                        {
+                            actor.Start();
+                        }
+                    });
+            return this;
+        }
+
+        public Actor RegisterActor(
+            string name,
+            string inRoute,
+            string outRoute,
+            Dictionary<string, Entity> entities,
+            ISerializer serializer,
+            ISerializer persistenceSerializer,
+            Dictionary<string, Delegate> actions)
         {
             this.actorTypes.Add(
                 name,
                 () =>
                 {
-                    using (var actor = new Actor(this.context, serializer, name, inRoute, workload))
+                    using (var actor = new Actor(
+                            this.Context,
+                            serializer,
+                            persistenceSerializer,
+                            name,
+                            inRoute,
+                            entities,
+                            actions))
                     {
                         actor.Start();
                     }
@@ -267,43 +640,89 @@ namespace Daytona
             return this;
         }
 
-
-        public Actor RegisterActor(string name, string inRoute, string outRoute, ISerializer serializer, Action<string, MethodInfo, List<object>, Actor> workload)
+        public void SendKillMe(ISerializer serializer, NetMQSocket socket)
         {
-            this.actorTypes.Add(
-                name,
-                () =>
-                {
-                    using (var actor = new Actor(this.context, serializer, name, inRoute, workload))
-                    {
-                        actor.Start();
-                    }
-                });
-            return this;
+            this.SendKillSignal(serializer, socket, this.InRoute);
         }
 
-        public void SendMessage(string address, byte[] message, ISerializer serializer, ZmqSocket socket)
+        public void SendKillSignal(ISerializer serializer, NetMQSocket socket, string address)
+        {
+            var netMqMessage = new NetMQMessage();
+            netMqMessage.Append(new NetMQFrame(serializer.GetBuffer(address)));
+            netMqMessage.Append(new NetMQFrame(serializer.GetBuffer("stop")));
+            socket.SendMessage(netMqMessage);
+        }
+
+        public void SendMessage(string address, byte[] message, ISerializer serializer, NetMQSocket socket)
         {
             this.SendMessage(serializer.Encoding.GetBytes(address), message, socket);
         }
 
-        public void SendMessage(byte[] address, byte[] message, ZmqSocket socket)
+        public void SendMessage(byte[] address, byte[] message, NetMQSocket socket)
         {
-            var zmqMessage = new ZmqMessage();
-            zmqMessage.Append(new Frame(address));
-            zmqMessage.Append(new Frame(message));
-            socket.SendMessage(zmqMessage);
+            var netMQMessage = new NetMQMessage();
+            netMQMessage.Append(new NetMQFrame(address));
+            netMQMessage.Append(new NetMQFrame(message));
+            socket.SendMessage(netMQMessage);
         }
 
-        public void SendOneMessageOfType<T>(string address, T message, ISerializer serializer, ZmqSocket socket)
+        public void SendMessage(object[] parameters, MethodInfo methodInfo, string TypeFullName)
+        {
+            var zmqMessage = PackZmqMessage(parameters, methodInfo, this.Serializer, TypeFullName);
+
+            this.OutputChannel.SendMessage(zmqMessage);
+        }
+
+        public static NetMQMessage PackZmqMessage(object[] parameters, MethodInfo methodInfo, ISerializer serializer, string addressToSendTo)
+        {
+            var zmqMessage = new NetMQMessage();
+            zmqMessage.Append(new NetMQFrame(serializer.GetBuffer(addressToSendTo)));
+            zmqMessage.Append(new NetMQFrame(serializer.GetBuffer("MethodInfo")));
+
+            var serializedMethodInfo = serializer.GetBuffer(methodInfo);
+            zmqMessage.Append(new NetMQFrame(serializedMethodInfo));
+
+            // zmqMessage.Append(new NetMQFrame(serializer.GetBuffer(string.Format("ParameterCount:{0}", parameters.Length))));
+            foreach (var parameter in parameters)
+            {
+                //todo cant handle null parameters
+                zmqMessage.Append(serializer.GetBuffer(parameter.GetType()));
+                zmqMessage.Append(serializer.GetBuffer(parameter));
+            }
+
+            return zmqMessage;
+        }
+
+        public TInterface CreateInstance<TInterface>(Type actoryType) where TInterface : class
+        {
+            var invocationHandler = new MessageSenderProxy(this, actoryType);
+            var proxyFactory = new ProxyFactory(new MethodsOnlyInterceptionFilter());
+            return proxyFactory.CreateProxy<TInterface>(Type.EmptyTypes, invocationHandler);
+        }
+
+        public TInterface CreateInstance<TInterface>(Type actoryType, long id) where TInterface : class
+        {
+            var invocationHandler = new MessageSenderProxy(this, actoryType, id);
+            var proxyFactory = new ProxyFactory(new MethodsOnlyInterceptionFilter());
+            return proxyFactory.CreateProxy<TInterface>(Type.EmptyTypes, invocationHandler);
+        }
+
+        public TInterface CreateInstance<TInterface>(Type actoryType, Guid uniqueGuid) where TInterface : class
+        {
+            var invocationHandler = new MessageSenderProxy(this, actoryType, uniqueGuid);
+            var proxyFactory = new ProxyFactory(new MethodsOnlyInterceptionFilter());
+            return proxyFactory.CreateProxy<TInterface>(Type.EmptyTypes, invocationHandler);
+        }
+
+        public void SendOneMessageOfType<T>(string address, T message, ISerializer serializer, NetMQSocket socket)
             where T : IPayload
         {
-            var zmqMessage = new ZmqMessage();
-            zmqMessage.Append(new Frame(serializer.GetBuffer(address)));
-            zmqMessage.Append(new Frame(serializer.GetBuffer(message)));
+            var netMQMessage = new NetMQMessage();
+            netMQMessage.Append(new NetMQFrame(serializer.GetBuffer(address)));
+            netMQMessage.Append(new NetMQFrame(serializer.GetBuffer(message)));
 
             ////var replySignal = this.sendControlChannel.Receive(Pipe.ControlChannelEncoding);
-            socket.SendMessage(zmqMessage);
+            socket.SendMessage(netMQMessage);
 
             ////this.sendControlChannel.Send("Just sent message to " + address + " Message is: " + message, Pipe.ControlChannelEncoding);
             ////replySignal = this.sendControlChannel.Receive(Pipe.ControlChannelEncoding);
@@ -316,157 +735,46 @@ namespace Daytona
             while (stop == false)
             {
                 this.IsRunning = true;
-                string address = string.Empty;
-                ZmqMessage zmqmessage = null;
+                string address = String.Empty;
+                NetMQMessage NetMQMessage = null;
 
-                this.WriteLineToMonitor("Waiting for message");
-
+                this.WriteLineToMonitor(String.Format("The {0} Waiting for message", this.Name));
+                   
                 byte[] messageAsBytes = null;
                 try
                 {
-                    stop = this.ReceiveMessage(this.subscriber);
-                    this.WriteLineToMonitor("Received message");
+                    stop = this.ReceiveMessage(this.Subscriber);
                 }
                 catch (SerializationException se)
                 {
-                    this.WriteLineToMonitor(string.Format("Serialization Error: {0}", se.ToString()));
+                    this.WriteLineToMonitor(String.Format("Serialization Error: {0}", se));
+
                     ////skip to end of message
-                    while (this.subscriber.ReceiveMore)
+                    bool more;
+                    do
                     {
-                        Frame frame = subscriber.ReceiveFrame();
+                        var data = this.Subscriber.Receive(out more);
                     }
+                    while (more);
                 }
-                
+                catch (TerminatingException te)
+                {
+                    ////Swallow excptions caused by the socet closing.
+                    //// dont yet have a way to terminate gracefully
+
+                    break;
+                }
+
+                ////non generic Actors do (should) not have any data to persist.
+                ////this.PersistSelf(this.TypeOfActor, this, this.PersistanceSerializer);
+
                 if (stop)
                 {
                     this.IsRunning = false;
                 }
             }
 
-            this.WriteLineToMonitor("Exiting actor");
-        }
-
-        public virtual bool ReceiveMessage(ZmqSocket subscriber)
-        {
-            var stopSignal = false;
-            var zmqOut = new ZmqMessage();
-            bool hasMore = true;
-
-            // var address = string.Empty;
-            // byte[] messageAsBytes = null;
-            int frameCount = 0;
-            MethodInfo methodinfo = null;
-            var methodParameters = new List<object>();
-            var serializer = new BinarySerializer();
-            var typeParameter = true;
-            Type type = null;
-            MethodInfo returnedMethodInfo = null;
-            string messageType = string.Empty, returnedMessageType = string.Empty;
-            string address = string.Empty;
-            var returnedAddress = string.Empty;
-            var exceptionThrown = false;
-
-            while (hasMore)
-            {
-                Frame frame = subscriber.ReceiveFrame();
-                try
-                {
-                    stopSignal = UnPackFrame(frameCount, serializer, frame, out address, ref methodinfo, methodParameters, ref typeParameter, ref type, out messageType);
-                }
-                catch (SerializationException se)
-                {
-                    this.WriteLineToMonitor(string.Format("Serialization Error: {0}", se.Message));
-                    exceptionThrown = true;
-                }
-
-                if (frameCount == 0)
-                {
-                    returnedAddress = address;
-                }
-
-                if (frameCount == 1)
-                {
-                    returnedMessageType = messageType;
-                }
-
-                if (frameCount == 2)
-                {
-                    returnedMethodInfo = methodinfo;
-                }
-
-                frameCount++;
-                zmqOut.Append(new Frame(frame.Buffer));
-                hasMore = subscriber.ReceiveMore;
-            }
-
-            //if (!exceptionThrown)
-            //{
-                var inputParameters = new object[4];
-                inputParameters[0] = returnedAddress;
-                inputParameters[1] = returnedMethodInfo;
-                inputParameters[2] = methodParameters;
-                inputParameters[3] = this;
-
-                this.Workload.DynamicInvoke(inputParameters);
-            //}
-            //else
-            //{
-            //    var target = (T)Activator.CreateInstance(typeof(T));
-            //    var result = returnedMethodInfo.Invoke(target, methodParameters.ToArray());
-            //}
-            return stopSignal;
-        }
-
-        public static bool UnPackFrame(int frameCount, BinarySerializer serializer, Frame frame, out string address, ref MethodInfo methodinfo, List<object> methodParameters, ref bool typeParameter, ref Type type, out string messageType)
-        {
-            messageType = string.Empty;
-            bool stopSignal = false;
-            address = string.Empty;
-            byte[] messageAsBytes;
-            int numberOfParameters;
-
-            if (frameCount == 0)
-            {
-                address = serializer.GetString(frame.Buffer);
-            }
-
-            if (frameCount == 1)
-            {
-                messageAsBytes = frame.Buffer;
-                messageType = serializer.GetString(messageAsBytes);
-                if (messageType.ToLower() == "stop")
-                {
-                    stopSignal = true;
-                }
-            }
-
-            if (frameCount == 2)
-            {
-                methodinfo = (MethodInfo)serializer.Deserializer(frame.Buffer, typeof(MethodInfo));
-            }
-
-            if (frameCount == 3)
-            {
-                numberOfParameters =
-                    int.Parse(serializer.GetString(frame.Buffer).Replace("ParameterCount:", string.Empty));
-            }
-
-            if (frameCount > 3)
-            {
-                if (typeParameter)
-                {
-                    type = (Type)serializer.Deserializer(frame.Buffer, typeof(Type));
-                    typeParameter = false;
-                }
-                else
-                {
-                    var parameter = serializer.Deserializer(frame.Buffer, type);
-                    methodParameters.Add(parameter);
-                    typeParameter = true;
-                }
-            }
-
-            return stopSignal;
+            this.WriteLineToMonitor(string.Format( "Exiting actor {0}", this.Name));
         }
 
         public void Start<T>() where T : IPayload
@@ -475,20 +783,20 @@ namespace Daytona
             while (stop == false)
             {
                 this.IsRunning = true;
-                string address = string.Empty;
-                ZmqMessage zmqmessage = null;
+                string address = String.Empty;
+                NetMQMessage NetMQMessage = null;
 
                 this.WriteLineToMonitor("Waiting for message");
 
                 byte[] messageAsBytes = null;
                 var message = this.ReceiveMessage<T>(
-                    this.subscriber, 
-                    out zmqmessage, 
-                    out address, 
-                    out stop, 
-                    out messageAsBytes, 
+                    this.Subscriber,
+                    out NetMQMessage,
+                    out address,
+                    out stop,
+                    out messageAsBytes,
                     this.Serializer);
-                if (stop == true)
+                if (stop)
                 {
                     this.IsRunning = false;
                 }
@@ -528,24 +836,109 @@ namespace Daytona
         {
             if (this.monitorChannelDisposed == false)
             {
-                this.MonitorChannel.Send(line, Pipe.ControlChannelEncoding);
-                var signal = this.MonitorChannel.Receive(Pipe.ControlChannelEncoding);
+                try
+                {
+                    this.MonitorChannel.Send(line, Exchange.ControlChannelEncoding);
+                    var signal = this.MonitorChannel.Receive();
+                    //var signal = this.MonitorChannel.Receive(SendReceiveOptions.DontWait);
+                }
+                catch (Exception ex)
+                {
+                    this.AddFault(ex);
+                }
             }
         }
-        
-        protected void SetUpMonitorChannel(ZmqContext context)
+
+        private readonly List<Exception> faults = new List<Exception>();
+        public void AddFault(Exception ex)
         {
-            this.MonitorChannel = context.CreateSocket(SocketType.REQ);
+            this.faults.Add(ex);
+        }
+
+        public void WriteLineToSelf(string line, string PathSegment)
+        {
+            var fi = new FileInfo(String.Format(@"c:\dev\persistence\{0}.log", PathSegment));
+            var stream = fi.AppendText();
+            stream.WriteLine("{0}~{1}", line, DateTime.Now.Ticks);
+            stream.Flush();
+            stream.Close();
+        }
+
+        #endregion
+
+        public bool DontAcceptMessages { get; set; }
+
+        public ISerializer PersistanceSerializer { get; set; }
+
+   
+
+        #region Methods
+
+        public object ReadfromPersistence(string returnedAddress, Type type)
+        {
+            var fileName = @"c:\Dev\Persistence\" + returnedAddress + ".log";
+            var directoryInfo = new DirectoryInfo(returnedAddress);
+            var fileInfo = new FileInfo(returnedAddress);
+            object target = null;
+
+            if (File.Exists(fileName))
+            {
+                var line = File.ReadLines(fileName).LastOrDefault();
+
+                if (line != null)
+                {
+                    var returnedRecord = line.Split('~');
+                    target = this.PersistanceSerializer.Deserializer(
+                        Pipe.ControlChannelEncoding.GetBytes(returnedRecord[0]), type); 
+                }
+                else
+                {
+                    target = Activator.CreateInstance(type);
+                    var store = new Store(this.PersistanceSerializer);
+                    store.Persist(type, target, returnedAddress);
+                }
+            }
+            else
+            {
+                //File.Create(fileName);
+                if (returnedAddress.Contains(@"/"))
+                {
+                    var addressAndNumber = returnedAddress.Split('/');
+                    var id = addressAndNumber[1];
+                    long longId = 0;
+                    if (Int64.TryParse(id, out longId))
+                    {
+                        target = Activator.CreateInstance(type, longId);
+                    }
+                    else
+                    {
+                        var guidId = new Guid(id);
+                        target = Activator.CreateInstance(type, guidId);
+                    }
+
+                    var store = new Store(this.PersistanceSerializer);
+                    store.Persist(type, target, returnedAddress); 
+                }
+
+            }
+    
+            return target;
+        }
+
+
+        protected void SetUpMonitorChannel(NetMQContext context)
+        {
+            this.MonitorChannel = context.CreateRequestSocket();
             this.MonitorChannel.Connect(Pipe.MonitorAddressClient);
         }
 
-        protected void SetUpOutputChannel(ZmqContext context)
+        protected void SetUpOutputChannel(NetMQContext context)
         {
-            this.OutputChannel = context.CreateSocket(SocketType.PUB);
-            this.OutputChannel.Connect(Pipe.PublishAddressClient);
+            this.OutputChannel = context.CreatePublisherSocket();
+            this.OutputChannel.Connect(Pipe.PublishAddress);
 
             this.WriteLineToMonitor(
-                "Set up output channel on " + Pipe.PublishAddressClient + " Default sending on: " + this.OutRoute);
+                "Set up output channel on " + Pipe.PublishAddress + " Default sending on: " + this.OutRoute);
 
             ////if(this.sendControlChannel == null)
             ////{
@@ -557,7 +950,7 @@ namespace Daytona
             ////Actor.Writeline(replySignal);
         }
 
-        protected void SetUpReceivers(ZmqContext context, string route)
+        protected void SetUpReceivers(NetMQContext context, string route)
         {
             this.InRoute = route;
             this.SetUpReceivers(context);
@@ -565,70 +958,72 @@ namespace Daytona
 
         private void Dispose(bool disposing)
         {
-            if (!this.disposed)
+            if (disposing)
             {
-                if (disposing)
+                if (this.OutputChannel != null)
                 {
-                    if (this.subscriber != null)
+                    if (this.IsRunning)
                     {
-                        this.subscriberDisposed = true;
-                        this.subscriber.Dispose();
+                        this.SendKillMe(this.Serializer, this.outputChannel);
                     }
 
-                    if (this.OutputChannel != null)
-                    {
-                        this.OutputChannelDisposed = true;
-                        this.OutputChannel.Dispose();
-                    }
-
-                    if (this.MonitorChannel != null)
-                    {
-                        this.monitorChannelDisposed = true;
-                        this.MonitorChannel.Dispose();
-                    }
+                    this.OutputChannelDisposed = true;
+                    this.OutputChannel.Dispose();
                 }
 
-                //// There are no unmanaged resources to release, but
-                //// if we add them, they need to be released here.
+                if (this.Subscriber != null)
+                {
+                    this.subscriberDisposed = true;
+                    this.Subscriber.Dispose();
+                }
+
+                if (this.MonitorChannel != null)
+                {
+                    this.monitorChannelDisposed = true;
+                    this.MonitorChannel.Dispose();
+                }
             }
 
-            this.disposed = true;
+            //// There are no unmanaged resources to release, but
+            //// if we add them, they need to be released here.
         }
 
         private T ReceiveMessage<T>(
-            ZmqSocket subscriber, 
-            out ZmqMessage zmqMessage, 
-            out string address, 
-            out bool stopSignal, 
-            out byte[] messageAsBytes, 
+            NetMQSocket subscriber,
+            out NetMQMessage netMqMessage,
+            out string address,
+            out bool stopSignal,
+            out byte[] messageAsBytes,
             ISerializer serializer)
         {
             stopSignal = false;
             T result = default(T);
-            var zmqOut = new ZmqMessage();
+            var zmqOut = new NetMQMessage();
             bool hasMore = true;
-            address = string.Empty;
+            address = String.Empty;
             messageAsBytes = null;
             int i = 0;
+
+            var buffer = subscriber.Receive(out hasMore);
+
             while (hasMore)
             {
-                Frame frame = subscriber.ReceiveFrame();
                 if (i == 0)
                 {
-                    address = serializer.GetString(frame.Buffer);
+                    address = serializer.GetString(buffer);
                 }
 
                 if (i == 1)
                 {
-                    messageAsBytes = frame.Buffer;
+                    messageAsBytes = buffer;
                     string stopMessage = serializer.GetString(messageAsBytes);
                     this.WriteLineToMonitor("Message: " + stopMessage);
                     if (stopMessage.ToLower() == "stop")
                     {
                         Writeline("received stop");
                         this.SendMessage(
-                            Pipe.ControlChannelEncoding.GetBytes(Pipe.SubscriberCountAddress), 
-                            Pipe.ControlChannelEncoding.GetBytes("SHUTTINGDOWN"), 
+                            Pipe.ControlChannelEncoding.GetBytes(Pipe.SubscriberCountAddress),
+                            Pipe.ControlChannelEncoding.GetBytes("SHUTTINGDOWN"),
                             this.OutputChannel);
                         stopSignal = true;
                     }
@@ -639,11 +1034,11 @@ namespace Daytona
                 }
 
                 i++;
-                zmqOut.Append(new Frame(frame.Buffer));
-                hasMore = subscriber.ReceiveMore;
+                zmqOut.Append(new NetMQFrame(buffer));
+                buffer = subscriber.Receive(out hasMore);
             }
 
-            zmqMessage = zmqOut;
+            netMqMessage = zmqOut;
             return result;
         }
 
@@ -651,28 +1046,33 @@ namespace Daytona
         ///     Creates a Socket and connects it to a endpoint that is bound to a Pipe
         /// </summary>
         /// <param name="context">The ZeroMQ context required to create the receivers</param>
-        private void SetUpReceivers(ZmqContext context)
+        private void SetUpReceivers(NetMQContext context)
         {
-            this.subscriber = context.CreateSocket(SocketType.SUB);
-            this.subscriber.Connect(Pipe.SubscribeAddressClient);
-            
-            if (string.IsNullOrEmpty(this.InRoute))
+            this.Subscriber = context.CreateSubscriberSocket();
+            this.Subscriber.Connect(Pipe.SubscribeAddress);
+
+            if (String.IsNullOrEmpty(this.InRoute))
             {
-                this.subscriber.SubscribeAll();
+                this.Subscriber.Subscribe(String.Empty);
             }
             else
             {
-                this.subscriber.Subscribe(this.Serializer.GetBuffer(this.InRoute));
+                this.Subscriber.Subscribe(this.Serializer.GetBuffer(this.InRoute));
             }
 
             this.MonitorChannel.Send(
-                "Set up Receive channel on " + Pipe.SubscribeAddressClient + " listening on: " + this.InRoute, 
+                "Set up Receive channel on " + Pipe.SubscribeAddress + " listening on: " + this.InRoute,
                 Pipe.ControlChannelEncoding);
-            var signal = this.MonitorChannel.Receive(Pipe.ControlChannelEncoding);
+            bool more = false;
+            var signal = this.MonitorChannel.Receive(); // Pipe.ControlChannelEncoding, out more);
             this.SendMessage(
-                Pipe.ControlChannelEncoding.GetBytes(Pipe.SubscriberCountAddress), 
-                Pipe.ControlChannelEncoding.GetBytes("ADDSUBSCRIBER"), 
+                Pipe.ControlChannelEncoding.GetBytes(Pipe.SubscriberCountAddress),
+                Pipe.ControlChannelEncoding.GetBytes("ADDSUBSCRIBER"),
                 this.OutputChannel);
         }
+
+        #endregion
+
+        public Dictionary<string, Delegate> Actions { get; set; }
     }
 }

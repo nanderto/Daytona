@@ -1,27 +1,31 @@
 ﻿using System.Text;
-using ZeroMQ;
 
 namespace Daytona
 {
+    using NetMQ;
+
     public class MessageReceiver
     {
-        public int ReceiveMessage(ZmqSocket subscriber)
+        public int ReceiveMessage(NetMQSocket subscriber)
         {
             bool hasMore = true;
             var address = string.Empty;
             int i = 0;
             int retValue = 0;
+
+            var buffer = subscriber.Receive(out hasMore);
+
             while (hasMore)
             {
-                Frame frame = subscriber.ReceiveFrame();
+                
                 if (i == 0)
                 {
-                    address = Encoding.Unicode.GetString(frame.Buffer);
+                    address = Encoding.Unicode.GetString(buffer);
                 }
 
                 if (i == 1)
                 {
-                    byte[] messageAsBytes = frame.Buffer;
+                    byte[] messageAsBytes = buffer;
                     string message = Encoding.Unicode.GetString(messageAsBytes);
                     if (message == "ADDSUBSCRIBER")
                     {
@@ -35,7 +39,7 @@ namespace Daytona
                 }
 
                 i++;
-                hasMore = subscriber.ReceiveMore;                
+                buffer = subscriber.Receive(out hasMore);                
             }
 
             //zmqMessage = zmqOut;

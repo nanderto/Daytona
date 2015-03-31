@@ -6,14 +6,15 @@
 namespace Daytona
 {
     using System.Text;
-    using ZeroMQ;
 
+    using NetMQ;
+    
     /// <summary>
     /// Container for extension methods
     /// </summary>
     public static class ZeroMQExtensionMethods
     {
-        public static bool Subscribe(this ZmqSocket socket, string input, Encoding encoding)
+        public static bool Subscribe(this NetMQSocket socket, string input, Encoding encoding)
         {
             if (Encoding.Unicode == encoding)
             {

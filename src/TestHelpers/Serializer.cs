@@ -41,6 +41,11 @@ namespace TestHelpers
             return encoding.GetString(buffer);
         }
 
+        public string GetString<T>(T message)
+        {
+            return this.Serialize(message);
+        }
+
         public T Deserializer<T>(string input)
         {
             return JsonConvert.DeserializeObject<T>(input);
@@ -63,6 +68,12 @@ namespace TestHelpers
         public Encoding Encoding
         {
             get { return this.encoding; }
+        }
+
+
+        public object Deserializer(string input, Type type)
+        {
+            throw new NotImplementedException();
         }
     }
 }
