@@ -1,16 +1,20 @@
 ﻿using System;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using ZeroMQ;
 using System.Text;
 using System.Threading.Tasks;
 using Daytona;
 using Newtonsoft.Json;
 using TestHelpers;
 using System.Threading;
-using ZeroMQ.Devices;
 
 namespace DaytonaTests
 {
+    using NetMQ;
+    using NetMQ.Devices;
+    using NetMQ.zmq;
+
+    using Pipe = Daytona.Pipe;
+
     [TestClass]
     public class PipeTests
     {
@@ -19,82 +23,133 @@ namespace DaytonaTests
         {
             string input = string.Empty;
             string expectedAddress = "XXXXxxxx";
-            string message = string.Empty;
+            string message = "ZZZ";
             var count = 2;
 
-            using (var context = ZmqContext.Create())
+            using (var context = NetMQContext.Create())
             {
-                var pipe = new Pipe();
-                pipe.Start(context);
+                var exchange = new XForwarder(
+                    context,
+                    Pipe.PublishAddressServer,
+                    Pipe.SubscribeAddressServer,
+                    DeviceMode.Threaded);
+                exchange.Start();
                 using (var pub = Helper.GetConnectedPublishSocket(context))
                 {
                     using (var sub = Helper.GetConnectedSubscribeSocket(context))
                     {
+                        Thread.Sleep(50);
                         Helper.SendOneSimpleMessage(expectedAddress, message, pub);
 
-                        var zmqMessage = Helper.ReceiveMessage(sub);
+                        var netMQMessage = Helper.ReceiveMessage(sub);
 
-                        Assert.AreEqual(count, zmqMessage.FrameCount);
-                        Frame frame = zmqMessage[0];
+                        Assert.AreEqual(count, netMQMessage.FrameCount);
+                        NetMQFrame frame = netMQMessage[0];
                         var address = Encoding.Unicode.GetString(frame.Buffer);
                         Assert.AreEqual(expectedAddress, address);
+                        
+                    }
+                }
+              
+                exchange.Stop();
+            }
+        }
+
+         [TestMethod]
+        public void SendOneMessage_inProc()
+        {
+            string input = string.Empty;
+            string expectedAddress = "XXXXxxxx";
+            string message = "ZZZ";
+            var count = 2;
+
+            using (var context = NetMQContext.Create())
+            {
+                var exchange = new XForwarder(
+                    context,
+                    "inproc://frontend",
+                    "inproc://SubscribeAddress",
+                    DeviceMode.Threaded);
+                exchange.Start();
+                using (var pub = Helper.GetConnectedPublishSocket(context, "inproc://frontend"))
+                {
+                    using (var sub = Helper.GetConnectedSubscribeSocket(context, "inproc://SubscribeAddress"))
+                    {
+                        Thread.Sleep(50);
+                        Helper.SendOneSimpleMessage(expectedAddress, message, pub);
+
+                        var netMQMessage = Helper.ReceiveMessage(sub);
+
+                        Assert.AreEqual(count, netMQMessage.FrameCount);
+                        NetMQFrame frame = netMQMessage[0];
+                        var address = Encoding.Unicode.GetString(frame.Buffer);
+                        Assert.AreEqual(expectedAddress, address);
+
                     }
                 }
 
-                pipe.Exit();
+                exchange.Stop();
             }
         }
 
         [TestMethod]
-        public void InProcOnlyWithForwarder ()
+        public void InProcOnlyWithForwarder()
         {
             string expectedAddress = "XXXX";
             string message = "hello its me";
             int count = 0;
-            using (var context = ZmqContext.Create())
+            using (var context = NetMQContext.Create())
             {
-                Pipe pipe = new Pipe();
-                pipe.Start(context);
+                var exchange = new XForwarder(context, "inproc://frontend", "inproc://SubscribeAddress", DeviceMode.Threaded);
+                exchange.Start();
+                var queueDevice = new QueueDevice(
+                    context,
+                    Pipe.PubSubControlBackAddressServer,
+                    Pipe.PubSubControlFrontAddressServer,
+                    DeviceMode.Threaded);
+                queueDevice.Start();
 
                 Task.Run(() =>
                 {
                     return RunSubscriber(context);
                 });
 
-                using (ZmqSocket pub = Helper.GetConnectedPublishSocket(context, Pipe.PublishAddressClient), 
-                   syncService = context.CreateSocket(SocketType.REP))
+                using (NetMQSocket pub = Helper.GetConnectedPublishSocket(context, "inproc://frontend"), 
+                   syncService = context.CreateResponseSocket())
                 {
                     syncService.Connect(Pipe.PubSubControlFrontAddressClient);
                     for (int i = 0; i < 1; i++)
                     {
-                        syncService.Receive(Encoding.Unicode);
-                        syncService.Send("", Encoding.Unicode);
+                        syncService.Receive();
+                        syncService.Send("");
                     }
     
                     Helper.SendOneSimpleMessage(expectedAddress, message, pub);
                            
 
                 }
-                pipe.Exit();
+                exchange.Stop(true);
+                queueDevice.Stop(true);
+                
             }          
         }
 
-        private Task RunSubscriber(ZmqContext context)
+        private Task RunSubscriber(NetMQContext context)
         {
-            using (ZmqSocket sub = Helper.GetConnectedSubscribeSocket(context, Pipe.SubscribeAddressClient),
-                syncClient = context.CreateSocket(SocketType.REQ))
+            using (NetMQSocket sub = Helper.GetConnectedSubscribeSocket(context, "inproc://SubscribeAddress"),
+                syncClient = context.CreateRequestSocket())
             {
                 syncClient.Connect(Pipe.PubSubControlBackAddressClient);
-                syncClient.Send("", Encoding.Unicode);
-                syncClient.Receive(Encoding.Unicode);
-                ZmqMessage zmqMessage = null;
-                while (zmqMessage == null)
+                syncClient.Send("");
+                syncClient.Receive();
+                NetMQMessage NetMQMessage = null;
+                while (NetMQMessage == null)
                 {
-                     zmqMessage = Helper.ReceiveMessage(sub);
+                     NetMQMessage = Helper.ReceiveMessage(sub);
                 }
 
-                Assert.AreEqual(2, zmqMessage.FrameCount);
-                Frame frame = zmqMessage[0];
+                Assert.AreEqual(2, NetMQMessage.FrameCount);
+                NetMQFrame frame = NetMQMessage[0];
                 var address = Encoding.Unicode.GetString(frame.Buffer);
                 Assert.AreEqual("XXXX", address);
             }
@@ -103,15 +158,15 @@ namespace DaytonaTests
     
 
 
-        private static async Task<ZmqMessage> LoopReceiver(ZmqSocket sub)
+        private static async Task<NetMQMessage> LoopReceiver(NetMQSocket sub)
         {
-            ZmqMessage zmqMessage = null;
-            while (zmqMessage == null)
+            NetMQMessage NetMQMessage = null;
+            while (NetMQMessage == null)
             {
-                zmqMessage = Helper.ReceiveMessage(sub);
+                NetMQMessage = Helper.ReceiveMessage(sub);
                 //isReady = true;
             }
-            return zmqMessage;
+            return NetMQMessage;
         }
 
         static bool interupt = false;
@@ -121,54 +176,52 @@ namespace DaytonaTests
         {
             string expectedAddress = "XXXX";
             string message = "hello its me";
-            int count = 2;
+            int count = 0;
 
-            using (var context = ZmqContext.Create())
+            using (var context = NetMQContext.Create())
             {
-                using (var forwarderDevice = new ForwarderDevice(context, "tcp://*:5555", "inproc://back", DeviceMode.Threaded))
-                {
-                    forwarderDevice.FrontendSetup.SubscribeAll();
-                    forwarderDevice.Start();
-                    while (!forwarderDevice.IsRunning)
-                    {
+                var forwarderDevice = new ForwarderDevice(context, "tcp://*:5555", "inproc://back", DeviceMode.Threaded);
+                forwarderDevice.FrontendSetup.Subscribe(string.Empty);
+                forwarderDevice.Start();
+                //while (!forwarderDevice.IsRunning)
+                //{
                         
-                    }
-                    using (var sub = Helper.GetConnectedSubscribeSocket(context, "inproc://back"))
+                //}
+                using (var sub = Helper.GetConnectedSubscribeSocket(context, "inproc://back"))
+                {
+                    using (var pub = Helper.GetConnectedPublishSocket(context, "tcp://localhost:5555"))
                     {
-                        using (var pub = Helper.GetConnectedPublishSocket(context, "tcp://localhost:5555"))
-                        {
 
-                            ZmqMessage zmqMessage = null;
-                            var task = Task.Run(() =>
-                                {
-                                    if (sub != null)
-                                    {
-                                        //while (interupt != true)
-                                        //{
-                                            zmqMessage = Helper.ReceiveMessage(sub);
-                                            //if (zmqMessage.FrameCount > 0)
-                                            //{
-                                            //    interupt = true;
-                                            //}
-                                        //}
-                                    }
-                                    return zmqMessage;
-                                });
-
-                            if (pub != null)
+                        NetMQMessage NetMQMessage = null;
+                        var task = Task.Run(() =>
                             {
-                                Helper.SendOneSimpleMessage(expectedAddress, message, pub);
-                            }
+                                if (sub != null)
+                                {
+                                    //while (interupt != true)
+                                    //{
+                                        NetMQMessage = Helper.ReceiveMessage(sub);
+                                        //if (NetMQMessage.FrameCount > 0)
+                                        //{
+                                        //    interupt = true;
+                                        //}
+                                    //}
+                                }
+                                return NetMQMessage;
+                            });
 
-                            task.Wait();
-                            Assert.AreEqual(count, zmqMessage.FrameCount);
-                            Frame frame = zmqMessage[0];
-                            var address = Encoding.Unicode.GetString(frame.Buffer);
-                            Assert.AreEqual(expectedAddress, address);
+                        if (pub != null)
+                        {
+                            Helper.SendOneSimpleMessage(expectedAddress, message, pub);
                         }
+
+                        task.Wait();
+                        Assert.AreEqual(count, NetMQMessage.FrameCount);
+                        NetMQFrame frame = NetMQMessage[0];
+                        var address = Encoding.Unicode.GetString(frame.Buffer);
+                        Assert.AreEqual(expectedAddress, address);
                     }
-                    forwarderDevice.Stop();
                 }
+                    forwarderDevice.Stop();
             }
         }
 
@@ -179,7 +232,7 @@ namespace DaytonaTests
             string expectedAddress = "XXXXxxxx";
             string message = string.Empty;
 
-            using (var context = ZmqContext.Create())
+            using (var context = NetMQContext.Create())
             {
                 var pipe = new Pipe();
                 pipe.Start(context);
@@ -188,7 +241,7 @@ namespace DaytonaTests
                     using (var sub = Helper.GetConnectedSubscribeSocket(context))
                     {
                         ISerializer serializer = new Serializer(Encoding.Unicode);
-                        Customer cust = new Customer();
+                        Customer cust = new Customer(1);
                         cust.Firstname = "John";
                         cust.Lastname = "Wilson";
 
@@ -208,7 +261,7 @@ namespace DaytonaTests
         [TestMethod, TestCategory("IntegrationZMQ")]
         public void SendOneMessageOfTypeConfigureActorToProcess()
         {
-            using (var pipeContext = ZmqContext.Create())
+            using (var pipeContext = NetMQContext.Create())
             {
                 var pipe = new Pipe();
                 var task2 = Task.Run(() =>
@@ -222,7 +275,7 @@ namespace DaytonaTests
                         string expectedAddress = "XXXXxxxx";
                         string message = string.Empty;
 
-                        using (var context = ZmqContext.Create())
+                        using (var context = NetMQContext.Create())
                         {
 
                             using (var pub = Helper.GetConnectedPublishSocket(context))
@@ -230,7 +283,7 @@ namespace DaytonaTests
                                 //using (var sub = GetConnectedSubscribeSocket(context))
                                 //{
                                 ISerializer serializer = new Serializer(Encoding.Unicode);
-                                Customer cust = new Customer();
+                                Customer cust = new Customer(1);
                                 cust.Firstname = "Johnx";
                                 cust.Lastname = "Wilson";
 
@@ -272,7 +325,7 @@ namespace DaytonaTests
             string expectedAddress = "XXXXxxxx";
             string message = string.Empty;
 
-            using (var context = ZmqContext.Create())
+            using (var context = NetMQContext.Create())
             {
                 var pipe = new Pipe();
                 pipe.Start(context);

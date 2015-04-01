@@ -5,107 +5,104 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using TestHelpers;
-using ZeroMQ;
 
 namespace SiloConsole
 {
+    using System.Globalization;
     using System.IO;
     using System.Reflection;
+    using System.Threading;
+
+    using NetMQ;
+    using NetMQ.Devices;
 
     class Program
     {
         public static void Main(string[] args)
         {
             Console.CancelKeyPress += new ConsoleCancelEventHandler(ConsoleCancelHandler);
-            var binarySerializer = new BinarySerializer();
-            var useActor = true;
-
-            using (var context = ZmqContext.Create())
+                   
+            using (var context = NetMQContext.Create())
             {
-                //using (var silo = new Silo(context, new BinarySerializer()))
-                //{
+                var exchange = new Exchange(context);
+                exchange.Start();
+                using (var silo = new Silo(context, new BinarySerializer()))
+                {
+                    silo.RegisterEntity(typeof(Customer));
+                    silo.RegisterEntity(typeof(Order));
+                    silo.RegisterEntity(typeof(DiagnosticMessage));
+                    silo.Start();
 
-                //}               
-                //using (var pipe = new Pipe())
-                //{
-                //    pipe.Start(context);
-                    using (var actorFactory = new Actor(context, new BinarySerializer(), string.Empty))
+                    var diagnosticMessage = silo.ActorFactory.CreateInstance<IDiagnosticMessage>(typeof(DiagnosticMessage));
+                          
+                    diagnosticMessage.WriteToConsole("Yeah this works");
+                    //Console.WriteLine("Run tests");
+                    //Console.ReadLine();
+
+                    var customer = silo.ActorFactory.CreateInstance<ICustomer>(typeof(Customer), 99);
+                        
+                    //customer.CreateOrder();
+
+                    var uniqueGuid = Guid.NewGuid();
+                    var order = silo.ActorFactory.CreateInstance<IOrder>(typeof(Order), uniqueGuid);
+
+                    var productId = Guid.NewGuid()
+                        .ToString()
+                        .Replace("-", "")
+                        .Replace("{", "")
+                        .Replace("}", "")
+                        .Substring(0, 10);
+
+                    order.CreateOrder("Another order", 23, productId, 12);
+
+                    var exit = string.Empty;
+                    var description = "XXXX";
+
+                    for (int i = 0; i < 100; i++)
                     {
-                        actorFactory.RegisterActor(
-                            "Silo",
-                            "",
-                            "SilooutRoute",
-                            new BinarySerializer(),
-                            (address, methodInfo, parameters, actor) =>
-                                {
-                                    object returnedObject = null;
-                                    List<RunningActors> runningActors = null;
+                        Console.WriteLine(
+                               "({0}) Last order created was {1}, its description was {2}", i,
+                               uniqueGuid,
+                               description);
 
-                                    if (actor.PropertyBag.TryGetValue("RunningActors", out returnedObject))
-                                    {
-                                        runningActors = (List<RunningActors>)returnedObject;
-                                        var returnedActor = runningActors.FirstOrDefault(ra => ra.Address == address);
+                       // uniqueGuid = Guid.NewGuid();
+                        customer.CreateOrder();
 
-                                        Console.WriteLine("Hey we found an actor");
-                                        if (returnedActor == null)
-                                        {
-                                            var customer = new Actor<Customer>(actor.context, new BinarySerializer());
-                                            //customer.StartWithIdAndMethod(address, methodInfo, parameters);
-                                            Console.WriteLine("I wish I could start a method");
-                                            ////start actor
-                                            /// 
-
-                                            runningActors.Add(new RunningActors(address));
-                                        }
-
-                                        Console.WriteLine("We found a running actor so er did nothing");
-                                    }
-                                    else
-                                    {
-                                        var customer = new Actor<Customer>(actor.context, new BinarySerializer());
-                                       // customer.StartWithIdAndMethod(address, methodInfo, parameters);
-                                        Console.WriteLine("no collection of running actors, So I am creating one and starting a new runner");
-                                        ////start actor
-                                        /// 
-                                        runningActors = new List<RunningActors>();
-                                        runningActors.Add(new RunningActors(address));
-                                        actor.PropertyBag.Add("RunningActors", runningActors);
-                                    }
-
-                                    var firstParameter = string.Empty;
-                                    try
-                                    {
-                                        firstParameter = parameters[0].ToString();
-                                    }
-                                    catch (Exception)
-                                    {
-                                    }
-
-                                    Console.WriteLine("Address: {0}, {1}", address, firstParameter);
-                                });
-                        actorFactory.StartAllActors();
-
-                        Console.WriteLine("Run tests");
-                        Console.ReadLine();
-                        using (var actor = new Actor<Customer>(context, new BinarySerializer()))
-                        {
-                            var customer = actor.CreateInstance<ICustomer>(typeof(Customer), 33);
-                            // Assert.IsInstanceOfType(customer, typeof(ICustomer));
-                            customer.UpdateName("XXX"); //called without exception
-
-                            var order = actor.CreateInstance<IOrder>(typeof(Order));
-                            // Assert.IsInstanceOfType(order, typeof(IOrder));
-                            order.UpdateDescription("XXX"); //called without exception
-
-                            var order2 = actor.CreateInstance<IOrder>(typeof(Order), Guid.NewGuid());
-                            // Assert.IsInstanceOfType(order2, typeof(IOrder));
-                            order2.UpdateDescription("ZZZ"); //called without exception
+                        if (exit != null && exit.ToLower() != "runtoend")
+                        {     
+                            Console.WriteLine("Press Enter to send another message, or type exit to stop");
+                            exit = Console.ReadLine();
+                            if (exit != null && exit.ToLower() == "exit")
+                            {
+                                break;
+                            }
                         }
 
-                        Console.ReadLine();
+                        description = "New Description " + 23 + (i * 2);
+                        order.UpdateDescription(description);
+
+                    //    customer.UpdateName(string.Format("new name, {0}", i.ToString(CultureInfo.InvariantCulture)));
+                    //    var customer2 = silo.ActorFactory.CreateInstance<ICustomer>(typeof(Customer), i);
+                    //    ////Thread.Sleep(500);
+                    //    customer2.UpdateName("XXX - AAA" + i);
+                    //    Console.WriteLine("Customer {0} was updated", i);
                     }
-                //}
-            }
+
+                    ////var netMqMessage = new NetMQMessage();
+                    ////netMqMessage.Append(new NetMQFrame(actor.Serializer.GetBuffer("Aslongasitissomething")));
+                    ////netMqMessage.Append(new NetMQFrame(actor.Serializer.GetBuffer("shutdownallactors")));
+                    ////actor.OutputChannel.SendMessage(netMqMessage);
+
+                    Console.WriteLine("Out of loop; Press Enter to stop silo");
+                    Console.ReadLine();
+                    silo.Stop();
+                }
+                
+                exchange.Stop(true);
+
+                Console.WriteLine("Press Enter to Exit");
+                Console.ReadLine();
+             }
         }
 
         static bool interrupted = false;

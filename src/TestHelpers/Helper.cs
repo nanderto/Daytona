@@ -6,130 +6,140 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using ZeroMQ;
 
 namespace TestHelpers
 {
+    using System.Net.Sockets;
+
+    using NetMQ;
+
     public class Helper
     {
-        public ZmqContext context { get; set; }
+        public NetMQContext context { get; set; }
         ISerializer serializer;
 
         public Helper()
         {
-            context = ZmqContext.Create();
+            context = NetMQContext.Create();
         }
 
-        public static void SendOneMessageOfType<T>(string Address, T message, ISerializer serializer, ZmqSocket publisher)
+        public static void SendOneMessageOfType<T>(string Address, T message, ISerializer serializer, NetMQSocket publisher)
         {
-            ZmqMessage zmqMessage = new ZmqMessage();
-            zmqMessage.Append(new Frame(serializer.GetBuffer(Address)));
-            zmqMessage.Append(new Frame(serializer.GetBuffer(message)));
-            publisher.SendMessage(zmqMessage);
+            NetMQMessage NetMQMessage = new NetMQMessage();
+            NetMQMessage.Append(new NetMQFrame(serializer.GetBuffer(Address)));
+            NetMQMessage.Append(new NetMQFrame(serializer.GetBuffer(message)));
+            publisher.SendMessage(NetMQMessage);
         }
 
-        public static void SendOneSimpleMessage(string address, string message, ZmqSocket publisher)
+        public static void SendOneSimpleMessage(string address, string message, NetMQSocket publisher)
         {
             {
-                ZmqMessage zmqMessage = new ZmqMessage();
-                zmqMessage.Append(new Frame(Encoding.Unicode.GetBytes(address)));
-                zmqMessage.Append(new Frame(Encoding.Unicode.GetBytes(message)));
-                publisher.SendMessage(zmqMessage);
+                NetMQMessage NetMQMessage = new NetMQMessage();
+                NetMQMessage.Append(new NetMQFrame(Encoding.Unicode.GetBytes(address)));
+                NetMQMessage.Append(new NetMQFrame(Encoding.Unicode.GetBytes(message)));
+                publisher.SendMessage(NetMQMessage);
                 //publisher.Send("hello", Encoding.Unicode);
             }
         }
 
-        public static T ReceiveMessageofType<T>(ZmqSocket sub)
+        public static T ReceiveMessageofType<T>(NetMQSocket sub)
         {
             string address = string.Empty;
-            ZmqMessage message = null;
+            NetMQMessage message = null;
             return ReceiveMessage<T>(sub, out message, out address);
         }
 
-        //public void SendOneMessageOfType<T>(string Address, T message, ISerializer serializer, ZmqSocket publisher)
+        //public void SendOneMessageOfType<T>(string Address, T message, ISerializer serializer, NetMQSocket publisher)
         //{
-        //    ZmqMessage zmqMessage = new ZmqMessage();
-        //    zmqMessage.Append(new Frame(Encoding.Unicode.GetBytes(Address)));
-        //    zmqMessage.Append(new Frame(serializer.GetBuffer(message)));
-        //    publisher.SendMessage(zmqMessage);
+        //    NetMQMessage NetMQMessage = new NetMQMessage();
+        //    NetMQMessage.Append(new NetMQFrame(Encoding.Unicode.GetBytes(Address)));
+        //    NetMQMessage.Append(new NetMQFrame(serializer.GetBuffer(message)));
+        //    publisher.SendMessage(NetMQMessage);
         //}
 
 
-        public static T ReceiveMessage<T>(ZmqSocket Subscriber, out ZmqMessage zmqMessage, out string address)
+        public static T ReceiveMessage<T>(NetMQSocket Subscriber, out NetMQMessage NetMQMessage, out string address)
         {
             T result = default(T);
-            ZmqMessage zmqOut = new ZmqMessage();
+            NetMQMessage zmqOut = new NetMQMessage();
             bool hasMore = true;
             string message = "";
             address = string.Empty;
             int i = 0;
+            
+            var buffer = Subscriber.Receive(out hasMore);
+
             while (hasMore)
             {
-                Frame frame = Subscriber.ReceiveFrame();
+                
                 if (i == 0)
                 {
-                    address = Encoding.Unicode.GetString(frame.Buffer);
+                    address = Encoding.Unicode.GetString(buffer);
                 }
                 if (i == 1)
                 {
-                    result = (T)JsonConvert.DeserializeObject<T>(Encoding.Unicode.GetString(frame.Buffer));
+                    result = (T)JsonConvert.DeserializeObject<T>(Encoding.Unicode.GetString(buffer));
                 }
 
                 i++;
-                zmqOut.Append(new Frame(Encoding.Unicode.GetBytes(message)));
-                hasMore = Subscriber.ReceiveMore;
+                zmqOut.Append(new NetMQFrame(Encoding.Unicode.GetBytes(message)));
+                buffer = Subscriber.Receive(out hasMore);
             }
 
-            zmqMessage = zmqOut;
+            NetMQMessage = zmqOut;
             return result;
         }
 
-        public static ZmqMessage ReceiveMessage(ZmqSocket Subscriber)
+        public static NetMQMessage ReceiveMessage(NetMQSocket Subscriber)
         {
-            var zmqMessage = new ZmqMessage();
+            var NetMQMessage = new NetMQMessage();
             bool hasMore = true;
             int i =0;
             string address = string.Empty;
-            
+
+            byte[] buffer = null; 
+
             while (hasMore)
             {
-                Frame frame = Subscriber.ReceiveFrame();
-                if (frame.Buffer.Count() > 0)
+                buffer = Subscriber.Receive(out hasMore);
+
+                if (buffer.Count() > 0)
                 {
                     if (i == 0)
                     {
-                        address = Encoding.Unicode.GetString(frame.Buffer);
+                        address = Encoding.Unicode.GetString(buffer);
                     }
                     if (i == 1)
                     {
-                        string stop = Encoding.Unicode.GetString(frame.Buffer);
+                        string stop = Encoding.Unicode.GetString(buffer);
                         //result = serializer.Deserializer<T>(stop);    
                     }
                     i++;
-                    zmqMessage.Append(new Frame(frame.Buffer));
-                    hasMore = Subscriber.ReceiveMore;
+                    NetMQMessage.Append(new NetMQFrame(buffer));
+
+                    
                     //message = Subscriber.Receive(Encoding.Unicode,);
 
-                    //zmqMessage.Append(new Frame(Encoding.Unicode.GetBytes(message)));
+                    //NetMQMessage.Append(new NetMQFrame(Encoding.Unicode.GetBytes(message)));
                     //hasMore = Subscriber.ReceiveMore;
                 }
                 else
                 {
-                    zmqMessage = null;
+                    NetMQMessage = null;
                 }
             }
 
-            return zmqMessage;
+            return NetMQMessage;
         }
 
-        public static ZmqSocket GetConnectedPublishSocket(ZmqContext context)
+        public static NetMQSocket GetConnectedPublishSocket(NetMQContext context)
         {
-            return GetConnectedPublishSocket(context, "tcp://localhost:5556");
+            return GetConnectedPublishSocket(context, Pipe.PublishAddressClient);
         }
 
-        public static ZmqSocket GetConnectedPublishSocket(ZmqContext context, string address)
+        public static NetMQSocket GetConnectedPublishSocket(NetMQContext context, string address)
         {
-            ZmqSocket publisher = context.CreateSocket(SocketType.PUB);
+            NetMQSocket publisher = context.CreatePublisherSocket();
 
             try
             {
@@ -144,19 +154,24 @@ namespace TestHelpers
             return publisher;
         }
 
-        public static ZmqSocket GetConnectedSubscribeSocket(ZmqContext context)
+        public static NetMQSocket GetConnectedSubscribeSocket(NetMQContext context)
         {
-            string address = "tcp://localhost:5555";
+            string address = Pipe.SubscribeAddressClient;
             return GetConnectedSubscribeSocket(context, address);
         }
 
-        public static ZmqSocket GetConnectedSubscribeSocket(ZmqContext context, string address)
+        public static NetMQSocket GetConnectedSubscribeSocket(NetMQContext context, string address)
         {
-            ZmqSocket subscriber = context.CreateSocket(SocketType.SUB);
+            return GetConnectedSubscribeSocket(context, address, string.Empty);
+        }
+
+        public static NetMQSocket GetConnectedSubscribeSocket(NetMQContext context, string address, string Subcription)
+        {
+            NetMQSocket subscriber = context.CreateSubscriberSocket();
             try
             {
                 subscriber.Connect(address);
-                subscriber.SubscribeAll();
+                subscriber.Subscribe(Subcription);
             }
             catch
             {
@@ -167,26 +182,26 @@ namespace TestHelpers
             return subscriber;
         }
 
-        public static ZmqSocket GetBoundSubscribeSocket(ZmqContext context, string address)
+        public static NetMQSocket GetBoundSubscribeSocket(NetMQContext context, string address)
         {
-            ZmqSocket subscriber = context.CreateSocket(SocketType.SUB);
+            NetMQSocket subscriber = context.CreateSubscriberSocket();
             subscriber.Bind(address);
-            subscriber.SubscribeAll();
+            subscriber.Subscribe(string.Empty);
             return subscriber;
         }
 
-        public static ZmqSocket GetBoundSubscribeSocket(ZmqContext context)
+        public static NetMQSocket GetBoundSubscribeSocket(NetMQContext context)
         {
             string address = "tcp://*:5555";
             return GetBoundSubscribeSocket(context, address);
         }
-        //public static void SendOneSimpleMessage(string address, string message, ZmqSocket publisher)
+        //public static void SendOneSimpleMessage(string address, string message, NetMQSocket publisher)
         //{
         //    {
-        //        ZmqMessage zmqMessage = new ZmqMessage();
-        //        zmqMessage.Append(new Frame(Encoding.Unicode.GetBytes(address)));
-        //        zmqMessage.Append(new Frame(Encoding.Unicode.GetBytes(message)));
-        //        publisher.SendMessage(zmqMessage);
+        //        NetMQMessage NetMQMessage = new NetMQMessage();
+        //        NetMQMessage.Append(new NetMQFrame(Encoding.Unicode.GetBytes(address)));
+        //        NetMQMessage.Append(new NetMQFrame(Encoding.Unicode.GetBytes(message)));
+        //        publisher.SendMessage(NetMQMessage);
         //    }
         //}
 

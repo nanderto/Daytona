@@ -16,7 +16,7 @@ namespace Daytona
 
     public class Pipe : IDisposable
     {
-        public static ForwarderDevice forwarderDevice = null;
+        public static XForwarder forwarderDevice = null;
 
         public static string MonitorAddressClient = "tcp://localhost:5560";  ////"inproc://pubsubcontrol";//
 
@@ -30,7 +30,7 @@ namespace Daytona
 
         public static string PubSubControlBackAddressServer = "tcp://*:5552"; ////"inproc://pubsubcontrol";//
 
-        public static string PubSubControlFrontAddress = "tcp://*:5551";
+        public static string PubSubControlFrontAddressServer = "tcp://*:5551";
 
         public static string PubSubControlFrontAddressClient = "tcp://localhost:5551";
 
@@ -105,7 +105,7 @@ namespace Daytona
             //while (!forwarderDevice.IsRunning)
             //{ }
 
-            QueueDevce = new QueueDevice(context, PubSubControlBackAddressServer, PubSubControlFrontAddress, DeviceMode.Threaded);
+            QueueDevce = new QueueDevice(context, PubSubControlBackAddressServer, PubSubControlFrontAddressServer, DeviceMode.Threaded);
             QueueDevce.Start();
             //while (!QueueDevce.IsRunning)
             //{

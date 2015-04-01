@@ -35,5 +35,29 @@
     <NamedTestSelector>
       <TestName>Daytona.Tests.ActorTests.CallMethod_usingDefaultSerializer</TestName>
     </NamedTestSelector>
+    <FixtureTestSelector>
+      <FixtureName>Daytona.Tests.ExchangeTests</FixtureName>
+    </FixtureTestSelector>
+    <NamedTestSelector>
+      <TestName>Daytona.Tests.ActorTests.CallMethod_Multiple_ObjectsBinarySerializer</TestName>
+    </NamedTestSelector>
+    <NamedTestSelector>
+      <TestName>Daytona.Tests.ActorTests.TestDeserialization</TestName>
+    </NamedTestSelector>
+    <NamedTestSelector>
+      <TestName>Daytona.Tests.ActorTests.CallKillMe</TestName>
+    </NamedTestSelector>
+    <NamedTestSelector>
+      <TestName>Daytona.Tests.ActorTests.CreatingAnActor</TestName>
+    </NamedTestSelector>
+    <NamedTestSelector>
+      <TestName>Daytona.Tests.ActorTests.PersistSelfTest</TestName>
+    </NamedTestSelector>
+    <NamedTestSelector>
+      <TestName>Daytona.Tests.ActorTests.ReadfromPersistenceTest</TestName>
+    </NamedTestSelector>
+    <NamedTestSelector>
+      <TestName>Daytona.Tests.ActorTests.WriteAndReadReadfromPersistenceTest</TestName>
+    </NamedTestSelector>
   </IgnoredTests>
 </ProjectConfiguration>

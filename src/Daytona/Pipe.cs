@@ -10,30 +10,39 @@ namespace Daytona
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
-    using ZeroMQ;
-    using ZeroMQ.Devices;
+    using NetMQ;
+    using NetMQ.Devices;
+
 
     public class Pipe : IDisposable
     {
-        public static ForwarderDevice ForwarderDevice = null;
+        public static XForwarder forwarderDevice = null;
 
         public static string MonitorAddressClient = "tcp://localhost:5560";  ////"inproc://pubsubcontrol";//
 
         public static string MonitorAddressServer = "tcp://*:5560";
 
+        public static string PublishAddress = "inproc://PublishAddress";
+
         public static string PublishAddressClient = "tcp://localhost:5550";
 
         public static string PublishAddressServer = "tcp://*:5550";
+
+        public static string PubSubControlBackAddress = "inproc://PubSubControlBackAddress";
 
         public static string PubSubControlBackAddressClient = "tcp://localhost:5552"; ////"inproc://pubsubcontrol";//
 
         public static string PubSubControlBackAddressServer = "tcp://*:5552"; ////"inproc://pubsubcontrol";//
 
-        public static string PubSubControlFrontAddress = "tcp://*:5551";
+        public static string PubSubControlFrontAddress = "inproc://PubSubControlFrontAddress";
+
+        public static string PubSubControlFrontAddressServer = "tcp://*:5551";
 
         public static string PubSubControlFrontAddressClient = "tcp://localhost:5551";
 
         public static QueueDevice QueueDevce = null;
+
+        public static string SubscribeAddress = "inproc://SubscribeAddress"; ////"inproc://back";
 
         public static string SubscribeAddressClient = "tcp://localhost:5553"; ////"inproc://back";
 
@@ -43,11 +52,11 @@ namespace Daytona
 
         public static Encoding ControlChannelEncoding = Encoding.Unicode;
 
-        public ZmqSocket MonitorChannel = null;
+        public NetMQSocket MonitorChannel = null;
 
-        private ZmqSocket AddSubscriberCountChannel = null;
+        private NetMQSocket AddSubscriberCountChannel = null;
 
-        private static ZmqSocket frontend, backend;
+        private static NetMQSocket frontend, backend;
 
         private CancellationTokenSource cancellationTokenSource;
 
@@ -59,7 +68,7 @@ namespace Daytona
         {
         }
 
-        public Pipe(ZmqContext context)
+        public Pipe(NetMQContext context)
         {
             this.Start(context);
         }
@@ -84,30 +93,31 @@ namespace Daytona
         public void Exit()
         {
             ////DONT SHUT DOWN UNTILL THE SUBSCRIBERS HAVE ALL SHUT DOWN
-            while (SubscriberCount > 0)
-            {
-                
-            }
-            this.cancellationTokenSource.Cancel();
+            //while (SubscriberCount > 0)
+            //{
+
+            //}
+            //this.cancellationTokenSource.Cancel();
             this.CleanUpDevices();
         }
 
-        public void Start(ZmqContext context)
+        public void Start(NetMQContext context)
         {
             this.SetUpMonitorChannel(context);
             this.SetUpAddSubscriberCountChannel(context);
 
-            ////this should work but the forwarder device appears to be broken - it does not use XSUb and XPUB sockets
-            ////ForwarderDevice = new ForwarderDevice(context, PublishAddressServer, SubscribeAddressServer, DeviceMode.Threaded);
-            ////ForwarderDevice.Start();
-            ////while (!ForwarderDevice.IsRunning)
-            ////{ }
+            //this should work but the forwarder device appears to be broken - it does not use XSUb and XPUB sockets
+            //forwarderDevice = new ForwarderDevice(context, PublishAddressServer, SubscribeAddressServer, DeviceMode.Threaded);
+            //forwarderDevice.FrontendSetup.Subscribe(string.Empty);
+            //forwarderDevice.Start();
+            //while (!forwarderDevice.IsRunning)
+            //{ }
 
-            QueueDevce = new QueueDevice(context, PubSubControlBackAddressServer, PubSubControlFrontAddress, DeviceMode.Threaded);
+            QueueDevce = new QueueDevice(context, PubSubControlBackAddressServer, PubSubControlFrontAddressServer, DeviceMode.Threaded);
             QueueDevce.Start();
-            while (!QueueDevce.IsRunning)
-            {
-            }
+            //while (!QueueDevce.IsRunning)
+            //{
+            //}
 
             this.Writeline("Control channel started");
 
@@ -116,22 +126,23 @@ namespace Daytona
             var token = this.cancellationTokenSource.Token;
             Task.Run(() =>
             {
-                using (frontend = context.CreateSocket(SocketType.XSUB))
+                using (frontend = context.CreateXSubscriberSocket())
                 {
-                    using (backend = context.CreateSocket(SocketType.XPUB))
+                    using (backend = context.CreateXPublisherSocket())
                     {
                         frontend.Bind(Pipe.PublishAddressServer); ////"tcp://*:5550");
                         backend.Bind(Pipe.SubscribeAddressServer); ////"tcp://*:5553");
-                        frontend.ReceiveReady += new EventHandler<SocketEventArgs>(FrontendReceiveReady);
-                        backend.ReceiveReady += new EventHandler<SocketEventArgs>(BackendReceiveReady);
-                        this.AddSubscriberCountChannel.ReceiveReady += new EventHandler<SocketEventArgs>(AddSubscriberCountChannelReceiveReady);
-                        using (poller = new Poller(new ZmqSocket[] { frontend, backend, this.AddSubscriberCountChannel }))
+                        // frontend.ReceiveReady += frontend_ReceiveReady;
+                        frontend.ReceiveReady += new EventHandler<NetMQSocketEventArgs>(FrontendReceiveReady);
+                        backend.ReceiveReady += new EventHandler<NetMQSocketEventArgs>(BackendReceiveReady);
+                        // this.AddSubscriberCountChannel.ReceiveReady += new EventHandler<NetMQSocketEventArgs>(AddSubscriberCountChannelReceiveReady);
+                        using (this.poller = new Poller(new NetMQSocket[] { frontend, backend, this.AddSubscriberCountChannel }))
                         {
                             Writeline("About to start polling");
 
                             while (true)
                             {
-                                poller.Poll(new TimeSpan(0,0,0,0,5));
+                                poller. PollOnce();// Poll(new TimeSpan(0,0,0,0,5));
                                 Writeline("polling" + count);
                                 count++;
                                 if (token.IsCancellationRequested)
@@ -149,23 +160,53 @@ namespace Daytona
             token);
         }
 
-        private static void AddSubscriberCountChannelReceiveReady(object sender, SocketEventArgs e)
-        {
-            WritelineToLogFile("AddSubscriberCountChannelReceiveReady");
-            var messageReceiver = new MessageReceiver();
-            SubscriberCount = SubscriberCount + messageReceiver.ReceiveMessage((ZmqSocket)sender);
-        }
+        //private static void AddSubscriberCountChannelReceiveReady(object sender, NetMQSocketEventArgs e)
+        //{
+        //    WritelineToLogFile("AddSubscriberCountChannelReceiveReady");
+        //    var messageReceiver = new MessageReceiver();
+        //    SubscriberCount = SubscriberCount + messageReceiver.ReceiveMessage((NetMQSocket)sender);
+        //}
 
-        private static void BackendReceiveReady(object sender, SocketEventArgs e)
+        private static void BackendReceiveReady(object sender, NetMQSocketEventArgs e)
         {
             WritelineToLogFile("BackendReceiveReady");
-            e.Socket.Forward(frontend);
+            // e.Socket.Send(frontend,);
+
+            bool more;
+
+            do
+            {
+                var data = e.Socket.Receive(out more);
+
+                if (more)
+                    frontend.SendMore(data);
+                else
+                {
+                    frontend.Send(data);
+                }
+
+            } while (more);
         }
 
-        private static void FrontendReceiveReady(object sender, SocketEventArgs e)
+        private static void FrontendReceiveReady(object sender, NetMQSocketEventArgs e)
         {
             WritelineToLogFile("FrontendReceiveReady");
-            e.Socket.Forward(backend);
+            //e.Socket.Forward(backend);
+
+            bool more;
+
+            do
+            {
+                var data = e.Socket.Receive(out more);
+
+                if (more)
+                    backend.SendMore(data);
+                else
+                {
+                    backend.Send(data);
+                }
+
+            } while (more);
         }
 
         private void CleanUpDevices()
@@ -174,23 +215,23 @@ namespace Daytona
             {
                 if (QueueDevce.IsRunning)
                 {
-                    QueueDevce.Stop();
-                    QueueDevce.Close();
+                    QueueDevce.Stop(true);
+                    //QueueDevce. .Close();
                 }
 
-                QueueDevce.Dispose();
+                //QueueDevce.Dispose();
             }
 
-            if (ForwarderDevice != null)
-            {
-                if (ForwarderDevice.IsRunning)
-                {
-                    ForwarderDevice.Stop();
-                    ForwarderDevice.Close();
-                }
+            //if (ForwarderDevice != null)
+            //{
+            //    if (ForwarderDevice.IsRunning)
+            //    {
+            //        ForwarderDevice.Stop(true);
+            //        //ForwarderDevice. .Close();
+            //    }
 
-                ForwarderDevice.Dispose();
-            }
+            //    //ForwarderDevice. .Dispose();
+            //}
 
             if (this.MonitorChannel != null)
             {
@@ -218,15 +259,15 @@ namespace Daytona
             this.disposed = true;
         }
 
-        private void SetUpMonitorChannel(ZmqContext context)
+        private void SetUpMonitorChannel(NetMQContext context)
         {
-            this.MonitorChannel = context.CreateSocket(SocketType.REQ);
+            this.MonitorChannel = context.CreateRequestSocket();
             this.MonitorChannel.Connect(Pipe.MonitorAddressClient);
         }
 
-        private void SetUpAddSubscriberCountChannel(ZmqContext zmqContext)
+        private void SetUpAddSubscriberCountChannel(NetMQContext zmqContext)
         {
-            this.AddSubscriberCountChannel = zmqContext.CreateSocket(SocketType.SUB);
+            this.AddSubscriberCountChannel = zmqContext.CreateSubscriberSocket();
             this.AddSubscriberCountChannel.Connect(Pipe.SubscribeAddressClient);
             this.AddSubscriberCountChannel.Subscribe(Pipe.ControlChannelEncoding.GetBytes(Pipe.SubscriberCountAddress));
         }
@@ -244,7 +285,7 @@ namespace Daytona
             catch (Exception ex)
             {
                 //Writeline(ex.ToString());
-                if(ex.ToString()=="")
+                if (ex.ToString() == "")
                 {
                     return ReadSignal();
                 }
@@ -252,10 +293,11 @@ namespace Daytona
 
             return false;
         }
-  
+
         private bool ReadSignal()
         {
-            var signal = this.MonitorChannel.Receive(Pipe.ControlChannelEncoding, new TimeSpan(0, 0, 0, 0, 100));
+            bool more = false;
+            var signal = this.MonitorChannel.Receive(out more);
             if (signal == null)
             {
                 return false;

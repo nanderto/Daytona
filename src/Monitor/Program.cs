@@ -5,24 +5,25 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using TestHelpers;
-using ZeroMQ;
 
 namespace Monitor
 {
+    using NetMQ;
+
     class Program
     {
         static void Main(string[] args)
         {
             Console.CancelKeyPress += new ConsoleCancelEventHandler(ConsoleCancelHandler);
-            using (var context = ZmqContext.Create())
+            using (var context = NetMQContext.Create())
             {
-                using (var monitorService = context.CreateSocket(SocketType.REP))
+                using (var monitorService = context.CreateResponseSocket())
                 {
                     monitorService.Bind(Pipe.MonitorAddressServer);
 
                     while (!interrupted)
                     {
-                        var signal = monitorService.Receive(Pipe.ControlChannelEncoding);
+                        var signal = monitorService.Receive();
                         Console.WriteLine("::> " + signal);
                         monitorService.Send("", Encoding.Unicode);
                     }
