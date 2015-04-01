@@ -71,7 +71,7 @@ namespace Daytona
                 }
             };
 
-        private readonly Dictionary<string, Entity> Clowns = new Dictionary<string, Entity>();
+        private readonly Dictionary<string, Entity> Entities = new Dictionary<string, Entity>();
 
         private BinarySerializer binarySerializer;
 
@@ -112,7 +112,7 @@ namespace Daytona
                 "ActorLauncher",
                 string.Empty,
                 "ActorLauncher outRoute",
-                this.Clowns,
+                this.Entities,
                 new BinarySerializer(),
                 new DefaultSerializer(Exchange.ControlChannelEncoding),
                 actions);
@@ -127,7 +127,7 @@ namespace Daytona
         public Silo RegisterEntity(Type type)
         {
             // Type type = actor.GetType();
-            this.Clowns.Add(type.FullName, new Entity(type));
+            this.Entities.Add(type.FullName, new Entity(type));
             return this;
         }
 
