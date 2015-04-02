@@ -13,30 +13,49 @@
 
         private static void Main(string[] args)
         {
-            using (var context = NetMQContext.Create())
+            using (var silo = Silo.Create())
             {
                 PrintInstructions();
 
-                var exchange = new Exchange(context);
-                exchange.Start();
-                using (var silo = new Silo(context, new BinarySerializer()))
+                silo.RegisterEntity(typeof(ConsoleReaderActor));
+                silo.RegisterEntity(typeof(ConsoleWriterActor));
+                silo.Start();
+                var reader = silo.ActorFactory.CreateInstance<IConsoleReaderActor>(typeof(ConsoleReaderActor));
+
+                reader.Read();
+                do
                 {
-                    silo.RegisterEntity(typeof(ConsoleReaderActor));
-                    silo.RegisterEntity(typeof(ConsoleWriterActor));
-                    silo.Start();
-                    var reader = silo.ActorFactory.CreateInstance<IConsoleReaderActor>(typeof(ConsoleReaderActor));
-
-                    reader.Read();
-                    do
-                    {
-                        Thread.Sleep(1000);
-                    }
-                    while (DontBreak);
-                    silo.Stop();
+                    Thread.Sleep(1000);
                 }
-
-                exchange.Stop(true);
+                while (DontBreak);
+                silo.Stop();
             }
+            
+
+            //using (var context = NetMQContext.Create())
+            //{
+            //    PrintInstructions();
+
+            //    var exchange = new Exchange(context);
+            //    exchange.Start();
+            //    using (var silo = new Silo(context, new BinarySerializer()))
+            //    {
+            //        silo.RegisterEntity(typeof(ConsoleReaderActor));
+            //        silo.RegisterEntity(typeof(ConsoleWriterActor));
+            //        silo.Start();
+            //        var reader = silo.ActorFactory.CreateInstance<IConsoleReaderActor>(typeof(ConsoleReaderActor));
+
+            //        reader.Read();
+            //        do
+            //        {
+            //            Thread.Sleep(1000);
+            //        }
+            //        while (DontBreak);
+            //        silo.Stop();
+            //    }
+
+            //    exchange.Stop(true);
+            //}
         }
 
         private static void PrintInstructions()

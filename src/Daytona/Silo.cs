@@ -1,10 +1,4 @@
-﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="Silo.cs" company="Brookfield Global Relocation Services">
-// Copyright © 2014 All Rights Reserved
-// </copyright>
-// --------------------------------------------------------------------------------------------------------------------
-
-namespace Daytona
+﻿namespace Daytona
 {
     using System;
     using System.Collections.Generic;
@@ -73,9 +67,9 @@ namespace Daytona
 
         private readonly Dictionary<string, Entity> Entities = new Dictionary<string, Entity>();
 
-        private BinarySerializer binarySerializer;
+        private readonly NetMQContext context;
 
-        private NetMQContext context;
+        private BinarySerializer binarySerializer;
 
         private bool disposed;
 
@@ -99,6 +93,18 @@ namespace Daytona
         /// </summary>
         public Actor ActorFactory { get; set; }
 
+        public Exchange Exchange { get; set; }
+
+        public static Silo Create()
+        {
+            var context = NetMQContext.Create();
+            var exchange = new Exchange(context);
+            exchange.Start();
+
+            var silo = new Silo(context, new BinarySerializer()) { Exchange = exchange };
+            return silo;
+        }
+
         /// <summary>
         /// Sets up the correct registration for the function that runs and controls the Actors.
         /// </summary>
@@ -107,7 +113,7 @@ namespace Daytona
             var actions = new Dictionary<string, Delegate>();
             actions.Add("MethodInfo", LaunchActors);
             actions.Add("ShutDownAllActors", ShutDownAllActors);
-            
+
             this.ActorFactory.RegisterActor(
                 "ActorLauncher",
                 string.Empty,
@@ -174,9 +180,8 @@ namespace Daytona
             actor.Entities.TryGetValue(addressAndId[0], out entity);
 
             Type[] typeArgs = { entity.EntityType };
-            
+
             var entityFromPersistence = actor.ReadfromPersistence(cleanAddress, entity.EntityType);
-            
 
             if (entityFromPersistence == null)
             {
@@ -225,6 +230,8 @@ namespace Daytona
                 if (disposing)
                 {
                     this.ActorFactory.Dispose();
+                    this.Exchange.Dispose();
+                    this.context.Dispose();
                 }
 
                 //// There are no unmanaged resources to release, but

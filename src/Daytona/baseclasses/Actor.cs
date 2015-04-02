@@ -1,10 +1,4 @@
-﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="Actor.cs" company="Brookfield Global Relocation Services">
-// Copyright © 2014 All Rights Reserved
-// </copyright>
-// --------------------------------------------------------------------------------------------------------------------
-
-namespace Daytona
+﻿namespace Daytona
 {
     using System;
     using System.Collections.Generic;
