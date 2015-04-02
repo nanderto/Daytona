@@ -222,21 +222,24 @@ namespace Daytona
             this.WriteLineToSelf(serializer.GetString(serializer.GetBuffer(toBePersisted)), pathSegment);
         }
 
+        /// <summary>
+        /// Receives the next message (all of it including multipart message) from the socket and processes the message
+        /// </summary>
+        /// <param name="subscriber">The socke which it is processing the message on</param>
+        /// <returns>boolean true if it receives a message telling it to stop listening</returns>
         public virtual bool ReceiveMessage(NetMQSocket subscriber)
         {
             var stopSignal = false;
             var methodParameters = new List<object>();
             var serializer = new BinarySerializer();
             MethodInfo returnedMethodInfo = null;
-            var returnedMessageType = string.Empty;
-            var returnedAddress = string.Empty;
-            var returnAddress = string.Empty;
 
-            returnedAddress = GetString(subscriber, serializer);
-            returnedMessageType = GetString(subscriber, serializer);
+            var returnedAddress = GetString(subscriber, serializer);
+            var returnedMessageType = GetString(subscriber, serializer);
 
             if (returnedMessageType == "MethodInfo")
             {
+                ////This type of message contains data about which method to execute and the parameters to execut it with
                 var returned = GetMethodInfo(subscriber, serializer);
                 returnedMethodInfo = returned.Item1;
                 var hasMore = returned.Item2;
@@ -245,6 +248,8 @@ namespace Daytona
                     hasMore = AddParameter(subscriber, serializer, methodParameters);
                 }
 
+                ////this checks if this specific actor has a business actor associated with it, if not then it attempts to
+                ////retrieve it from the persistence layer at the address it has for it.  
                 if (this.Model == null)
                 {
                     this.Model = this.ReadfromPersistence(returnedAddress);

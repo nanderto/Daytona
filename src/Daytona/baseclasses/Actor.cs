@@ -870,7 +870,7 @@ namespace Daytona
 
         public ISerializer PersistanceSerializer { get; set; }
 
-   
+        public ISerializerFactory PersistSerializerFactory { get; set; }
 
         #region Methods
 
