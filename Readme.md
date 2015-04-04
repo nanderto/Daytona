@@ -1,4 +1,4 @@
-Daytona is an experimental Actor Model Framework written in C# and using ZeroMQ as the messaging library to support messaging between Actors. It is capable of the following requirements in support of the actor model
+Daytona is an experimental Actor Model Framework written in C# and using ZeroMQ as the messaging library to support messaging between Actors. It is capable of the following requirements in support of the actor model:
 1. Single threaded within the actor.
 2. Only communicates with other actors via messaging
 3. Actors can create other actors
@@ -35,6 +35,7 @@ You should create only one per application, it will under the hood create a NetM
         {
             Thread.Sleep(1000);
         }
+       
         while (DontBreak);
         silo.Stop();
     }
