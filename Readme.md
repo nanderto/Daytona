@@ -13,10 +13,11 @@ Under the hood the framework is still substantially the same. The Actor is the c
 You host this in a Windows application, Console, forms or Windows service.
 
 1. First thing you need to do is create a Silo. The Silo will construct it self via the create method, and tear itself down when being disposed of. So you should use the "Using" pattern
-
+'''
+   
     using (var silo = Silo.Create())
     {}
-
+'''
 You should create only one per application, it will under the hood create a NetMQContext (also limited to one per application), and once the context is created it will set up anexchange to forward messages to the correct address, and its own internal actors that run create the virtual framework to manage your actors.
 
 
@@ -48,6 +49,7 @@ The last few lines of code are just there to ensure that the thread does not exi
 Just create a class and give it some methods that return void
 
 '''
+    
     [Serializable]
     public class ConsoleReaderActor : ActorFactory, IConsoleReaderActor
     {
