@@ -21,7 +21,8 @@ You host this in a Windows application, Console, forms or Windows service.
 You should create only one per application, it will under the hood create a NetMQContext (also limited to one per application), and once the context is created it will set up anexchange to forward messages to the correct address, and its own internal actors that run create the virtual framework to manage your actors.
 
 2. Then you can use your silo. All that is required is to register your actors prior to starting the Silo.
-
+'''
+    
     using (var silo = Silo.Create())
     {
         silo.RegisterEntity(typeof(ConsoleReaderActor));
@@ -39,7 +40,7 @@ You should create only one per application, it will under the hood create a NetM
         while (DontBreak);
         silo.Stop();
     }
-
+'''
 
 In the above sample you can see a consoleReaderActor, ValidationActor and a ConsoleWriterActor being registered. Then you see the silo being started, which must occur in this order. Next you can see the reader object being created by the Actorfactory, this is a proxy object and will take what ever parameters you have passed the method and the method name and send them to the actual object. The reader.Read call sends a message to the address inproc://<fullobjectname>/objectId the silo has an actor set up to monitor all addresses. If it can not find a working version it will create a new one. If one already exists then it will also read the message and respond to it.
 The last few lines of code are just there to ensure that the thread does not exit before it is supposed to. The last lines silo.Stop, the close of the using statement for the Silo are part of the gracefull shut down of the app.
