@@ -23,14 +23,18 @@ You should create only one per application, it will under the hood create a NetM
 2. Then you can use your silo. All that is required is to register your actors prior to starting the Silo.
 
     
+    
     using (var silo = Silo.Create())
+    
     {
+        
         silo.RegisterEntity(typeof(ConsoleReaderActor));
         silo.RegisterEntity(typeof(ConsoleWriterActor));
         silo.RegisterEntity(typeof(ValidationActor));
         silo.Start();
         var reader =    silo.ActorFactory.CreateInstance<IConsoleReaderActor>(typeof(ConsoleReaderActor));
         reader.Read();
+        
         do
         {
             Thread.Sleep(1000);
