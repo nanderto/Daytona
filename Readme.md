@@ -48,7 +48,6 @@ The last few lines of code are just there to ensure that the thread does not exi
 
 Just create a class and give it some methods that return void
 
-'''
     
     [Serializable]
     public class ConsoleReaderActor : ActorFactory, IConsoleReaderActor
@@ -90,7 +89,8 @@ Just create a class and give it some methods that return void
                 this.validator.Validate(message);
             }
         }
-'''
+    }  
+
 Above is the ConsoleReaderActor, you need to mark it as Serializable because it is persisted to a store via serialization. You also need to declare an Interface for the methods that you want to send messages to your actor. In this case the "Read" and "ReadAgain" methods form the interface. Because this actor is creating other actors you need to inherit from the ActorFactory, this will make the Factory avaiable to create the other actors. This is not necessary if you do not want your actor to create other actors. A couple of idiosyncracies The Actor Factory cannot and should not be serialized, since you can use your own serializer you have to override the property and apply your own tag to it to avoid it being serialized. In this case it has the JsonIgnore attribut applied to it (this might be fixable). Also you cannot currently create your own constructor, this object gets deserialized from persistant storage, and its not possible to have the actorfactory available during this instantiation. The result is that if you want to call another actor you have to check if it has been cre3ated by a previous call. See the first 5 lines of code of the read method. (Also looking into this)
 
 
