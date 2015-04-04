@@ -15,17 +15,23 @@ namespace MonitorNetMq
     {
         private static void Main(string[] args)
         {
+            Console.CancelKeyPress += new ConsoleCancelEventHandler(ConsoleCancelHandler);
+
             using (NetMQContext context = NetMQContext.Create())
             {
                 
                     using (var rep = context.CreateResponseSocket())
                     {
                         rep.Bind(MonitorAddressServer);
-                        while (true)
+                        while (!interrupted)
                         {
-                            var signal = rep.ReceiveString(ControlChannelEncoding);
-                            Console.WriteLine("::> " + signal);
-                            rep.Send(string.Empty, Encoding.Unicode);
+                            var signal = rep.ReceiveString(ControlChannelEncoding, TimeSpan.FromMilliseconds(30));
+                            if (!string.IsNullOrEmpty(signal))
+                            {
+                                Console.WriteLine("::> " + signal);
+                                rep.Send(string.Empty, Encoding.Unicode);
+                                
+                            }
                         }
                     }
                
@@ -39,5 +45,15 @@ namespace MonitorNetMq
 
 
         public static Encoding ControlChannelEncoding = Encoding.Unicode;
+
+        static bool interrupted = false;
+
+        static void ConsoleCancelHandler(object sender, ConsoleCancelEventArgs e)
+        {
+            e.Cancel = true;
+            interrupted = true;
+        }
     }
+
+
 }

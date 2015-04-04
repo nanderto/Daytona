@@ -5,6 +5,7 @@
     using System.IO;
     using System.Linq;
     using System.Reflection;
+    using System.Runtime.InteropServices;
     using System.Runtime.Serialization;
     using System.Text;
     using System.Threading.Tasks;
@@ -37,6 +38,22 @@
                 return new Tuple<MethodInfo, bool>(methodinfo, hasMore);
             };
 
+        public static Func<NetMQSocket, BinarySerializer, Tuple<ExceptionDetails, bool>> GetExceptionDetails = (socket, serializer) =>
+        {
+            var hasMore = false;
+            var buffer = socket.Receive(out hasMore);
+            var methodinfo = (ExceptionDetails)serializer.Deserializer(buffer, typeof(ExceptionDetails));
+            return new Tuple<ExceptionDetails, bool>(methodinfo, hasMore);
+        };
+
+        public static Func<NetMQSocket, BinarySerializer, Tuple<Exception, bool>> GetException = (socket, serializer) =>
+        {
+            var hasMore = false;
+            var buffer = socket.Receive(out hasMore);
+            var exception = (Exception)serializer.Deserializer(buffer, typeof(Exception));
+            return new Tuple<Exception, bool>(exception, hasMore);
+        };
+
         public static Func<NetMQSocket, BinarySerializer, Type> GetObjectType = (socket, serializer) =>
             {
                 var hasMore = false;
@@ -62,11 +79,13 @@
 
         private static readonly object SynchLock = new object();
 
-        public readonly Dictionary<string, Entity> Entities = new Dictionary<string, Entity>();
-
         #endregion
 
         #region Fields
+
+        
+
+        public readonly Dictionary<string, Entity> Entities = new Dictionary<string, Entity>();
 
         public readonly Dictionary<string, Action> actorTypes = new Dictionary<string, Action>();
 
@@ -75,8 +94,6 @@
 
         [NonSerialized]
         public NetMQSocket Subscriber;
-
-        //public Type TypeOfActor;
 
         [NonSerialized]
         private NetMQSocket monitorChannel;
@@ -417,6 +434,11 @@
             GC.SuppressFinalize(this);
         }
 
+        /// <summary>
+        /// Receives the message, and translates it into objects that are called to do the work of the method
+        /// </summary>
+        /// <param name="subscriber">The socket that the messages are being received on</param>
+        /// <returns>Stop signal, if true it has received a message to stop processing and exit</returns>
         public virtual bool  ReceiveMessage(NetMQSocket subscriber)
         {
             var stopSignal = false;
@@ -449,9 +471,17 @@
 
                 Delegate action = null;
                 this.Actions.TryGetValue("MethodInfo", out action);
-                action.DynamicInvoke(inputParameters);
 
-                //this.Workload.DynamicInvoke(inputParameters);
+                try
+                {
+                    action.DynamicInvoke(inputParameters);
+                }
+                catch (Exception ex)
+                {
+                    this.SendException(ex, returnedAddress);
+                }
+                
+
             }
 
             if (returnedMessageType == "Workload")
@@ -480,7 +510,49 @@
                 action.DynamicInvoke(inputParameters);
                 //this.Workload.DynamicInvoke(inputParameters);
             }
+
+            if (returnedMessageType.ToLower() == "handleexceptions")
+            {
+                var returned = GetException(subscriber, serializer);
+                var returnedException = returned.Item1;
+                string AddressThatThrewException = String.Empty;
+                if (returned.Item2)
+                {
+                    var result = GetExceptionDetails(subscriber, serializer);
+                    AddressThatThrewException = result.Item1.AddressThatThrewException;
+                }
+
+                Delegate action = null;
+                if (this.Actions.TryGetValue("HandleExceptions", out action))
+                {
+
+                    var inputParameters = new object[5];
+                    inputParameters[0] = "HandleExceptions";
+                    inputParameters[1] = this;
+                    inputParameters[2] = returnedException;
+                    inputParameters[3] = "this is a message";
+                    inputParameters[4] = AddressThatThrewException;
+
+                    action.DynamicInvoke(inputParameters);
+                    ////I have to do something to handle exceptions like restart the actor.
+                    System.Diagnostics.Debug.Assert(true);
+                }
+            }
+
             return stopSignal;
+        }
+
+        internal void SendException(Exception ex, string address)
+        {
+            ExceptionDetails exceptionDetails = new ExceptionDetails();
+            exceptionDetails.AddressThatThrewException = address;
+            var netMqMessage = new NetMQMessage();
+            var exceptionSerializer = new BinarySerializer();
+            netMqMessage.Append(new NetMQFrame(exceptionSerializer.GetBuffer("ExceptionHandler")));
+            netMqMessage.Append(new NetMQFrame(exceptionSerializer.GetBuffer("handleexceptions")));
+            netMqMessage.Append(new NetMQFrame(exceptionSerializer.GetBuffer(ex)));
+            netMqMessage.Append(new NetMQFrame(exceptionSerializer.GetBuffer(exceptionDetails)));
+            this.OutputChannel.SendMessage(netMqMessage);
         }
 
         public Actor RegisterActor<T>(
@@ -958,7 +1030,8 @@
                 {
                     if (this.IsRunning)
                     {
-                        this.SendKillMe(this.Serializer, this.outputChannel);
+                       // I dont think this works
+                       // this.SendKillMe(this.Serializer, this.outputChannel);
                     }
 
                     this.OutputChannelDisposed = true;

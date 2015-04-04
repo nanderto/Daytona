@@ -11,6 +11,8 @@
 
     using Microsoft.VisualStudio.TestTools.UnitTesting;
 
+    using NetMQ;
+
     using TestHelpers;
 
     [TestClass]
@@ -66,12 +68,17 @@
         [TestMethod]
         public void SerializeActorFactory()
         {
-            var serializer = new DefaultSerializer(Pipe.ControlChannelEncoding);
-            var customer = new Customer(new Actor());
-            customer.Firstname = "george";
-            var buffer = serializer.GetBuffer(customer);
-            var result = serializer.Deserializer<Customer>(buffer);
-            Assert.AreEqual(customer.Firstname, result.Firstname);
+            using (var context = NetMQContext.Create())
+            using (var testActor = new Actor(context))
+            {
+                
+                var serializer = new DefaultSerializer(Pipe.ControlChannelEncoding);
+                var customer = new Customer(testActor);
+                customer.Firstname = "george";
+                var buffer = serializer.GetBuffer(customer);
+                var result = serializer.Deserializer<Customer>(buffer);
+                Assert.AreEqual(customer.Firstname, result.Firstname);
+            }
         }
 
         [TestMethod]

@@ -478,7 +478,7 @@ namespace Daytona.Tests
         }
 
         [TestMethod]
-        public void CreatingAClown()
+        public void CreatingAEntity()
         {
 
             Type typeInfo = typeof(Customer);

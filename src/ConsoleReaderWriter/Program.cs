@@ -19,6 +19,7 @@
 
                 silo.RegisterEntity(typeof(ConsoleReaderActor));
                 silo.RegisterEntity(typeof(ConsoleWriterActor));
+                silo.RegisterEntity(typeof(ValidationActor));
                 silo.Start();
                 var reader = silo.ActorFactory.CreateInstance<IConsoleReaderActor>(typeof(ConsoleReaderActor));
 
@@ -30,32 +31,6 @@
                 while (DontBreak);
                 silo.Stop();
             }
-            
-
-            //using (var context = NetMQContext.Create())
-            //{
-            //    PrintInstructions();
-
-            //    var exchange = new Exchange(context);
-            //    exchange.Start();
-            //    using (var silo = new Silo(context, new BinarySerializer()))
-            //    {
-            //        silo.RegisterEntity(typeof(ConsoleReaderActor));
-            //        silo.RegisterEntity(typeof(ConsoleWriterActor));
-            //        silo.Start();
-            //        var reader = silo.ActorFactory.CreateInstance<IConsoleReaderActor>(typeof(ConsoleReaderActor));
-
-            //        reader.Read();
-            //        do
-            //        {
-            //            Thread.Sleep(1000);
-            //        }
-            //        while (DontBreak);
-            //        silo.Stop();
-            //    }
-
-            //    exchange.Stop(true);
-            //}
         }
 
         private static void PrintInstructions()

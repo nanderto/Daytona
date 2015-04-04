@@ -51,6 +51,9 @@
                     }
                 };
 
+        /// <summary>
+        /// This function sends a message to shut down all running actors
+        /// </summary>
         public static Action<string, Actor> ShutDownAllActors = (instruction, actor) =>
             {
                 object returnedObject = null;
@@ -62,6 +65,38 @@
                     {
                         actor.SendKillSignal(actor.Serializer, actor.OutputChannel, actr.Address);
                     }
+                }
+            };
+
+        public static Action<string, Actor, Exception, string, string> HandleExceptionsRemoveFromRunningActors =
+            (instruction, actor, exception, message, addressThatThrewException) =>
+                {
+                    actor.WriteLineToMonitor("trouble");
+                    ////todo I have to remove the  actor that thru the exception and was allowed to stop
+                    ////from the collection of runing actors in the launch actor actor. ie send it a message to remove, then send it a message to restart it
+                    ////dtarting to look like this actor is a waist of time I shold just handle it all in the Launch actor 
+                    object returnedObject = null;
+
+                    if (actor.PropertyBag.TryGetValue("RunningActors", out returnedObject))
+                    {
+                        var runningActors = (List<RunningActors>)returnedObject;                        
+                        runningActors.RemoveAll(ra => ra.Address == addressThatThrewException);
+                    } 
+                };
+
+        public static Action<string, Actor, Exception, string, string> HandleExceptionsLog =
+            (instruction, actor, exception, message, addressThatThrewException) =>
+            {
+                actor.WriteLineToMonitor("trouble");
+                ////todo I have to remove the  actor that thru the exception and was allowed to stop
+                ////from the collection of runing actors in the launch actor actor. ie send it a message to remove, then send it a message to restart it
+                ////dtarting to look like this actor is a waist of time I shold just handle it all in the Launch actor 
+                object returnedObject = null;
+
+                if (actor.PropertyBag.TryGetValue("RunningActors", out returnedObject))
+                {
+                    var runningActors = (List<RunningActors>)returnedObject;
+                    runningActors.RemoveAll(ra => ra.Address == addressThatThrewException);
                 }
             };
 
@@ -80,6 +115,7 @@
             this.ActorFactory = new Actor(context, new BinarySerializer());
             this.ActorFactory.PersistanceSerializer = new DefaultSerializer(Pipe.ControlChannelEncoding);
             this.ConfigActorLauncher();
+            this.ConfigExceptionHandler();
 
             //// need to add additional actors here. they will get configured and started in this constructor.
             //this.exceptionhandler();
@@ -89,10 +125,14 @@
         /// Actor factory is an actor that is set up so it will not listen to any messages. 
         /// this is created to register and start sub-actors which perform the roles necessary for the Silo to function.
         /// the Sub actors will listen on there own channels for messages
-        /// the output channel is alson set up, so the Actotfactory can (and is used) to send messages.
+        /// the output channel is also set up, so the ActorFactory can (and is used) to send messages.
         /// </summary>
         public Actor ActorFactory { get; set; }
 
+        /// <summary>
+        /// the exchange is a device to allow the shuffling of messages from the send endpoint to the receive end point
+        /// this allows multiple actors to connect to the endpoints
+        /// </summary>
         public Exchange Exchange { get; set; }
 
         public static Silo Create()
@@ -113,11 +153,30 @@
             var actions = new Dictionary<string, Delegate>();
             actions.Add("MethodInfo", LaunchActors);
             actions.Add("ShutDownAllActors", ShutDownAllActors);
+            actions.Add("HandleExceptions", HandleExceptionsRemoveFromRunningActors);
 
             this.ActorFactory.RegisterActor(
                 "ActorLauncher",
                 string.Empty,
                 "ActorLauncher outRoute",
+                this.Entities,
+                new BinarySerializer(),
+                new DefaultSerializer(Exchange.ControlChannelEncoding),
+                actions);
+        }
+
+        /// <summary>
+        /// Sets up the correct registration for the function that handles exceptions.
+        /// </summary>
+        public void ConfigExceptionHandler()
+        {
+            var actions = new Dictionary<string, Delegate>();
+            actions.Add("HandleExceptions", HandleExceptionsLog);
+
+            this.ActorFactory.RegisterActor(
+                "ExceptionHandlerActor",
+                "ExceptionHandler",
+                "Exceptions outRoute",
                 this.Entities,
                 new BinarySerializer(),
                 new DefaultSerializer(Exchange.ControlChannelEncoding),
@@ -190,6 +249,8 @@
 
             if (entity.EntityType.BaseType == typeof(ActorFactory))
             {
+                //todo I need to clone a new actor hear or at least not pass in the actor that I have. 
+                //this I think will mean sharing the actor although the only reason to share is the registered entities
                 ((ActorFactory)entityFromPersistence).Factory = actor;
             }
 
@@ -208,7 +269,19 @@
                     new BinarySerializer(),
                     new DefaultSerializer(Exchange.ControlChannelEncoding));
             target.Name = cleanAddress;
-            var result = methodInfo.Invoke(entityFromPersistence, parameters.ToArray());
+
+            try
+            {
+                var result = methodInfo.Invoke(entityFromPersistence, parameters.ToArray());
+            }
+            catch (Exception)
+            {
+                ////todo
+                //// swallow exception on running the method, in the creation of the actor.
+                //// allow the actor to start anyway.
+                //// need to do something about this cant just swallow it but OK for now but there is a good chance it will stop the program from running
+            }
+             
             var store = new Store(target.PersistanceSerializer);
             store.Persist(entity.EntityType, entityFromPersistence, cleanAddress);
 

@@ -12,7 +12,7 @@
     using NProxy.Core;
 
     /// <summary>
-    ///     The Actor is the coe object of the Actor framework, it is self configuring to listen for messages that come in and
+    ///     The Actor is the core object of the Actor framework, it is self configuring to listen for messages that come in and
     ///     execute what ever
     ///     workload that is configured for it.
     /// </summary>
@@ -59,9 +59,9 @@
         /// <summary>
         /// this Constructor is specifically used by the silo to create new instances of user defined objects
         /// </summary>
-        /// <param name="context"></param>
-        /// <param name="model"></param>
-        /// <param name="id"></param>
+        /// <param name="context">NetMQContext required to set up communication</param>
+        /// <param name="model">The entity that is going to be run as an actor</param>
+        /// <param name="address"></param>
         /// <param name="messageSerializer"></param>
         /// <param name="persistenceSerializer"></param>
         public Actor(NetMQContext context, T model, string address, ISerializer messageSerializer, ISerializer persistenceSerializer)
@@ -255,7 +255,17 @@
                     }
                 }
                 //var target = (T)Activator.CreateInstance(typeof(T));
-                var result = returnedMethodInfo.Invoke(this.Model, methodParameters.ToArray());
+                try
+                {
+                    var result = returnedMethodInfo.Invoke(this.Model, methodParameters.ToArray());
+                }
+                catch (Exception ex)
+                {
+                    this.SendException(ex, returnedAddress);
+                    //set this to exit actor on exception
+                    stopSignal = true;
+                }
+               
                 
                 this.PersistSelf(this.Model.GetType(), this.Model, this.PersistanceSerializer);
             }

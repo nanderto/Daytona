@@ -87,6 +87,7 @@
     <Compile Include="Actor.cs" />
     <Compile Include="ActorFactory.cs" />
     <Compile Include="baseclasses\Actor.cs" />
+    <Compile Include="ExceptionDetails.cs" />
     <Compile Include="baseclasses\Store.cs" />
     <Compile Include="BinarySerializer.cs" />
     <Compile Include="CallBackEventArgs.cs" />
