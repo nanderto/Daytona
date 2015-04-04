@@ -19,15 +19,10 @@ You host this in a Windows application, Console, forms or Windows service.
 
 You should create only one per application, it will under the hood create a NetMQContext (also limited to one per application), and once the context is created it will set up anexchange to forward messages to the correct address, and its own internal actors that run create the virtual framework to manage your actors.
 
-
 2. Then you can use your silo. All that is required is to register your actors prior to starting the Silo.
 
-    
-    
     using (var silo = Silo.Create())
-    
     {
-        
         silo.RegisterEntity(typeof(ConsoleReaderActor));
         silo.RegisterEntity(typeof(ConsoleWriterActor));
         silo.RegisterEntity(typeof(ValidationActor));
