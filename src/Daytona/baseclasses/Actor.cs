@@ -83,8 +83,6 @@
 
         #region Fields
 
-        
-
         public readonly Dictionary<string, Entity> Entities = new Dictionary<string, Entity>();
 
         public readonly Dictionary<string, Action> actorTypes = new Dictionary<string, Action>();
@@ -245,6 +243,7 @@
             this.SetUpOutputChannel(context);
             this.SetUpReceivers(context, inRoute);
         }
+
         /// <summary>
         /// This constructor is useful for seting up a Actor factory that does not listen for its own messages
         /// </summary>
@@ -916,6 +915,8 @@
         }
 
         private readonly List<Exception> faults = new List<Exception>();
+
+
         public void AddFault(Exception ex)
         {
             this.faults.Add(ex);

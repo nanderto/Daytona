@@ -29,15 +29,28 @@ namespace PipeRunner
             var input = string.Empty;
             Console.CancelKeyPress += new ConsoleCancelEventHandler(ConsoleCancelHandler);
 
-            using (var context = NetMQContext.Create())
+
+            using (var silo = Silo.Create())
             {
-                using (var pipe = new Pipe())
-                {
-                    pipe.Start(context);
-                    Console.WriteLine("enter to exit=>");
-                    input = Console.ReadLine();
-                }
+                silo.Spawn("Johnny", actor =>
+                    {
+                        Console.WriteLine("here");
+                        Console.WriteLine("hey is ther enything there##{0}##", actor.Name);
+                        for (int i = 0; i < 5; i++)
+                        {
+                            Console.WriteLine("hey is ther enything there##{0}##{1}", actor.Name, i);
+                        }
+                    });
             }
+            //using (var context = NetMQContext.Create())
+            //{
+            //    using (var pipe = new Pipe())
+            //    {
+            //        pipe.Start(context);
+            //        Console.WriteLine("enter to exit=>");
+            //        input = Console.ReadLine();
+            //    }
+            //}
         }
 
         //static void backend_ReceiveReady(object sender, SocketEventArgs e)
