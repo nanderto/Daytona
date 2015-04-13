@@ -104,6 +104,14 @@
 
         private readonly NetMQContext context;
 
+        public NetMQContext Context
+        {
+            get
+            {
+                return context;
+            }
+        }
+
         private BinarySerializer binarySerializer;
 
         private bool disposed;
@@ -121,6 +129,19 @@
             //this.exceptionhandler();
         }
 
+
+        public Silo(NetMQContext context, MessageSerializerFactory messageSerializerFactory)
+        {
+            this.context = context;
+            this.MessageSerializerFactory = messageSerializerFactory;
+            this.ActorFactory = new Actor(context, new BinarySerializer());
+            this.ActorFactory.PersistanceSerializer = new DefaultSerializer(Pipe.ControlChannelEncoding);
+            this.ConfigActorLauncher();
+            this.ConfigExceptionHandler();
+
+            //// need to add additional actors here. they will get configured and started in this constructor.
+            //this.exceptionhandler();
+        }
         /// <summary>
         /// Actor factory is an actor that is set up so it will not listen to any messages. 
         /// this is created to register and start sub-actors which perform the roles necessary for the Silo to function.
@@ -135,13 +156,16 @@
         /// </summary>
         public Exchange Exchange { get; set; }
 
+        public MessageSerializerFactory MessageSerializerFactory { get; private set; }
+
         public static Silo Create()
         {
+            var messageSerializerFactory = new MessageSerializerFactory(() => new BinarySerializer());
             var context = NetMQContext.Create();
             var exchange = new Exchange(context);
             exchange.Start();
 
-            var silo = new Silo(context, new BinarySerializer()) { Exchange = exchange };
+            var silo = new Silo(context, messageSerializerFactory) { Exchange = exchange };
             return silo;
         }
 
@@ -304,7 +328,7 @@
                 {
                     this.ActorFactory.Dispose();
                     this.Exchange.Dispose();
-                    this.context.Dispose();
+                    this.Context.Dispose();
                 }
 
                 //// There are no unmanaged resources to release, but
@@ -313,5 +337,6 @@
 
             this.disposed = true;
         }
+
     }
 }

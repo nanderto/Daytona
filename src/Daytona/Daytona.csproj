@@ -68,12 +68,15 @@
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="NetMQ, Version=3.3.0.11, Culture=neutral, PublicKeyToken=a6decef4ddc58b3a, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
+    <Reference Include="NetMQ">
       <HintPath>..\packages\NetMQ.3.3.0.11\lib\net40\NetMQ.dll</HintPath>
     </Reference>
     <Reference Include="Newtonsoft.Json, Version=4.5.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\packages\Newtonsoft.Json.4.5.11\lib\net40\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="NProxy.Core, Version=2.3.0.0, Culture=neutral, PublicKeyToken=75421c8750338fd2, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\NProxy.Core.2.3.4\lib\net35\NProxy.Core.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -87,6 +90,8 @@
     <Compile Include="Actor.cs" />
     <Compile Include="ActorFactory.cs" />
     <Compile Include="baseclasses\Actor.cs" />
+    <Compile Include="baseclasses\Sender.cs" />
+    <Compile Include="Context.cs" />
     <Compile Include="ExceptionDetails.cs" />
     <Compile Include="baseclasses\Store.cs" />
     <Compile Include="BinarySerializer.cs" />
@@ -96,11 +101,13 @@
     <Compile Include="DataWriterReader.cs" />
     <Compile Include="DefaultSerializer.cs" />
     <Compile Include="Exchange.cs" />
+    <Compile Include="FrameworkExtensions.cs" />
     <Compile Include="IPayload.cs" />
     <Compile Include="ISerializer.cs" />
     <Compile Include="ISerializerFactory.cs" />
     <Compile Include="MessageReceiver.cs" />
     <Compile Include="MessageSenderProxy.cs" />
+    <Compile Include="MessageSerializerFactory.cs" />
     <Compile Include="MethodsOnlyInterceptionFilter.cs" />
     <Compile Include="Pipe.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -112,12 +119,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\..\..\Git\Repos\NProxy\Source\Main\NProxy.Core\NProxy.Core.csproj">
-      <Project>{e4d8e5ab-7233-4a6f-9763-54931e7580b4}</Project>
-      <Name>NProxy.Core</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="$(SolutionDir)\.nuget\nuget.targets" />

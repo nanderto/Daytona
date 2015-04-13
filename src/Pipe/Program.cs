@@ -10,6 +10,8 @@ namespace PipeRunner
 {
     using NetMQ;
 
+    using TestHelpers;
+
     class Program
     {
         static long msgCptr = 0;
@@ -29,15 +31,54 @@ namespace PipeRunner
             var input = string.Empty;
             Console.CancelKeyPress += new ConsoleCancelEventHandler(ConsoleCancelHandler);
 
-            using (var context = NetMQContext.Create())
+
+            using (var context = Context.Create())
             {
-                using (var pipe = new Pipe())
+                var actorReference = context.Spawn("Johnny", (message, sender, actor) =>
+                        {
+                            object count = 0;
+                            if (actor.PropertyBag.TryGetValue("Counter", out count))
+                            {
+                                var c = (int)count;
+                                count = ++c;
+                                actor.PropertyBag["Counter"] = count;
+                            }
+                            else
+                            {
+                                var c = 0;
+                                actor.PropertyBag.Add("Counter", c);
+                            }
+
+                            //actor.PropertyBag.Add("Counter", count);
+                            Console.WriteLine("here this is the message:{0}##{1}", message, count);
+                            Console.WriteLine("here this is the Sender:{0}##", sender.ReturnedAddress);
+                            Console.WriteLine("hey is there enything there##{0}##", actor.Name);
+                            for (int i = 0; i < 5; i++)
+                            {
+                                Console.WriteLine("hey is ther enything there##{0}##{1}", actor.Name, i);
+                            }
+                        });
+                do
                 {
-                    pipe.Start(context);
-                    Console.WriteLine("enter to exit=>");
-                    input = Console.ReadLine();
+                    Thread.Sleep(30);
+                    actorReference.Tell("hello");
+                    
+                    //context.ActorFactory.SendMessage(serializer.GetBuffer("Johnny"), serializer.GetBuffer("Spawned"), context.ActorFactory.OutputChannel);
                 }
+                while (!interrupted);
+
+                actorReference.Kill();
+                //silo.Stop();
             }
+            //using (var context = NetMQContext.Create())
+            //{
+            //    using (var pipe = new Pipe())
+            //    {
+            //        pipe.Start(context);
+            //        Console.WriteLine("enter to exit=>");
+            //        input = Console.ReadLine();
+            //    }
+            //}
         }
 
         //static void backend_ReceiveReady(object sender, SocketEventArgs e)
