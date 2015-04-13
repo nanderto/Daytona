@@ -1,4 +1,5 @@
-﻿namespace Daytona
+﻿using Daytona.baseclasses;
+namespace Daytona
 {
     using System;
     using System.Collections.Generic;
@@ -151,6 +152,27 @@
             this.SetUpOutputChannel(context);
         }
 
+        /// <summary>
+        /// Creates an actor that does not listen for messages, it is used to send messages only.
+        /// this is usefull in the root when sending messages.
+        /// this is the most recent version, where the Serializerfactory is being used to create new serializers all of the time.
+        /// </summary>
+        /// <param name="context">NetMQContext needed for all messaging</param>
+        /// <param name="messageSerializerFactory">factory can be used to produce new sertializers to ensure they are not shared across threads
+        /// Just call GetNewSerializer everytime you need a serializer</param>
+        public Actor(NetMQContext context, MessageSerializerFactory messageSerializerFactory)
+        {
+            this.IsRunning = false;
+            this.Context = context;
+            this.MessageSerializerFactory = messageSerializerFactory;
+            this.Serializer = messageSerializerFactory.GetNewSerializer();
+            this.PropertyBag = new Dictionary<string, object>();
+            this.SetUpMonitorChannel(context);
+            this.SetUpOutputChannel(context);
+        }
+
+        public MessageSerializerFactory MessageSerializerFactory { get; set; }
+
         public Actor(NetMQContext context, ISerializer serializer, string inRoute)
         {
             this.IsRunning = false;
@@ -176,6 +198,19 @@
             this.SetUpReceivers(context, inRoute);
         }
 
+        public Actor(NetMQContext context, ISerializer serializer, string name, string inRoute, Action<object, Sender, Actor> workload)
+        {
+            this.IsRunning = false;
+            this.Context = context;
+            this.Serializer = serializer;
+            this.Name = name;
+            this.InRoute = inRoute;
+            this.Workload = workload;
+            this.PropertyBag = new Dictionary<string, object>();
+            this.SetUpMonitorChannel(context);
+            this.SetUpOutputChannel(context);
+            this.SetUpReceivers(context, inRoute);
+        }
         public Actor(NetMQContext context, ISerializer serializer, string name, string inRoute, Action<string, List<object>, Actor> workload)
         {
             this.IsRunning = false;
@@ -483,6 +518,22 @@
 
             }
 
+            if (returnedMessageType == "Spawned")
+            {
+                var hasMore = true;
+                while (hasMore)
+                {
+                    hasMore = AddParameter(subscriber, serializer, methodParameters);
+                }
+
+                var inputParameters = new object[3];
+                inputParameters[0] = methodParameters[0];
+                inputParameters[1] = new Sender(returnedAddress);
+                inputParameters[2] = this;
+
+                this.Workload.DynamicInvoke(inputParameters);
+            }
+
             if (returnedMessageType == "Workload")
             {
                 var inputParameters = new object[4];
@@ -721,6 +772,16 @@
         public void SendMessage(string address, byte[] message, ISerializer serializer, NetMQSocket socket)
         {
             this.SendMessage(serializer.Encoding.GetBytes(address), message, socket);
+        }
+
+        public void SendMessage(string address, object message, ISerializer serializer, NetMQSocket socket)
+        {
+            var netMQMessage = new NetMQMessage();
+            netMQMessage.Append(new NetMQFrame(serializer.GetBuffer(address)));
+            netMQMessage.Append(new NetMQFrame(serializer.GetBuffer("Spawned")));
+            netMQMessage.Append(new NetMQFrame(serializer.GetBuffer(message.GetType())));
+            netMQMessage.Append(new NetMQFrame(serializer.GetBuffer(message)));
+            socket.SendMessage(netMQMessage);
         }
 
         public void SendMessage(byte[] address, byte[] message, NetMQSocket socket)

@@ -90,6 +90,8 @@
     <Compile Include="Actor.cs" />
     <Compile Include="ActorFactory.cs" />
     <Compile Include="baseclasses\Actor.cs" />
+    <Compile Include="baseclasses\Sender.cs" />
+    <Compile Include="Context.cs" />
     <Compile Include="ExceptionDetails.cs" />
     <Compile Include="baseclasses\Store.cs" />
     <Compile Include="BinarySerializer.cs" />
@@ -99,6 +101,7 @@
     <Compile Include="DataWriterReader.cs" />
     <Compile Include="DefaultSerializer.cs" />
     <Compile Include="Exchange.cs" />
+    <Compile Include="FrameworkExtensions.cs" />
     <Compile Include="IPayload.cs" />
     <Compile Include="ISerializer.cs" />
     <Compile Include="ISerializerFactory.cs" />

@@ -28,30 +28,25 @@ namespace Daytona
 
     public class ActorReference
     {
+        public MessageSerializerFactory MessageSerializerFactory { get; set; }
+
+        public Actor ActorFactory { get; set; }
+
         public Task ActorReferenceTask { get; set; }
 
-        public string Addres { get; set; }
-    }
+        public string Address { get; set; }
 
-    public static class FrameworkExtensions
-    {
-        public static ActorReference Spawn(this Silo silo, string processName, Action<Actor> action)
+        public void Tell(object message)
         {
-            var task = Task.Run(() =>
-                {
-                    var serializer = silo.MessageSerializerFactory.GetNewSerializer();
-                    using (var actor = new Actor(silo.Context, serializer, processName, processName, action))
-                    {
-                        actor.Start();
-                    }
-                });
-
-           return new ActorReference { ActorReferenceTask = task, Addres = processName };
+            var serializer = MessageSerializerFactory.GetNewSerializer();
+            this.ActorFactory.SendMessage(this.Address, message, serializer, this.ActorFactory.OutputChannel);
         }
 
-        public static ActorReference Spawn(this Silo silo, string processName, string address, Action<Actor> action)
+        public void Kill()
         {
-            return Spawn(silo, processName + @"/" + address, action);
+            var serializer = MessageSerializerFactory.GetNewSerializer();
+            this.ActorFactory.SendKillSignal(serializer, this.ActorFactory.OutputChannel, this.Address);
+            this.ActorFactory.Dispose();
         }
     }
 }
