@@ -203,7 +203,12 @@
        
         public virtual void PersistSelf(Type typeToBePersisted, object toBePersisted, ISerializer serializer)
         {
-            
+            if(string.IsNullOrEmpty(this.InRoute))
+            {
+                this.InRoute = typeToBePersisted.FullName;
+            }
+
+
             if (serializer == null)
             {
                 serializer = new DefaultSerializer(Pipe.ControlChannelEncoding);
@@ -296,19 +301,18 @@
        public T ReadfromPersistence(string returnedAddress)
         {
             //string line = string.Empty;
-            var line = File.ReadLines(string.Format(@"c:\Dev\Persistence\{0}.log", returnedAddress)).LastOrDefault();
-            //using (var sr = new StreamReader(string.Format(@"c:\Dev\Persistence\{0}.log", returnedAddress)))
-            //{
-            //    line = sr.ReadLine();
-            //}
-            if (line != null)
+            if (File.Exists($@"c:\Dev\Persistence\{returnedAddress}.log"))
             {
-                var returnedRecord = line.Split('~');
+                var line = File.ReadLines(string.Format(@"c:\Dev\Persistence\{0}.log", returnedAddress)).LastOrDefault();
 
-                var target = this.PersistanceSerializer.Deserializer<T>(returnedRecord[0]);
-                return target; 
+                if (line != null)
+                {
+                    var returnedRecord = line.Split('~');
+
+                    var target = this.PersistanceSerializer.Deserializer<T>(returnedRecord[0]);
+                    return target;
+                }
             }
-
            return null;
         }
 
