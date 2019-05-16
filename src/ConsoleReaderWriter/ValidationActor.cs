@@ -15,7 +15,7 @@
     {
         private IConsoleWriterActor writer;
 
-        private int callCounter = 0;
+        public int callCounter = 0;
         
         [JsonIgnore]
         public override Actor Factory { get; set; }
@@ -41,7 +41,7 @@
                 if (valid)
                 {
                     // send success to console writer
-                    this.writer.WriteOutput(new Messages.InputSuccess("Thank you! Message was valid."));
+                    this.writer.WriteOutput(new Messages.InputSuccess($"Call Counter is {callCounter}. Thank you! Message was valid. The message is: {msg}"));
 
                     ////for a test for throwing exceptions this is a strange place to have the exception
                     ////read below for details
@@ -60,7 +60,7 @@
                 {
                     // signal that input was bad
                     this.writer.WriteOutput(
-                        new Messages.ValidationError("Invalid: input had odd number of characters."));
+                        new Messages.ValidationError($"Call Counter is {callCounter}. Invalid: input had odd number of characters."));
                 }
             }
         }
