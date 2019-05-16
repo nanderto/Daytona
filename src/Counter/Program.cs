@@ -44,8 +44,8 @@ namespace Counter
                     {
                         diagnosticMessage.WriteToConsole("Yeah this works");
                         Console.WriteLine(i);
-                       counter.Add();
-                        Thread.Sleep(10);
+                        counter.Add();
+                        Thread.Sleep(100);
                     }
 
                     Console.WriteLine("Done: press enter to exit");

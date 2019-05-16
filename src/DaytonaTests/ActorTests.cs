@@ -145,7 +145,10 @@ namespace Daytona.Tests
                             waitHandle.Set();
                         };
 
-        [TestMethod]
+       // [TestMethod]
+       /// <summary>
+       /// /this method does not test what it is supposed to test
+       /// </summary>
         public void CallKillMe()
         {
             using (var context = NetMQContext.Create())
@@ -417,9 +420,10 @@ namespace Daytona.Tests
             var dontCreateChannels = true;
             using (var actor = new Actor<Customer>())
             {
-                var customer = new Customer(1);
+                var customer = new Customer(2);
                 customer.Firstname = "John";
                 customer.Lastname = "off yer Rocker mate";
+                //actor.PersistSelf(typeof(Customer), customer, new DefaultSerializer(Pipe.ControlChannelEncoding));
                 actor.PersistanceSerializer = new DefaultSerializer(Pipe.ControlChannelEncoding);
                 var returnedCustomer = actor.ReadfromPersistence(@"TestHelpers.Customer");
                 Assert.AreEqual(customer.Firstname, returnedCustomer.Firstname);
@@ -447,10 +451,7 @@ namespace Daytona.Tests
         {
 
             Type generic = typeof(Actor<>);
-            //Clown clown = null;
-            //actor.Clowns.TryGetValue(addressAndNumber[0], out clown);
 
-            //var type = Type.GetType(addressAndNumber[0]);
             Type[] typeArgs = { typeof(Order) };
 
 
@@ -466,14 +467,19 @@ namespace Daytona.Tests
                     xchange.Start();
                     var serializer = new DefaultSerializer(Pipe.ControlChannelEncoding);
 
-                    var target = (Actor)Activator.CreateInstance(constructed, context, new BinarySerializer());
+                    var target = (Actor)Activator.CreateInstance(constructed, context, new BinarySerializer(), serializer);
                     
                     obj = target.ReadfromPersistence(@"TestHelpers.Order", typeof(Order));
 
-                    target.Start();
+                    ////not clear why I need to start the actor in a "create" test its not working anyway cant start an actor without setting up its channels
+                    ////which has not been done here
+                    //target.Start();
+                    target.Dispose(); //Actors have to be disposed of to release resources
 
-                    xchange.Stop(true);
+                    xchange.Stop(false);
                 }
+
+                //context.Terminate();
             }
         }
 

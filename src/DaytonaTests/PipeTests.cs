@@ -120,7 +120,7 @@ namespace DaytonaTests
                     syncService.Connect(Pipe.PubSubControlFrontAddressClient);
                     for (int i = 0; i < 1; i++)
                     {
-                        syncService.Receive();
+                        var received = syncService.Receive();
                         syncService.Send("");
                     }
     

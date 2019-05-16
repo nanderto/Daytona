@@ -128,7 +128,12 @@ namespace Daytona
             this.SetUpMonitorChannel(context);
             this.SetUpOutputChannel(context);
             this.PropertyBag = new Dictionary<string, object>();
-            this.Subscriber.ReceiveReady += Subscriber_ReceiveReady;
+            if (this.Subscriber != null)
+            {
+                ////cant add event handler without the subscriber existing
+                ////not sure this is the correct pay to fix it but should do least halm
+                this.Subscriber.ReceiveReady += Subscriber_ReceiveReady;
+            }
         }
 
         public void Subscriber_ReceiveReady(object sender, NetMQSocketEventArgs e)
@@ -985,7 +990,14 @@ namespace Daytona
 
         public void WriteLineToSelf(string line, string PathSegment)
         {
-            var fi = new FileInfo(String.Format(@"c:\dev\persistence\{0}.log", PathSegment));
+            var PathSegmentWithoutID = PathSegment;
+            if (PathSegment.Contains("/"))
+            {
+                PathSegmentWithoutID = PathSegment.Split('/')[0];
+            }
+
+            var fi = new FileInfo(String.Format(@"c:\dev\persistence\{0}.log", PathSegmentWithoutID));
+
             var stream = fi.AppendText();
             stream.WriteLine("{0}~{1}", line, DateTime.Now.Ticks);
             stream.Flush();

@@ -20,7 +20,15 @@ namespace Daytona
         {
             var pathSegment = type.FullName;
             var line = this.persistanceSerializer.GetString(target);
-            var fi = new FileInfo(string.Format(@"c:\dev\persistence\{0}.log", filename));
+            var fileNameWithoutID = filename.Split('/')[0];
+
+            var fi = new FileInfo(string.Format(@"c:\dev\persistence\{0}.log", fileNameWithoutID));
+
+            if(!fi.Exists)
+            {
+                fi.Create();
+            }
+
             var stream = fi.AppendText();
             stream.WriteLine("{0}~{1}", line, DateTime.Now);
             stream.Flush();

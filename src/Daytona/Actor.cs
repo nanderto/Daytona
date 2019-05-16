@@ -73,6 +73,10 @@
             this.Subscriber.ReceiveReady += base.Subscriber_ReceiveReady;
         }
 
+        public Actor(NetMQContext context, ISerializer messageSerializer, ISerializer persistenceSerializer)
+            : base(context, messageSerializer, persistenceSerializer)
+        { }
+
         //void Subscriber_ReceiveReady(object sender, NetMQSocketEventArgs e)
         //{
         //    throw new NotImplementedException();

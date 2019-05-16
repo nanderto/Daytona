@@ -4,7 +4,7 @@ namespace Daytona
     using System.Threading.Tasks;
 
     [Serializable]
-    public class ActorFactory
+    public class ActorFactory : IDisposable
     {
         public ActorFactory()
         {
@@ -23,7 +23,25 @@ namespace Daytona
         {
             get { return factory; }
             set { factory = value; }
-        }       
+        }
+
+        public void Dispose()
+        {
+            this.Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        private void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                if (this.factory != null)
+                {
+                    this.factory.Dispose();
+                }
+            }
+        }
+
     }
 
     public class ActorReference

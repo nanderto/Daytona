@@ -22,7 +22,7 @@ namespace TestHelpers
     }
 
     [Serializable]
-    public class Customer : ActorFactory, ICustomer 
+    public class Customer : ActorFactory, ICustomer, IDisposable
     {
         private readonly List<Guid> orders = new List<Guid>();
 

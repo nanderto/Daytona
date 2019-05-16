@@ -327,7 +327,7 @@
                 if (disposing)
                 {
                     this.ActorFactory.Dispose();
-                    this.Exchange.Dispose();
+                    this.Exchange?.Dispose();
                     this.Context.Dispose();
                 }
 
