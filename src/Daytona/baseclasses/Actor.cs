@@ -1,18 +1,15 @@
-﻿using Daytona.baseclasses;
-namespace Daytona
+﻿namespace Daytona
 {
     using System;
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
     using System.Reflection;
-    using System.Runtime.InteropServices;
     using System.Runtime.Serialization;
     using System.Text;
     using System.Threading.Tasks;
 
     using NetMQ;
-    using NetMQ.zmq;
 
     using NProxy.Core;
 
@@ -128,7 +125,10 @@ namespace Daytona
             this.SetUpMonitorChannel(context);
             this.SetUpOutputChannel(context);
             this.PropertyBag = new Dictionary<string, object>();
-            this.Subscriber.ReceiveReady += Subscriber_ReceiveReady;
+            if (this.Subscriber != null)
+            {
+                this.Subscriber.ReceiveReady += Subscriber_ReceiveReady;
+            }
         }
 
         public void Subscriber_ReceiveReady(object sender, NetMQSocketEventArgs e)
@@ -441,7 +441,7 @@ namespace Daytona
             }
         }
 
-        public void CallBack(int result, List<IPayload> payload, Exception exception)
+        public void CallBack(bool result, List<IPayload> payload, Exception exception)
         {
             var eventArgs = new CallBackEventArgs { Result = result, Error = exception, Payload = payload };
 
@@ -818,6 +818,7 @@ namespace Daytona
 
             return zmqMessage;
         }
+
 
         public TInterface CreateInstance<TInterface>(Type actoryType) where TInterface : class
         {
