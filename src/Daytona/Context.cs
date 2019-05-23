@@ -19,8 +19,8 @@ namespace Daytona
             this.NetMqContext = netMqContext;
             this.Exchange = new Exchange(this.NetMqContext);
             this.Exchange.Start();
-
-            
+            this.Poller = new Poller();
+            //this.NetMQScheduler = new NetMQScheduler(netMqContext);
         }
 
         public Context(NetMQContext netMqContext, MessageSerializerFactory messageSerializerFactory)
@@ -79,7 +79,19 @@ namespace Daytona
                     this.ActorFactory.Dispose();
                     this.Exchange.Stop(true);
                     this.Exchange.Dispose();
-                    this.NetMqContext.Dispose();
+                    //this.NetMqContext.Dispose();
+
+                    if (this.NetMqContext != null)
+                    {
+                        this.NetMqContext.Dispose();
+                    }
+
+                    if (this.Poller != null)
+                    {
+                        this.Poller.Stop(true);
+                        this.Poller.Dispose();
+                    }
+
                 }
 
                 //// There are no unmanaged resources to release, but
@@ -88,5 +100,9 @@ namespace Daytona
 
             this.disposed = true;
         }
+
+        public Poller Poller { get; set; }
+
+        public NetMQScheduler NetMQScheduler { get; set; }
     }
 }

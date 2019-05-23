@@ -38,6 +38,7 @@ namespace Daytona
 
         public void Tell(object message)
         {
+            var status = ActorReferenceTask.Status;
             var serializer = MessageSerializerFactory.GetNewSerializer();
             this.ActorFactory.SendMessage(this.Address, message, serializer, this.ActorFactory.OutputChannel);
         }

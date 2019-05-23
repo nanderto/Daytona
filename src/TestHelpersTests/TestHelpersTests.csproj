@@ -55,6 +55,10 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Daytona\Daytona.csproj">
+      <Project>{626cb1e5-251f-4a23-8d7d-c3a7b35f67d2}</Project>
+      <Name>Daytona</Name>
+    </ProjectReference>
     <ProjectReference Include="..\TestHelpers\TestHelpers.csproj">
       <Project>{9E8D7D0C-488E-49C9-B441-7250FA62BFF6}</Project>
       <Name>TestHelpers</Name>

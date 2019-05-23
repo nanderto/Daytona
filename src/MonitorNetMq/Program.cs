@@ -15,7 +15,7 @@ namespace MonitorNetMq
     {
         private static void Main(string[] args)
         {
-            Console.CancelKeyPress += new ConsoleCancelEventHandler(ConsoleCancelHandler);
+            Console.CancelKeyPress += ConsoleCancelHandler;
 
             using (NetMQContext context = NetMQContext.Create())
             {
@@ -42,7 +42,6 @@ namespace MonitorNetMq
         public static string MonitorAddressClient = "tcp://localhost:5560";  ////"inproc://pubsubcontrol";//
 
         public static string MonitorAddressServer = "tcp://*:5560";
-
 
         public static Encoding ControlChannelEncoding = Encoding.Unicode;
 

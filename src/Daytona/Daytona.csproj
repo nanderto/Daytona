@@ -89,8 +89,10 @@
   <ItemGroup>
     <Compile Include="Actor.cs" />
     <Compile Include="ActorFactory.cs" />
+    <Compile Include="AsyncSocket.cs" />
     <Compile Include="baseclasses\Actor.cs" />
     <Compile Include="baseclasses\Sender.cs" />
+    <Compile Include="ChannelDisposedException.cs" />
     <Compile Include="Context.cs" />
     <Compile Include="ExceptionDetails.cs" />
     <Compile Include="baseclasses\Store.cs" />
@@ -114,6 +116,7 @@
     <Compile Include="RunningActors.cs" />
     <Compile Include="SerializerFactory.cs" />
     <Compile Include="Silo.cs" />
+    <Compile Include="SocketDisposer.cs" />
     <Compile Include="XForwarder.cs" />
     <Compile Include="ZeroMQExtensionMethods.cs" />
   </ItemGroup>

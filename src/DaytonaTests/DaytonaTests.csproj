@@ -99,6 +99,7 @@
   </Choose>
   <ItemGroup>
     <Compile Include="ActorTests.cs" />
+    <Compile Include="AsyncSocketTests.cs" />
     <Compile Include="BinarySerializerTests.cs" />
     <Compile Include="ExchangeTests.cs" />
     <Compile Include="PipeTests.cs" />

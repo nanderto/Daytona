@@ -14,7 +14,7 @@ namespace Daytona
         
         public bool Cancelled { get; set; }
         
-        public int Result { get; set; }
+        public bool Result { get; set; }
         
         public List<IPayload> Payload { get; set; }
     }

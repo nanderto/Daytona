@@ -15,7 +15,7 @@
     /// <typeparam name="T">Type that this is sent from, allows us to save a strongly typed reference to the actor that is sending the message
     /// </typeparam>
     [Serializable]
-    public class MessageSenderProxy : IInvocationHandler 
+    public class MessageSenderProxy : IInvocationHandler
     {
         private Actor actor;
 
@@ -27,7 +27,7 @@
 
         /// <summary>
         /// MessageSenderProxy constructor, you need to pass in enough that your method will work when called by the interception proxy
-        /// In this case se need a reference to the parent object that will be sending the message, and a way to determine where the message is being sent.
+        /// In this case you need a reference to the parent object that will be sending the message, and a way to determine where the message is being sent.
         /// Currently using the type of the object that the method is called on 
         /// </summary>
         /// <param name="actor"></param>
