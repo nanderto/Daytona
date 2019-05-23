@@ -130,20 +130,20 @@ namespace Daytona.Tests
 
        public static Action<string, string, MethodInfo, List<object>, Actor> TestActors =
             (address, returnAddress, methodinfo, parameters, actr) =>
-                        {
-                            var firstParameter = string.Empty;
-                            try
-                            {
-                                firstParameter = parameters[0].ToString();
-                            }
-                            catch (Exception)
-                            {
-                            }
+                {
+                    var firstParameter = string.Empty;
+                    try
+                    {
+                        firstParameter = parameters[0].ToString();
+                    }
+                    catch (Exception)
+                    {
+                    }
 
-                            Console.WriteLine("Address: {0}, {1}", address, firstParameter);
-                            actr.WriteLineToMonitor(string.Format("Address: {0}, {1}", address, firstParameter));
-                            waitHandle.Set();
-                        };
+                    Console.WriteLine("Address: {0}, {1}", address, firstParameter);
+                    actr.WriteLineToMonitor(string.Format("Address: {0}, {1}", address, firstParameter));
+                    waitHandle.Set();
+                };
 
        // [TestMethod]
        /// <summary>

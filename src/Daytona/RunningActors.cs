@@ -8,6 +8,11 @@ namespace Daytona
 {
     public class RunningActors
     {
+        public void SetLastHeartBeat()
+        {
+            this.LastHeartbeat = DateTime.UtcNow;
+        }
+
         public DateTime LastHeartbeat { get; set; }
 
         public string Address { get; set; }

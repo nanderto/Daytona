@@ -26,17 +26,17 @@ namespace Daytona.Tests
             {
                 var exchange = new XForwarder(
                     context,
-                    Pipe.PublishAddressServer,
-                    Pipe.SubscribeAddressServer,
+                    Exchange.PublishAddressServer,
+                    Exchange.SubscribeAddressServer,
                     DeviceMode.Threaded);
                 //exchange.FrontendSetup.Subscribe("");
                // exchange.BackendSetup.Subscribe("");
                 exchange.Start();
-                var pub = Helper.GetConnectedPublishSocket(context, Pipe.PublishAddressClient);
-                var sub = Helper.GetConnectedSubscribeSocket(context, Pipe.SubscribeAddressClient);
-                var sub2 = Helper.GetConnectedSubscribeSocket(context, Pipe.SubscribeAddressClient);
-                var sub3 = Helper.GetConnectedSubscribeSocket(context, Pipe.SubscribeAddressClient, "hello");
-                var sub4 = Helper.GetConnectedSubscribeSocket(context, Pipe.SubscribeAddressClient, "Nothello");
+                var pub = Helper.GetConnectedPublishSocket(context, Exchange.PublishAddressClient);
+                var sub = Helper.GetConnectedSubscribeSocket(context, Exchange.SubscribeAddressClient);
+                var sub2 = Helper.GetConnectedSubscribeSocket(context, Exchange.SubscribeAddressClient);
+                var sub3 = Helper.GetConnectedSubscribeSocket(context, Exchange.SubscribeAddressClient, "hello");
+                var sub4 = Helper.GetConnectedSubscribeSocket(context, Exchange.SubscribeAddressClient, "Nothello");
 
                 sub.ReceiveReady +=sub_ReceiveReady;
 

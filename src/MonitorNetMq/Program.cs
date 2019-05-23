@@ -16,26 +16,24 @@ namespace MonitorNetMq
         private static void Main(string[] args)
         {
             Console.CancelKeyPress += new ConsoleCancelEventHandler(ConsoleCancelHandler);
+            Console.WriteLine("::>Ready ");
 
             using (NetMQContext context = NetMQContext.Create())
             {
-                
-                    using (var rep = context.CreateResponseSocket())
+                using (var rep = context.CreateResponseSocket())
+                {
+                    rep.Bind(MonitorAddressServer);
+                    while (!interrupted)
                     {
-                        rep.Bind(MonitorAddressServer);
-                        while (!interrupted)
+                        var signal = rep.ReceiveString(ControlChannelEncoding, TimeSpan.FromMilliseconds(30));
+                        if (!string.IsNullOrEmpty(signal))
                         {
-                            var signal = rep.ReceiveString(ControlChannelEncoding, TimeSpan.FromMilliseconds(30));
-                            if (!string.IsNullOrEmpty(signal))
-                            {
-                                Console.WriteLine("::> " + signal);
-                                rep.Send(string.Empty, Encoding.Unicode);
+                            Console.WriteLine("::> " + signal);
+                            rep.Send(string.Empty, Encoding.Unicode);
                                 
-                            }
                         }
                     }
-               
-
+                }
             }
         }
 

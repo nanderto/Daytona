@@ -37,7 +37,7 @@
                         else
                         {
                             //"We found a running actor so er updated the time of the last heartbeat.");
-                            returnedActor.LastHeartbeat = DateTime.UtcNow;
+                            returnedActor.SetLastHeartBeat();
                         }
                     }
                     else
@@ -215,8 +215,13 @@
 
         public Silo RegisterEntity(Type type)
         {
-            // Type type = actor.GetType();
             this.Entities.Add(type.FullName, new Entity(type));
+            return this;
+        }
+
+        public Silo RegisterEntity(Type type, Type Interface)
+        {
+            this.Entities.Add(Interface.FullName, new Entity(type));
             return this;
         }
 

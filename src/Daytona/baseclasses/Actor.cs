@@ -831,6 +831,13 @@ namespace Daytona
             return proxyFactory.CreateProxy<TInterface>(Type.EmptyTypes, invocationHandler);
         }
 
+        //public TInterface CreateInstance<TInterface>() where TInterface : class
+        //{
+        //    var invocationHandler = new MessageSenderProxy(this, actoryType);
+        //    var proxyFactory = new ProxyFactory(new MethodsOnlyInterceptionFilter());
+        //    return proxyFactory.CreateProxy<TInterface>(Type.EmptyTypes, invocationHandler);
+        //}
+
         public TInterface CreateInstance<TInterface>(Type actoryType, long id) where TInterface : class
         {
             var invocationHandler = new MessageSenderProxy(this, actoryType, id);
