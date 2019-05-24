@@ -172,6 +172,34 @@ namespace DaytonaTests
         static bool interupt = false;
         
         [TestMethod]
+        public void SendOneMessageUsingSpawn()
+        {
+            string passedMessage = string.Empty;
+
+            using (var context = Context.Create())
+            {
+                var actorReference = context.Spawn("Johnny", (message, sender, actor) =>
+                {
+                    passedMessage = (string)message;
+                    Console.WriteLine($"here this is the message:{message}");
+                    Console.WriteLine("here this is the Sender:{0}##", sender.ReturnedAddress);
+                    Console.WriteLine("hey is there enything there##{0}##", actor.Name);
+
+                    Assert.AreEqual("hello", message);
+                });
+               
+                Thread.Sleep(20);
+                actorReference.Tell("hello");
+                Thread.Sleep(20);
+                actorReference.Kill();
+            }
+
+            Console.WriteLine($"hello = {passedMessage}");
+            Assert.AreEqual("hello", passedMessage);
+        }
+
+
+        [TestMethod]
         [TestCategory("DoNotRunOnServer")]
         public void SendOneMessageInProc()
         {
@@ -180,49 +208,54 @@ namespace DaytonaTests
             int count = 0;
 
             using (var context = NetMQContext.Create())
+            using (var exchange = new Exchange(context))
             {
-                var forwarderDevice = new ForwarderDevice(context, "tcp://*:5555", "inproc://back", DeviceMode.Threaded);
-                forwarderDevice.FrontendSetup.Subscribe(string.Empty);
-                forwarderDevice.Start();
-                //while (!forwarderDevice.IsRunning)
-                //{
-                        
-                //}
-                using (var sub = Helper.GetConnectedSubscribeSocket(context, "inproc://back"))
-                {
-                    using (var pub = Helper.GetConnectedPublishSocket(context, "tcp://localhost:5555"))
-                    {
+                exchange.Start();
 
-                        NetMQMessage NetMQMessage = null;
-                        var task = Task.Run(() =>
-                            {
-                                if (sub != null)
+                {
+                    var forwarderDevice = new ForwarderDevice(context, "tcp://*:5555", "inproc://back", DeviceMode.Threaded);
+                    forwarderDevice.FrontendSetup.Subscribe(string.Empty);
+                    forwarderDevice.Start();
+                    //while (!forwarderDevice.IsRunning)
+                    //{
+
+                    //}
+                    using (var sub = Helper.GetConnectedSubscribeSocket(context, "inproc://back"))
+                    {
+                        using (var pub = Helper.GetConnectedPublishSocket(context, "tcp://localhost:5555"))
+                        {
+
+                            NetMQMessage NetMQMessage = null;
+                            var task = Task.Run(() =>
                                 {
+                                    if (sub != null)
+                                    {
                                     //while (interupt != true)
                                     //{
-                                        NetMQMessage = Helper.ReceiveMessage(sub);
-                                        //if (NetMQMessage.FrameCount > 0)
-                                        //{
-                                        //    interupt = true;
-                                        //}
+                                    NetMQMessage = Helper.ReceiveMessage(sub);
+                                    //if (NetMQMessage.FrameCount > 0)
+                                    //{
+                                    //    interupt = true;
+                                    //}
                                     //}
                                 }
-                                return NetMQMessage;
-                            });
+                                    return NetMQMessage;
+                                });
 
-                        if (pub != null)
-                        {
-                            Helper.SendOneSimpleMessage(expectedAddress, message, pub);
+                            if (pub != null)
+                            {
+                                Helper.SendOneSimpleMessage(expectedAddress, message, pub);
+                            }
+
+                            task.Wait();
+                            Assert.AreEqual(count, NetMQMessage.FrameCount);
+                            NetMQFrame frame = NetMQMessage[0];
+                            var address = Encoding.Unicode.GetString(frame.Buffer);
+                            Assert.AreEqual(expectedAddress, address);
                         }
-
-                        task.Wait();
-                        Assert.AreEqual(count, NetMQMessage.FrameCount);
-                        NetMQFrame frame = NetMQMessage[0];
-                        var address = Encoding.Unicode.GetString(frame.Buffer);
-                        Assert.AreEqual(expectedAddress, address);
                     }
-                }
                     forwarderDevice.Stop();
+                }
             }
         }
 

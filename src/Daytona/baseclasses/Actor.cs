@@ -972,6 +972,7 @@ namespace Daytona
 
         public void WriteLineToMonitor(string line)
         {
+#if DEBUG
             if (this.monitorChannelDisposed == false)
             {
                 try
@@ -985,6 +986,7 @@ namespace Daytona
                     this.AddFault(ex);
                 }
             }
+#endif
         }
 
         private readonly List<Exception> faults = new List<Exception>();
@@ -1011,7 +1013,7 @@ namespace Daytona
             stream.Close();
         }
 
-        #endregion
+#endregion
 
         public bool DontAcceptMessages { get; set; }
 
@@ -1019,7 +1021,7 @@ namespace Daytona
 
         public ISerializerFactory PersistSerializerFactory { get; set; }
 
-        #region Methods
+#region Methods
 
         public object ReadfromPersistence(string returnedAddress, Type type)
         {
@@ -1075,8 +1077,10 @@ namespace Daytona
 
         protected void SetUpMonitorChannel(NetMQContext context)
         {
+#if DEBUG
             this.MonitorChannel = context.CreateRequestSocket();
             this.MonitorChannel.Connect(Pipe.MonitorAddressClient);
+#endif
         }
 
         protected void SetUpOutputChannel(NetMQContext context)
@@ -1219,7 +1223,7 @@ namespace Daytona
                 this.OutputChannel);
         }
 
-        #endregion
+#endregion
 
         public Dictionary<string, Delegate> Actions { get; set; }
     }
