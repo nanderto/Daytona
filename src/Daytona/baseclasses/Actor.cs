@@ -432,7 +432,6 @@ namespace Daytona
 
         #endregion
 
-        #region Public Methods and Operators
 
         public static void Writeline(string line)
         {
@@ -1012,16 +1011,13 @@ namespace Daytona
             stream.Flush();
             stream.Close();
         }
-
-#endregion
-
+        
         public bool DontAcceptMessages { get; set; }
 
         public ISerializer PersistanceSerializer { get; set; }
 
         public ISerializerFactory PersistSerializerFactory { get; set; }
 
-#region Methods
 
         public object ReadfromPersistence(string returnedAddress, Type type)
         {
@@ -1174,8 +1170,8 @@ namespace Daytona
                     {
                         Writeline("received stop");
                         this.SendMessage(
-                            Pipe.ControlChannelEncoding.GetBytes(Pipe.SubscriberCountAddress),
-                            Pipe.ControlChannelEncoding.GetBytes("SHUTTINGDOWN"),
+                            Exchange.ControlChannelEncoding.GetBytes(Exchange.SubscriberCountAddress),
+                            Exchange.ControlChannelEncoding.GetBytes("SHUTTINGDOWN"),
                             this.OutputChannel);
                         stopSignal = true;
                     }
@@ -1201,7 +1197,7 @@ namespace Daytona
         private void SetUpReceivers(NetMQContext context)
         {
             this.Subscriber = context.CreateSubscriberSocket();
-            this.Subscriber.Connect(Pipe.SubscribeAddress);
+            this.Subscriber.Connect(Exchange.SubscribeAddress);
 
             if (String.IsNullOrEmpty(this.InRoute))
             {
@@ -1213,17 +1209,15 @@ namespace Daytona
             }
 
             this.MonitorChannel.Send(
-                "Set up Receive channel on " + Pipe.SubscribeAddress + " listening on: " + this.InRoute,
-                Pipe.ControlChannelEncoding);
+                "Set up Receive channel on " + Exchange.SubscribeAddress + " listening on: " + this.InRoute,
+                Exchange.ControlChannelEncoding);
             bool more = false;
             var signal = this.MonitorChannel.Receive(); // Pipe.ControlChannelEncoding, out more);
             this.SendMessage(
-                Pipe.ControlChannelEncoding.GetBytes(Pipe.SubscriberCountAddress),
-                Pipe.ControlChannelEncoding.GetBytes("ADDSUBSCRIBER"),
+                Exchange.ControlChannelEncoding.GetBytes(Exchange.SubscriberCountAddress),
+                Exchange.ControlChannelEncoding.GetBytes("ADDSUBSCRIBER"),
                 this.OutputChannel);
         }
-
-#endregion
 
         public Dictionary<string, Delegate> Actions { get; set; }
     }

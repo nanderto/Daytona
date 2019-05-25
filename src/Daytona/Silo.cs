@@ -121,7 +121,7 @@
             this.context = context;
             this.binarySerializer = binarySerializer;
             this.ActorFactory = new Actor(context, new BinarySerializer());
-            this.ActorFactory.PersistanceSerializer = new DefaultSerializer(Pipe.ControlChannelEncoding);
+            this.ActorFactory.PersistanceSerializer = new DefaultSerializer(Exchange.ControlChannelEncoding);
             this.ConfigActorLauncher();
             this.ConfigExceptionHandler();
 
@@ -135,7 +135,7 @@
             this.context = context;
             this.MessageSerializerFactory = messageSerializerFactory;
             this.ActorFactory = new Actor(context, new BinarySerializer());
-            this.ActorFactory.PersistanceSerializer = new DefaultSerializer(Pipe.ControlChannelEncoding);
+            this.ActorFactory.PersistanceSerializer = new DefaultSerializer(Exchange.ControlChannelEncoding);
             this.ConfigActorLauncher();
             this.ConfigExceptionHandler();
 

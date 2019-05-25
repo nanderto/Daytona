@@ -14,7 +14,6 @@ namespace DaytonaTests
     using NetMQ.zmq;
     using System.Collections.Generic;
     using System.Diagnostics;
-    using Pipe = Daytona.Pipe;
 
     [TestClass]
     public class PipeTests
@@ -140,7 +139,7 @@ namespace DaytonaTests
             using (NetMQSocket sub = Helper.GetConnectedSubscribeSocket(context, "inproc://SubscribeAddress"),
                 syncClient = context.CreateRequestSocket())
             {
-                syncClient.Connect(Pipe.PubSubControlBackAddressClient);
+                syncClient.Connect(Exchange.PubSubControlBackAddressClient);
                 syncClient.Send("");
                 syncClient.Receive();
                 NetMQMessage NetMQMessage = null;
@@ -374,8 +373,8 @@ namespace DaytonaTests
 
             using (var context = NetMQContext.Create())
             {
-                var pipe = new Pipe();
-                pipe.Start(context);
+                var pipe = new Exchange(context);
+                pipe.Start();
                 using (var pub = Helper.GetConnectedPublishSocket(context))
                 {
                     using (var sub = Helper.GetConnectedSubscribeSocket(context))
@@ -394,7 +393,7 @@ namespace DaytonaTests
                     }
                 }
 
-                pipe.Exit();
+                pipe.Dispose();
             }
         }
 
@@ -404,10 +403,10 @@ namespace DaytonaTests
         {
             using (var pipeContext = NetMQContext.Create())
             {
-                var pipe = new Pipe();
+                var pipe = new Exchange(pipeContext);
                 var task2 = Task.Run(() =>
                     {
-                        pipe.Start(pipeContext);
+                        pipe.Start();
                     });
 
                 var task = Task.Run(() =>
@@ -455,7 +454,7 @@ namespace DaytonaTests
                         }
                     });
                 Task.WaitAll(task, task2);
-                pipe.Exit();
+                pipe.Dispose();
             }
         }
 
@@ -469,8 +468,8 @@ namespace DaytonaTests
 
             using (var context = NetMQContext.Create())
             {
-                var pipe = new Pipe();
-                pipe.Start(context);
+                var pipe = new Exchange(context);
+                pipe.Start();
                 using (var pub = Helper.GetConnectedPublishSocket(context))
                 {
                     using (var sub = Helper.GetConnectedSubscribeSocket(context))
@@ -514,7 +513,7 @@ namespace DaytonaTests
                         //}
                     }
                 }
-                pipe.Exit();
+                pipe.Dispose();
             }
         }
 

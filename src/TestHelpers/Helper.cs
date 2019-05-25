@@ -156,7 +156,7 @@ namespace TestHelpers
 
         public static NetMQSocket GetConnectedSubscribeSocket(NetMQContext context)
         {
-            string address = Pipe.SubscribeAddressClient;
+            string address = Exchange.SubscribeAddressClient;
             return GetConnectedSubscribeSocket(context, address);
         }
 

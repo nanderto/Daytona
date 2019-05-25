@@ -18,9 +18,7 @@ namespace Daytona.Tests
     using NetMQ.zmq;
 
     using TestHelpers;
-
-    using Pipe = Daytona.Pipe;
-
+    
     [TestClass]
     public class ActorTests
     {
@@ -38,8 +36,8 @@ namespace Daytona.Tests
                     
                     var queueDevice = new QueueDevice(
                     context,
-                    Pipe.PubSubControlBackAddressServer,
-                    Pipe.PubSubControlFrontAddressServer,
+                    Exchange.PubSubControlBackAddressServer,
+                    Exchange.PubSubControlFrontAddressServer,
                     DeviceMode.Threaded);
                     queueDevice.Start();
 
@@ -54,7 +52,7 @@ namespace Daytona.Tests
                     {
                         using (var syncService = context.CreateResponseSocket())
                         {
-                            syncService.Connect(Pipe.PubSubControlFrontAddressClient);
+                            syncService.Connect(Exchange.PubSubControlFrontAddressClient);
                             for (int i = 0; i < 1; i++)
                             {
                                 syncService.Receive();
@@ -87,7 +85,7 @@ namespace Daytona.Tests
        {
             using (NetMQSocket syncClient = context.CreateRequestSocket())
             {
-                syncClient.Connect(Pipe.PubSubControlBackAddressClient);
+                syncClient.Connect(Exchange.PubSubControlBackAddressClient);
                 syncClient.Send(string.Empty);
                 syncClient.Receive();
                 
@@ -172,7 +170,7 @@ namespace Daytona.Tests
         {
             using (var context = NetMQContext.Create())
             {
-                var exchange = new XForwarder(context, Pipe.SubscribeAddress, Exchange.PublishAddress, DeviceMode.Threaded);
+                var exchange = new XForwarder(context, Exchange.SubscribeAddress, Exchange.PublishAddress, DeviceMode.Threaded);
                 exchange.Start();
 
                 using (var actor = new Actor<Customer>(context, new BinarySerializer()))
@@ -406,7 +404,7 @@ namespace Daytona.Tests
                         customer.Firstname = "John";
                         customer.Lastname = "off yer Rocker mate";
 
-                        actor.PersistSelf(typeof(Customer), customer, new DefaultSerializer(Pipe.ControlChannelEncoding));
+                        actor.PersistSelf(typeof(Customer), customer, new DefaultSerializer(Exchange.ControlChannelEncoding));
                     }
                     
                     exchange.Stop(true);
@@ -424,7 +422,7 @@ namespace Daytona.Tests
                 customer.Firstname = "John";
                 customer.Lastname = "off yer Rocker mate";
                 //actor.PersistSelf(typeof(Customer), customer, new DefaultSerializer(Pipe.ControlChannelEncoding));
-                actor.PersistanceSerializer = new DefaultSerializer(Pipe.ControlChannelEncoding);
+                actor.PersistanceSerializer = new DefaultSerializer(Exchange.ControlChannelEncoding);
                 var returnedCustomer = actor.ReadfromPersistence(@"TestHelpers.Customer");
                 Assert.AreEqual(customer.Firstname, returnedCustomer.Firstname);
 
@@ -439,8 +437,8 @@ namespace Daytona.Tests
             {
                 var order = new Order();
                 order.Description = "John's new order";
-                actor.PersistSelf(typeof(Order), order, new DefaultSerializer(Pipe.ControlChannelEncoding));
-                actor.PersistanceSerializer = new DefaultSerializer(Pipe.ControlChannelEncoding);
+                actor.PersistSelf(typeof(Order), order, new DefaultSerializer(Exchange.ControlChannelEncoding));
+                actor.PersistanceSerializer = new DefaultSerializer(Exchange.ControlChannelEncoding);
                 var returnedOrder = actor.ReadfromPersistence(@"TestHelpers.Order");
                 Assert.AreEqual(order.Description, returnedOrder.Description);
             }
@@ -465,7 +463,7 @@ namespace Daytona.Tests
                 using (var xchange = new Exchange(context))
                 {
                     xchange.Start();
-                    var serializer = new DefaultSerializer(Pipe.ControlChannelEncoding);
+                    var serializer = new DefaultSerializer(Exchange.ControlChannelEncoding);
 
                     var target = (Actor)Activator.CreateInstance(constructed, context, new BinarySerializer(), serializer);
                     
