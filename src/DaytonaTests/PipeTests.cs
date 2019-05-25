@@ -315,7 +315,6 @@ namespace DaytonaTests
         }
 
         [TestMethod]
-        [TestCategory("DoNotRunOnServer")]
         public void SendOneMessageInProc()
         {
             string expectedAddress = "XXXX";

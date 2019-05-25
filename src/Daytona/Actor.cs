@@ -215,7 +215,7 @@
 
             if (serializer == null)
             {
-                serializer = new DefaultSerializer(Pipe.ControlChannelEncoding);
+                serializer = new DefaultSerializer(Exchange.ControlChannelEncoding);
             }
 
             //var store = new Store(serializer);

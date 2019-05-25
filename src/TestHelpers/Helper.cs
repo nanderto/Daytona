@@ -134,7 +134,7 @@ namespace TestHelpers
 
         public static NetMQSocket GetConnectedPublishSocket(NetMQContext context)
         {
-            return GetConnectedPublishSocket(context, Pipe.PublishAddressClient);
+            return GetConnectedPublishSocket(context, Exchange.PublishAddressClient);
         }
 
         public static NetMQSocket GetConnectedPublishSocket(NetMQContext context, string address)

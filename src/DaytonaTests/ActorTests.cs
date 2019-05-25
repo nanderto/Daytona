@@ -172,7 +172,7 @@ namespace Daytona.Tests
         {
             using (var context = NetMQContext.Create())
             {
-                var exchange = new XForwarder(context, Pipe.SubscribeAddress, Pipe.PublishAddress, DeviceMode.Threaded);
+                var exchange = new XForwarder(context, Pipe.SubscribeAddress, Exchange.PublishAddress, DeviceMode.Threaded);
                 exchange.Start();
 
                 using (var actor = new Actor<Customer>(context, new BinarySerializer()))

@@ -130,7 +130,7 @@ namespace Daytona
                 {
                     using (backend = context.CreateXPublisherSocket())
                     {
-                        frontend.Bind(Pipe.PublishAddressServer); ////"tcp://*:5550");
+                        frontend.Bind(Exchange.PublishAddressServer); ////"tcp://*:5550");
                         backend.Bind(Pipe.SubscribeAddressServer); ////"tcp://*:5553");
                         // frontend.ReceiveReady += frontend_ReceiveReady;
                         frontend.ReceiveReady += new EventHandler<NetMQSocketEventArgs>(FrontendReceiveReady);
@@ -262,7 +262,7 @@ namespace Daytona
         private void SetUpMonitorChannel(NetMQContext context)
         {
             this.MonitorChannel = context.CreateRequestSocket();
-            this.MonitorChannel.Connect(Pipe.MonitorAddressClient);
+            this.MonitorChannel.Connect(Exchange.MonitorAddressClient);
         }
 
         private void SetUpAddSubscriberCountChannel(NetMQContext zmqContext)

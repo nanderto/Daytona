@@ -1038,7 +1038,7 @@ namespace Daytona
                 {
                     var returnedRecord = line.Split('~');
                     target = this.PersistanceSerializer.Deserializer(
-                        Pipe.ControlChannelEncoding.GetBytes(returnedRecord[0]), type); 
+                        Exchange.ControlChannelEncoding.GetBytes(returnedRecord[0]), type); 
                 }
                 else
                 {
@@ -1079,7 +1079,7 @@ namespace Daytona
         {
 #if DEBUG
             this.MonitorChannel = context.CreateRequestSocket();
-            this.MonitorChannel.Connect(Pipe.MonitorAddressClient);
+            this.MonitorChannel.Connect(Exchange.MonitorAddressClient);
 #endif
         }
 
@@ -1089,14 +1089,14 @@ namespace Daytona
             this.OutputChannel.Connect(Exchange.PublishAddress);
 
             this.WriteLineToMonitor(
-                "Set up output channel on " + Pipe.PublishAddress + " Default sending on: " + this.OutRoute);
+                "Set up output channel on " + Exchange.PublishAddress + " Default sending on: " + this.OutRoute);
 
             ////if(this.sendControlChannel == null)
             ////{
             ////    this.sendControlChannel = context.CreateSocket(SocketType.REQ);
             ////    this.sendControlChannel.Connect(Pipe.PubSubControlBackAddressClient);
             ////}
-            ////this.sendControlChannel.Send("Actor OutputChannel connected, Sending on " + Pipe.PublishAddressClient, Pipe.ControlChannelEncoding);
+            ////this.sendControlChannel.Send("Actor OutputChannel connected, Sending on " + Exchange.PublishAddressClient, Pipe.ControlChannelEncoding);
             ////var replySignal = this.sendControlChannel.Receive(Pipe.ControlChannelEncoding);
             ////Actor.Writeline(replySignal);
         }
