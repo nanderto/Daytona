@@ -91,6 +91,7 @@
     <Compile Include="ActorFactory.cs" />
     <Compile Include="baseclasses\Actor.cs" />
     <Compile Include="baseclasses\Sender.cs" />
+    <Compile Include="ConsoleMonitor.cs" />
     <Compile Include="Context.cs" />
     <Compile Include="ExceptionDetails.cs" />
     <Compile Include="baseclasses\Store.cs" />

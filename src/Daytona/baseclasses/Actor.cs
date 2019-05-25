@@ -874,11 +874,11 @@ namespace Daytona
             {
                 this.IsRunning = true;
                 string address = String.Empty;
-                NetMQMessage NetMQMessage = null;
+                //NetMQMessage NetMQMessage = null;
 
-                this.WriteLineToMonitor(String.Format("The {0} Waiting for message", this.Name));
+                this.WriteLineToMonitor($"The Actor \"{this.Name}\" is waiting for message");
                    
-                byte[] messageAsBytes = null;
+                //byte[] messageAsBytes = null;
                 try
                 {
                     stop = this.ReceiveMessage(this.Subscriber);
@@ -1086,7 +1086,7 @@ namespace Daytona
         protected void SetUpOutputChannel(NetMQContext context)
         {
             this.OutputChannel = context.CreatePublisherSocket();
-            this.OutputChannel.Connect(Pipe.PublishAddress);
+            this.OutputChannel.Connect(Exchange.PublishAddress);
 
             this.WriteLineToMonitor(
                 "Set up output channel on " + Pipe.PublishAddress + " Default sending on: " + this.OutRoute);

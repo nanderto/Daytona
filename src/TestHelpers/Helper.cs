@@ -162,7 +162,7 @@ namespace TestHelpers
 
         public static NetMQSocket GetConnectedSubscribeSocket(NetMQContext context, string address)
         {
-            return GetConnectedSubscribeSocket(context, address, string.Empty);
+            return GetConnectedSubscribeSocket(context, address, string.Empty);//string.Empty subscribes to all messages on the address
         }
 
         public static NetMQSocket GetConnectedSubscribeSocket(NetMQContext context, string address, string Subcription)

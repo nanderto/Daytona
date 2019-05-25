@@ -168,3 +168,8 @@ pip-log.txt
 #*.StyleCop
 *.ncrunchproject
 /src/.vs/Daytona/v16/Server/sqlite3
+/src/.vs/Daytona/v15
+/src/FsharpTestHelpers
+/src/packages/AsyncIO.0.1.15.0
+/src/Wintail2
+/src/Report150318.vspx

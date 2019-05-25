@@ -401,7 +401,7 @@
                 string address = string.Empty;
                 NetMQMessage zmqmessage = null;
 
-                this.WriteLineToMonitor(String.Format("The {0} Waiting for message", this.Name));
+                this.WriteLineToMonitor($"The Actor \"{this.Name}\" is waiting for message");
 
                 byte[] messageAsBytes = null;
                 try
