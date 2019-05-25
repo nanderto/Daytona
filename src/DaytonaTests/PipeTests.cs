@@ -12,7 +12,8 @@ namespace DaytonaTests
     using NetMQ;
     using NetMQ.Devices;
     using NetMQ.zmq;
-
+    using System.Collections.Generic;
+    using System.Diagnostics;
     using Pipe = Daytona.Pipe;
 
     [TestClass]
@@ -185,7 +186,9 @@ namespace DaytonaTests
                     Console.WriteLine("here this is the Sender:{0}##", sender.ReturnedAddress);
                     Console.WriteLine("hey is there enything there##{0}##", actor.Name);
 
-                    Assert.AreEqual("hello", message);
+
+                    //No point asserting here it will get swallowed
+                    //Assert.AreEqual("hello", message);
                 });
                
                 Thread.Sleep(20);
@@ -198,6 +201,118 @@ namespace DaytonaTests
             Assert.AreEqual("hello", passedMessage);
         }
 
+        [TestMethod]
+        public void SendFiveMessagesUsingSpawn()
+        {
+            string passedMessage = string.Empty;
+            List<string> receivedMessages = new List<string>();
+
+            using (var context = Context.Create())
+            {
+                var actorReference = context.Spawn("Johnny", (message, sender, actor) =>
+                {
+                    passedMessage = (string)message;
+                    receivedMessages.Add(passedMessage);
+                    Console.WriteLine($"here this is the message:{message}");
+                    Console.WriteLine("here this is the Sender:{0}##", sender.ReturnedAddress);
+                    Console.WriteLine("hey is there enything there##{0}##", actor.Name);
+
+                    int c = 0;
+                    object count = 0;
+                    if (actor.PropertyBag.TryGetValue("Counter", out count))
+                    {
+                        c = (int)count;
+                        count = ++c;
+                        actor.PropertyBag["Counter"] = count;
+                    }
+                    else
+                    {
+                        c = 0;
+                        actor.PropertyBag.Add("Counter", c);
+                    }
+
+
+                });
+
+                Thread.Sleep(20);
+                actorReference.Tell(1);
+                actorReference.Tell(2);
+                actorReference.Tell(3);
+                actorReference.Tell(4);
+                Thread.Sleep(20);
+                actorReference.Kill();
+            }
+
+            Console.WriteLine($"message = {passedMessage}");
+
+            var i = 0;
+            foreach (var item in receivedMessages)
+            {
+                i++;
+                Assert.AreEqual($"{i}", item);
+            }
+        }
+
+
+        [TestMethod]
+        public void SendAlotOfMessagesUsingSpawn()
+        {
+            string passedMessage = string.Empty;
+            List<string> receivedMessages = new List<string>();
+            var stopWatch = new Stopwatch();
+            stopWatch.Start();
+            
+            using (var context = Context.Create())
+            {
+                var actorReference = context.Spawn("Johnny", (message, sender, actor) =>
+                {
+                    passedMessage = (string)message;
+                    receivedMessages.Add(passedMessage);
+                    Console.WriteLine($"here this is the message:{message}");
+                    Console.WriteLine("here this is the Sender:{0}##", sender.ReturnedAddress);
+                    Console.WriteLine("hey is there enything there##{0}##", actor.Name);
+
+                    int c = 0;
+                    object count = 0;
+                    if (actor.PropertyBag.TryGetValue("Counter", out count))
+                    {
+                        c = (int)count;
+                        count = ++c;
+                        actor.PropertyBag["Counter"] = count;
+                    }
+                    else
+                    {
+                        c = 0;
+                        actor.PropertyBag.Add("Counter", c);
+                    }
+
+                    if (c == 1000)
+                    {
+                        stopWatch.Stop();
+                    }
+
+                });
+
+                Thread.Sleep(20);
+                for (int j = 0; j < 1000; j++)
+                {
+                    actorReference.Tell(j);
+                }
+                
+                Thread.Sleep(20);
+                actorReference.Kill();
+            }
+
+            Console.WriteLine($"message = {passedMessage}");
+            Console.WriteLine($"StopWatch time (milliseconds): {stopWatch.ElapsedMilliseconds}");
+            Console.WriteLine($"thats {stopWatch.ElapsedMilliseconds / 1000} per message");
+            var i = 0;
+            foreach (var item in receivedMessages)
+            {
+                i++;
+                Assert.AreEqual($"{i}", item);
+            }
+        }
 
         [TestMethod]
         [TestCategory("DoNotRunOnServer")]
