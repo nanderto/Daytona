@@ -24,8 +24,9 @@ namespace Daytona.Tests
     {
         public static AutoResetEvent waitHandle = new AutoResetEvent(false);
 
-       [TestMethod]   
-       public void CallMethod_Using_NProxyWrapper_ReadMessageWithRawActor()
+       [TestMethod]
+        [TestCategory("DoNotRunOnServer")]
+        public void CallMethod_Using_NProxyWrapper_ReadMessageWithRawActor()
        {
             waitHandle.Reset();
             using (var DaytonaContext = Context.Create(new ConsoleMonitor()))
@@ -160,6 +161,7 @@ namespace Daytona.Tests
         }
 
         [TestMethod]
+        [TestCategory("DoNotRunOnServer")]
         public void CallMethod_Multiple_ObjectsBinarySerializer()
         {
             using (var DaytonaContext = Context.Create(new ConsoleMonitor()))
@@ -384,6 +386,7 @@ namespace Daytona.Tests
         }
 
         [TestMethod()]
+        [TestCategory("DoNotRunOnServer")]
         public void PersistSelfTest()
         {
 
@@ -444,6 +447,7 @@ namespace Daytona.Tests
         }
 
         [TestMethod]
+        [TestCategory("DoNotRunOnServer")]
         public void CreatingAnActor()
         {
 
