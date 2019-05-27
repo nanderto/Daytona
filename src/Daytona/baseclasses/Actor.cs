@@ -432,7 +432,6 @@ namespace Daytona
 
         #endregion
 
-        #region Public Methods and Operators
 
         public static void Writeline(string line)
         {
@@ -831,6 +830,13 @@ namespace Daytona
             return proxyFactory.CreateProxy<TInterface>(Type.EmptyTypes, invocationHandler);
         }
 
+        //public TInterface CreateInstance<TInterface>() where TInterface : class
+        //{
+        //    var invocationHandler = new MessageSenderProxy(this, actoryType);
+        //    var proxyFactory = new ProxyFactory(new MethodsOnlyInterceptionFilter());
+        //    return proxyFactory.CreateProxy<TInterface>(Type.EmptyTypes, invocationHandler);
+        //}
+
         public TInterface CreateInstance<TInterface>(Type actoryType, long id) where TInterface : class
         {
             var invocationHandler = new MessageSenderProxy(this, actoryType, id);
@@ -867,11 +873,11 @@ namespace Daytona
             {
                 this.IsRunning = true;
                 string address = String.Empty;
-                NetMQMessage NetMQMessage = null;
+                //NetMQMessage NetMQMessage = null;
 
-                this.WriteLineToMonitor(String.Format("The {0} Waiting for message", this.Name));
+                this.WriteLineToMonitor($"The Actor \"{this.Name}\" is waiting for message");
                    
-                byte[] messageAsBytes = null;
+                //byte[] messageAsBytes = null;
                 try
                 {
                     stop = this.ReceiveMessage(this.Subscriber);
@@ -965,6 +971,7 @@ namespace Daytona
 
         public void WriteLineToMonitor(string line)
         {
+#if DEBUG
             if (this.monitorChannelDisposed == false)
             {
                 try
@@ -978,6 +985,7 @@ namespace Daytona
                     this.AddFault(ex);
                 }
             }
+#endif
         }
 
         private readonly List<Exception> faults = new List<Exception>();
@@ -1003,16 +1011,13 @@ namespace Daytona
             stream.Flush();
             stream.Close();
         }
-
-        #endregion
-
+        
         public bool DontAcceptMessages { get; set; }
 
         public ISerializer PersistanceSerializer { get; set; }
 
         public ISerializerFactory PersistSerializerFactory { get; set; }
 
-        #region Methods
 
         public object ReadfromPersistence(string returnedAddress, Type type)
         {
@@ -1029,7 +1034,7 @@ namespace Daytona
                 {
                     var returnedRecord = line.Split('~');
                     target = this.PersistanceSerializer.Deserializer(
-                        Pipe.ControlChannelEncoding.GetBytes(returnedRecord[0]), type); 
+                        Exchange.ControlChannelEncoding.GetBytes(returnedRecord[0]), type); 
                 }
                 else
                 {
@@ -1068,24 +1073,26 @@ namespace Daytona
 
         protected void SetUpMonitorChannel(NetMQContext context)
         {
+#if DEBUG
             this.MonitorChannel = context.CreateRequestSocket();
-            this.MonitorChannel.Connect(Pipe.MonitorAddressClient);
+            this.MonitorChannel.Connect(Exchange.MonitorAddressClient);
+#endif
         }
 
         protected void SetUpOutputChannel(NetMQContext context)
         {
             this.OutputChannel = context.CreatePublisherSocket();
-            this.OutputChannel.Connect(Pipe.PublishAddress);
+            this.OutputChannel.Connect(Exchange.PublishAddress);
 
             this.WriteLineToMonitor(
-                "Set up output channel on " + Pipe.PublishAddress + " Default sending on: " + this.OutRoute);
+                "Set up output channel on " + Exchange.PublishAddress + " Default sending on: " + this.OutRoute);
 
             ////if(this.sendControlChannel == null)
             ////{
             ////    this.sendControlChannel = context.CreateSocket(SocketType.REQ);
             ////    this.sendControlChannel.Connect(Pipe.PubSubControlBackAddressClient);
             ////}
-            ////this.sendControlChannel.Send("Actor OutputChannel connected, Sending on " + Pipe.PublishAddressClient, Pipe.ControlChannelEncoding);
+            ////this.sendControlChannel.Send("Actor OutputChannel connected, Sending on " + Exchange.PublishAddressClient, Pipe.ControlChannelEncoding);
             ////var replySignal = this.sendControlChannel.Receive(Pipe.ControlChannelEncoding);
             ////Actor.Writeline(replySignal);
         }
@@ -1163,8 +1170,8 @@ namespace Daytona
                     {
                         Writeline("received stop");
                         this.SendMessage(
-                            Pipe.ControlChannelEncoding.GetBytes(Pipe.SubscriberCountAddress),
-                            Pipe.ControlChannelEncoding.GetBytes("SHUTTINGDOWN"),
+                            Exchange.ControlChannelEncoding.GetBytes(Exchange.SubscriberCountAddress),
+                            Exchange.ControlChannelEncoding.GetBytes("SHUTTINGDOWN"),
                             this.OutputChannel);
                         stopSignal = true;
                     }
@@ -1190,7 +1197,7 @@ namespace Daytona
         private void SetUpReceivers(NetMQContext context)
         {
             this.Subscriber = context.CreateSubscriberSocket();
-            this.Subscriber.Connect(Pipe.SubscribeAddress);
+            this.Subscriber.Connect(Exchange.SubscribeAddress);
 
             if (String.IsNullOrEmpty(this.InRoute))
             {
@@ -1202,17 +1209,15 @@ namespace Daytona
             }
 
             this.MonitorChannel.Send(
-                "Set up Receive channel on " + Pipe.SubscribeAddress + " listening on: " + this.InRoute,
-                Pipe.ControlChannelEncoding);
+                "Set up Receive channel on " + Exchange.SubscribeAddress + " listening on: " + this.InRoute,
+                Exchange.ControlChannelEncoding);
             bool more = false;
             var signal = this.MonitorChannel.Receive(); // Pipe.ControlChannelEncoding, out more);
             this.SendMessage(
-                Pipe.ControlChannelEncoding.GetBytes(Pipe.SubscriberCountAddress),
-                Pipe.ControlChannelEncoding.GetBytes("ADDSUBSCRIBER"),
+                Exchange.ControlChannelEncoding.GetBytes(Exchange.SubscriberCountAddress),
+                Exchange.ControlChannelEncoding.GetBytes("ADDSUBSCRIBER"),
                 this.OutputChannel);
         }
-
-        #endregion
 
         public Dictionary<string, Delegate> Actions { get; set; }
     }

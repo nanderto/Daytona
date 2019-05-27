@@ -6,26 +6,48 @@
 
 namespace Daytona
 {
-    using System;
-
     using NetMQ;
+    using System;
 
     public class Context : IDisposable
     {
         private bool disposed;
+
+        private ConsoleMonitor consoleMonitor = null;
 
         public Context(NetMQContext netMqContext)
         {
             this.NetMqContext = netMqContext;
             this.Exchange = new Exchange(this.NetMqContext);
             this.Exchange.Start();
-
-            
         }
 
         public Context(NetMQContext netMqContext, MessageSerializerFactory messageSerializerFactory)
             : this(netMqContext)
         {
+            this.MessageSerializerFactory = messageSerializerFactory;
+            this.ActorFactory = new Actor(netMqContext, this.MessageSerializerFactory.GetNewSerializer());
+        }
+
+        /// <summary>
+        /// Creates a Context with a ConsoleMonitor to send output to stdout. it can be seen in the test results 
+        /// or a console if you are using one.
+        /// </summary>
+        /// <param name="netMqContext"></param>
+        /// <param name="messageSerializerFactory"></param>
+        /// <param name="consoleMonitor"></param>
+        private Context(NetMQContext netMqContext, MessageSerializerFactory messageSerializerFactory, ConsoleMonitor consoleMonitor)
+        {
+            this.consoleMonitor = consoleMonitor;
+            this.consoleMonitor.Start(netMqContext); // this needs to be started frst other wise the attempts to send messages 
+            // to it will cause a thread to hang - and likely everything else with it.
+            // underlying is a request response type of connection. (waiting to receive will hang, sending message before it is 
+            // ready will also cause it to hang as ther is no message to wait for.
+            this.Exchange = new Exchange(netMqContext);
+            this.Exchange.Start(); //the exchange has t be started befor an acto can be cerated below because the underlying forwwarder
+            // needs to be created. (the underlying forwarder device binds to the end points which must occur before the actors can attempt 
+            // to connect
+            this.NetMqContext = netMqContext;
             this.MessageSerializerFactory = messageSerializerFactory;
             this.ActorFactory = new Actor(netMqContext, this.MessageSerializerFactory.GetNewSerializer());
         }
@@ -48,6 +70,19 @@ namespace Daytona
             var messageSerializerFactory = new MessageSerializerFactory(() => new BinarySerializer());
 
             return new Context(NetMQContext.Create(), messageSerializerFactory);
+        }
+
+        /// <summary>
+        /// Static constructor to create a context with a ConsoleMonitor to write to stdout
+        /// Could probably swap this for an INterface so other places could be written to.
+        /// </summary>
+        /// <param name="consoleMonitor">new up a Console Monitor and pass it in</param>
+        /// <returns></returns>
+        public static Context Create(ConsoleMonitor consoleMonitor)
+        {
+            var messageSerializerFactory = new MessageSerializerFactory(() => new BinarySerializer());
+
+            return new Context(NetMQContext.Create(), messageSerializerFactory, consoleMonitor);
         }
 
         /// <summary>

@@ -91,6 +91,7 @@
     <Compile Include="ActorFactory.cs" />
     <Compile Include="baseclasses\Actor.cs" />
     <Compile Include="baseclasses\Sender.cs" />
+    <Compile Include="ConsoleMonitor.cs" />
     <Compile Include="Context.cs" />
     <Compile Include="ExceptionDetails.cs" />
     <Compile Include="baseclasses\Store.cs" />
@@ -109,7 +110,6 @@
     <Compile Include="MessageSenderProxy.cs" />
     <Compile Include="MessageSerializerFactory.cs" />
     <Compile Include="MethodsOnlyInterceptionFilter.cs" />
-    <Compile Include="Pipe.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RunningActors.cs" />
     <Compile Include="SerializerFactory.cs" />

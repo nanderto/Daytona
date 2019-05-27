@@ -2,7 +2,6 @@
 {
     using System;
     using System.Text;
-
     using NetMQ;
     using NetMQ.Devices;
 
@@ -44,6 +43,15 @@
 
         private bool disposed;
 
+        /// <summary>
+        /// The Exchange configures the xForwarder (implementation of a NetMQ device) that passes messages
+        /// This is a low level component that does not need to be used by the end user of the library
+        /// This handles the creation and set up of the forwarder on the specified endpoints and 
+        /// also the disposal of it.
+        /// You should create this with a Using statement to ensure it is disposed of when it goes out of scope
+        /// The Exchange Start Must be called to start it but the Stop will get handled in the dispose
+        /// </summary>
+        /// <param name="context"></param>
         public Exchange(NetMQContext context)
         {
             this.XForwarder = new XForwarder(context, PublishAddress, SubscribeAddress, DeviceMode.Threaded);
@@ -61,7 +69,13 @@
             {
                 if (disposing)
                 {
-                    this.XForwarder.Stop(true);
+                    if (this.XForwarder.IsRunning)
+                    {
+                        this.XForwarder.Stop(true);
+                        // THe XForwarder does not need to be disposed of.
+                        // it does have a Poller which needs to be disposed of but this must happen in the Device base class
+                        // TODO shoud check that this actuialy happens (that the base class disposes of the Poller)
+                    }
                 }
 
                 //// There are no unmanaged resources to release, but

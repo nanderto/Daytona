@@ -37,7 +37,7 @@
                         else
                         {
                             //"We found a running actor so er updated the time of the last heartbeat.");
-                            returnedActor.LastHeartbeat = DateTime.UtcNow;
+                            returnedActor.SetLastHeartBeat();
                         }
                     }
                     else
@@ -122,7 +122,7 @@
             this.context = context;
             this.binarySerializer = binarySerializer;
             this.ActorFactory = new Actor(context, new BinarySerializer());
-            this.ActorFactory.PersistanceSerializer = new DefaultSerializer(Pipe.ControlChannelEncoding);
+            this.ActorFactory.PersistanceSerializer = new DefaultSerializer(Exchange.ControlChannelEncoding);
             this.ConfigActorLauncher();
             this.ConfigExceptionHandler();
 
@@ -136,7 +136,7 @@
             this.context = context;
             this.MessageSerializerFactory = messageSerializerFactory;
             this.ActorFactory = new Actor(context, new BinarySerializer());
-            this.ActorFactory.PersistanceSerializer = new DefaultSerializer(Pipe.ControlChannelEncoding);
+            this.ActorFactory.PersistanceSerializer = new DefaultSerializer(Exchange.ControlChannelEncoding);
             this.ConfigActorLauncher();
             this.ConfigExceptionHandler();
 
@@ -247,8 +247,13 @@
 
         public Silo RegisterEntity(Type type)
         {
-            // Type type = actor.GetType();
             this.Entities.Add(type.FullName, new Entity(type));
+            return this;
+        }
+
+        public Silo RegisterEntity(Type type, Type Interface)
+        {
+            this.Entities.Add(Interface.FullName, new Entity(type));
             return this;
         }
 

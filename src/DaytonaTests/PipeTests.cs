@@ -12,8 +12,8 @@ namespace DaytonaTests
     using NetMQ;
     using NetMQ.Devices;
     using NetMQ.zmq;
-
-    using Pipe = Daytona.Pipe;
+    using System.Collections.Generic;
+    using System.Diagnostics;
 
     [TestClass]
     public class PipeTests
@@ -28,12 +28,12 @@ namespace DaytonaTests
 
             using (var context = NetMQContext.Create())
             {
-                var exchange = new XForwarder(
+                var xForwarder = new XForwarder(
                     context,
-                    Pipe.PublishAddressServer,
-                    Pipe.SubscribeAddressServer,
+                    Exchange.PublishAddressServer,
+                    Exchange.SubscribeAddressServer,
                     DeviceMode.Threaded);
-                exchange.Start();
+                xForwarder.Start();
                 using (var pub = Helper.GetConnectedPublishSocket(context))
                 {
                     using (var sub = Helper.GetConnectedSubscribeSocket(context))
@@ -51,7 +51,7 @@ namespace DaytonaTests
                     }
                 }
               
-                exchange.Stop();
+                xForwarder.Stop();
             }
         }
 
@@ -93,19 +93,19 @@ namespace DaytonaTests
         }
 
         [TestMethod]
-        public void InProcOnlyWithForwarder()
+        public void InProcOnlyWithXForwarder()
         {
             string expectedAddress = "XXXX";
             string message = "hello its me";
             int count = 0;
             using (var context = NetMQContext.Create())
             {
-                var exchange = new XForwarder(context, "inproc://frontend", "inproc://SubscribeAddress", DeviceMode.Threaded);
-                exchange.Start();
+                var xForwarder = new XForwarder(context, "inproc://frontend", "inproc://SubscribeAddress", DeviceMode.Threaded);
+                xForwarder.Start();
                 var queueDevice = new QueueDevice(
                     context,
-                    Pipe.PubSubControlBackAddressServer,
-                    Pipe.PubSubControlFrontAddressServer,
+                    Exchange.PubSubControlBackAddressServer,
+                    Exchange.PubSubControlFrontAddressServer,
                     DeviceMode.Threaded);
                 queueDevice.Start();
 
@@ -117,7 +117,7 @@ namespace DaytonaTests
                 using (NetMQSocket pub = Helper.GetConnectedPublishSocket(context, "inproc://frontend"), 
                    syncService = context.CreateResponseSocket())
                 {
-                    syncService.Connect(Pipe.PubSubControlFrontAddressClient);
+                    syncService.Connect(Exchange.PubSubControlFrontAddressClient);
                     for (int i = 0; i < 1; i++)
                     {
                         var received = syncService.Receive();
@@ -128,9 +128,9 @@ namespace DaytonaTests
                            
 
                 }
-                exchange.Stop(true);
+
+                xForwarder.Stop(true);
                 queueDevice.Stop(true);
-                
             }          
         }
 
@@ -139,7 +139,7 @@ namespace DaytonaTests
             using (NetMQSocket sub = Helper.GetConnectedSubscribeSocket(context, "inproc://SubscribeAddress"),
                 syncClient = context.CreateRequestSocket())
             {
-                syncClient.Connect(Pipe.PubSubControlBackAddressClient);
+                syncClient.Connect(Exchange.PubSubControlBackAddressClient);
                 syncClient.Send("");
                 syncClient.Receive();
                 NetMQMessage NetMQMessage = null;
@@ -172,60 +172,199 @@ namespace DaytonaTests
         static bool interupt = false;
         
         [TestMethod]
+        public void SendOneMessageUsingSpawn()
+        {
+            string passedMessage = string.Empty;
+
+            using (var context = Context.Create())
+            {
+                var actorReference = context.Spawn("Johnny", (message, sender, actor) =>
+                {
+                    passedMessage = (string)message;
+                    Console.WriteLine($"here this is the message:{message}");
+                    Console.WriteLine("here this is the Sender:{0}##", sender.ReturnedAddress);
+                    Console.WriteLine("hey is there enything there##{0}##", actor.Name);
+
+
+                    //No point asserting here it will get swallowed
+                    //Assert.AreEqual("hello", message);
+                });
+               
+                Thread.Sleep(20);
+                actorReference.Tell("hello");
+                Thread.Sleep(20);
+                actorReference.Kill();
+            }
+
+            Console.WriteLine($"hello = {passedMessage}");
+            Assert.AreEqual("hello", passedMessage);
+        }
+
+        [TestMethod]
+        public void SendFiveMessagesUsingSpawn()
+        {
+            string passedMessage = string.Empty;
+            List<string> receivedMessages = new List<string>();
+
+            using (var context = Context.Create(new ConsoleMonitor()))
+            {
+                var actorReference = context.Spawn("Johnny", (message, sender, actor) =>
+                {
+                    passedMessage = (string)message;
+                    receivedMessages.Add(passedMessage);
+                    Console.WriteLine($"here this is the message:{message}");
+                    Console.WriteLine("here this is the Sender:{0}##", sender.ReturnedAddress);
+                    Console.WriteLine("hey is there enything there##{0}##", actor.Name);
+
+                    int c = 0;
+                    object count = 0;
+                    if (actor.PropertyBag.TryGetValue("Counter", out count))
+                    {
+                        c = (int)count;
+                        count = ++c;
+                        actor.PropertyBag["Counter"] = count;
+                    }
+                    else
+                    {
+                        c = 0;
+                        actor.PropertyBag.Add("Counter", c);
+                    }
+
+
+                });
+
+                Thread.Sleep(20);
+                actorReference.Tell(1);
+                actorReference.Tell(2);
+                actorReference.Tell(3);
+                actorReference.Tell(4);
+                Thread.Sleep(20);
+                actorReference.Kill();
+            }
+
+            Console.WriteLine($"message = {passedMessage}");
+
+            var i = 0;
+            foreach (var item in receivedMessages)
+            {
+                i++;
+                Assert.AreEqual($"{i}", item);
+            }
+        }
+
+
+        [TestMethod]
+        public void SendAlotOfMessagesUsingSpawn()
+        {
+            string passedMessage = string.Empty;
+            List<string> receivedMessages = new List<string>();
+            var stopWatch = new Stopwatch();
+            stopWatch.Start();
+
+            using (var context = Context.Create(new ConsoleMonitor()))
+            {
+                var actorReference = context.Spawn("Johnny", (message, sender, actor) =>
+                {
+                    passedMessage = (string)message.ToString();
+                    receivedMessages.Add(passedMessage);
+                    Console.WriteLine($"This is the message:{message}");
+                    Console.WriteLine($"Sender:{sender.ReturnedAddress}##");
+                    Console.WriteLine($"Actor Name:{actor.Name}##");
+
+                    int c = 0;
+                    object count = 0;
+                    if (actor.PropertyBag.TryGetValue("Counter", out count))
+                    {
+                        c = (int)count;
+                        count = ++c;
+                        actor.PropertyBag["Counter"] = count;
+                    }
+                    else
+                    {
+                        c = 0;
+                        actor.PropertyBag.Add("Counter", c);
+                    }
+
+                    if (c == 1000)
+                    {
+                        stopWatch.Stop();
+                    }
+
+                });
+
+                Thread.Sleep(20);
+                for (int j = 0; j < 1000; j++)
+                {
+                    actorReference.Tell(j);
+                }
+
+                Thread.Sleep(20);
+                actorReference.Kill();
+            }
+
+            Console.WriteLine($"message = {passedMessage}");
+            Console.WriteLine($"StopWatch time (milliseconds): {stopWatch.ElapsedMilliseconds}");
+            Console.WriteLine($"thats {stopWatch.ElapsedMilliseconds / 1000} per message");
+            var i = 0;
+            foreach (var item in receivedMessages)
+            {
+                Assert.AreEqual($"{i}", item);
+                i++;
+            }
+        }
+
+        [TestMethod]
         public void SendOneMessageInProc()
         {
             string expectedAddress = "XXXX";
             string message = "hello its me";
-            int count = 0;
 
             using (var context = NetMQContext.Create())
+            using (var exchange = new Exchange(context))
             {
-                var forwarderDevice = new ForwarderDevice(context, "tcp://*:5555", "inproc://back", DeviceMode.Threaded);
-                forwarderDevice.FrontendSetup.Subscribe(string.Empty);
-                forwarderDevice.Start();
-                //while (!forwarderDevice.IsRunning)
-                //{
-                        
-                //}
-                using (var sub = Helper.GetConnectedSubscribeSocket(context, "inproc://back"))
+                exchange.Start();
                 {
-                    using (var pub = Helper.GetConnectedPublishSocket(context, "tcp://localhost:5555"))
+                    using (var sub = Helper.GetConnectedSubscribeSocket(context, Exchange.SubscribeAddress))
                     {
-
-                        NetMQMessage NetMQMessage = null;
-                        var task = Task.Run(() =>
-                            {
-                                if (sub != null)
-                                {
-                                    //while (interupt != true)
-                                    //{
-                                        NetMQMessage = Helper.ReceiveMessage(sub);
-                                        //if (NetMQMessage.FrameCount > 0)
-                                        //{
-                                        //    interupt = true;
-                                        //}
-                                    //}
-                                }
-                                return NetMQMessage;
-                            });
-
-                        if (pub != null)
+                        using (var pub = Helper.GetConnectedPublishSocket(context, Exchange.PublishAddress)) // "tcp://localhost:5555"
                         {
-                            Helper.SendOneSimpleMessage(expectedAddress, message, pub);
-                        }
 
-                        task.Wait();
-                        Assert.AreEqual(count, NetMQMessage.FrameCount);
-                        NetMQFrame frame = NetMQMessage[0];
-                        var address = Encoding.Unicode.GetString(frame.Buffer);
-                        Assert.AreEqual(expectedAddress, address);
+                            NetMQMessage NetMQMessage = null;
+                            var task = Task.Run(() =>
+                                {
+                                    if (sub != null)
+                                    {
+                                    NetMQMessage = Helper.ReceiveMessage(sub);
+                                    }
+                                    return NetMQMessage;
+                                });
+
+                            if (pub != null)
+                            {
+                                Thread.Sleep(30); // need to make sure that the other thread is ready to receive 
+                                // before this thread sends the message
+                                Helper.SendOneSimpleMessage(expectedAddress, message, pub);
+                            }
+
+                            task.Wait();
+                            Assert.AreEqual(2, NetMQMessage.FrameCount);
+                            NetMQFrame frame = NetMQMessage[0];
+                            var address = Encoding.Unicode.GetString(frame.Buffer);
+                            Assert.AreEqual(expectedAddress, address);
+
+                            frame = NetMQMessage[1];
+                            var returnedMessage = Encoding.Unicode.GetString(frame.Buffer);
+                            Assert.AreEqual(message, returnedMessage);
+                        }
                     }
                 }
-                    forwarderDevice.Stop();
+
+                exchange.Stop(true);
             }
         }
 
         [TestMethod, TestCategory("IntegrationZMQ")]
+        [TestCategory("DoNotRunOnServer")]
         public void SendOneMessageOfType()
         {
             string input = string.Empty;
@@ -234,8 +373,8 @@ namespace DaytonaTests
 
             using (var context = NetMQContext.Create())
             {
-                var pipe = new Pipe();
-                pipe.Start(context);
+                var pipe = new Exchange(context);
+                pipe.Start();
                 using (var pub = Helper.GetConnectedPublishSocket(context))
                 {
                     using (var sub = Helper.GetConnectedSubscribeSocket(context))
@@ -254,19 +393,20 @@ namespace DaytonaTests
                     }
                 }
 
-                pipe.Exit();
+                pipe.Dispose();
             }
         }
 
         [TestMethod, TestCategory("IntegrationZMQ")]
+        [TestCategory("DoNotRunOnServer")]
         public void SendOneMessageOfTypeConfigureActorToProcess()
         {
             using (var pipeContext = NetMQContext.Create())
             {
-                var pipe = new Pipe();
+                var pipe = new Exchange(pipeContext);
                 var task2 = Task.Run(() =>
                     {
-                        pipe.Start(pipeContext);
+                        pipe.Start();
                     });
 
                 var task = Task.Run(() =>
@@ -314,11 +454,12 @@ namespace DaytonaTests
                         }
                     });
                 Task.WaitAll(task, task2);
-                pipe.Exit();
+                pipe.Dispose();
             }
         }
 
-        [TestMethod, TestCategory("IntegrationZMQ")]
+        //[TestMethod, TestCategory("IntegrationZMQ")]
+        ////obviously broken test
         public void SendFiveMessageOfTypeConfigureActorToProcess()
         {
              string input = string.Empty;
@@ -327,8 +468,8 @@ namespace DaytonaTests
 
             using (var context = NetMQContext.Create())
             {
-                var pipe = new Pipe();
-                pipe.Start(context);
+                var pipe = new Exchange(context);
+                pipe.Start();
                 using (var pub = Helper.GetConnectedPublishSocket(context))
                 {
                     using (var sub = Helper.GetConnectedSubscribeSocket(context))
@@ -372,7 +513,7 @@ namespace DaytonaTests
                         //}
                     }
                 }
-                pipe.Exit();
+                pipe.Dispose();
             }
         }
 

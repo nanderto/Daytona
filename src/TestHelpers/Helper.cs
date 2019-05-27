@@ -134,7 +134,7 @@ namespace TestHelpers
 
         public static NetMQSocket GetConnectedPublishSocket(NetMQContext context)
         {
-            return GetConnectedPublishSocket(context, Pipe.PublishAddressClient);
+            return GetConnectedPublishSocket(context, Exchange.PublishAddressClient);
         }
 
         public static NetMQSocket GetConnectedPublishSocket(NetMQContext context, string address)
@@ -156,13 +156,13 @@ namespace TestHelpers
 
         public static NetMQSocket GetConnectedSubscribeSocket(NetMQContext context)
         {
-            string address = Pipe.SubscribeAddressClient;
+            string address = Exchange.SubscribeAddressClient;
             return GetConnectedSubscribeSocket(context, address);
         }
 
         public static NetMQSocket GetConnectedSubscribeSocket(NetMQContext context, string address)
         {
-            return GetConnectedSubscribeSocket(context, address, string.Empty);
+            return GetConnectedSubscribeSocket(context, address, string.Empty);//string.Empty subscribes to all messages on the address
         }
 
         public static NetMQSocket GetConnectedSubscribeSocket(NetMQContext context, string address, string Subcription)

@@ -66,25 +66,30 @@
         }
 
         [TestMethod]
+        [TestCategory("DoNotRunOnServer")]
         public void SerializeActorFactory()
         {
             using (var context = NetMQContext.Create())
-            using (var testActor = new Actor(context))
+            using (var exchange = new Exchange(context))
             {
-                
-                var serializer = new DefaultSerializer(Pipe.ControlChannelEncoding);
-                var customer = new Customer(testActor);
-                customer.Firstname = "george";
-                var buffer = serializer.GetBuffer(customer);
-                var result = serializer.Deserializer<Customer>(buffer);
-                Assert.AreEqual(customer.Firstname, result.Firstname);
+                exchange.Start();
+                using (var testActor = new Actor(context))
+                {
+
+                    var serializer = new DefaultSerializer(Exchange.ControlChannelEncoding);
+                    var customer = new Customer(testActor);
+                    customer.Firstname = "george";
+                    var buffer = serializer.GetBuffer(customer);
+                    var result = serializer.Deserializer<Customer>(buffer);
+                    Assert.AreEqual(customer.Firstname, result.Firstname);
+                }
             }
         }
 
         [TestMethod]
         public void SerializeActorFactory2()
         {
-            var store = new Store(new DefaultSerializer(Pipe.ControlChannelEncoding));
+            var store = new Store(new DefaultSerializer(Exchange.ControlChannelEncoding));
             var customer = new Customer(new Actor());
             customer.Firstname = "george";
             store.Persist(typeof(Customer), customer, "testCustomer33"); 
@@ -92,6 +97,7 @@
         }
 
         [TestMethod]
+        [TestCategory("DoNotRunOnServer")]
         public void SerializeActorFactory3()
         {
             //MessageSerializerFactory msf = () => 
@@ -101,7 +107,7 @@
             using (var silo = Silo.Create())
             using (var customer = new Customer(new Actor(silo.Context, msf)))
             {
-                var store = new Store(new DefaultSerializer(Pipe.ControlChannelEncoding));
+                var store = new Store(new DefaultSerializer(Exchange.ControlChannelEncoding));
 
                 customer.Firstname = "george";
                 store.Persist(typeof(Customer), customer, "testCustomer33");

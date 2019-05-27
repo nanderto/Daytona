@@ -8,7 +8,7 @@ namespace Daytona
 {
     public class SerializerFactory : ISerializerFactory
     {
-        private readonly Func<ISerializer> returnSerializer = () => new DefaultSerializer(Pipe.ControlChannelEncoding);
+        private readonly Func<ISerializer> returnSerializer = () => new DefaultSerializer(Exchange.ControlChannelEncoding);
 
         public SerializerFactory(Func<ISerializer> returnSerializerFunc )
         {

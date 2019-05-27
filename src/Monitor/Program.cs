@@ -19,7 +19,7 @@ namespace Monitor
             {
                 using (var monitorService = context.CreateResponseSocket())
                 {
-                    monitorService.Bind(Pipe.MonitorAddressServer);
+                    monitorService.Bind(Exchange.MonitorAddressServer);
 
                     while (!interrupted)
                     {

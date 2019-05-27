@@ -1,24 +1,26 @@
-﻿using System;
+﻿using NetMQ;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MonitorNetMq
+namespace Daytona
 {
-
-    using NetMQ;
-
-    using TestHelpers;
-
-    class Program
+    public class ConsoleMonitor
     {
-        private static void Main(string[] args)
-        {
-            Console.CancelKeyPress += new ConsoleCancelEventHandler(ConsoleCancelHandler);
-            Console.WriteLine("::>Ready ");
+        Task Monitor = null;
 
-            using (NetMQContext context = NetMQContext.Create())
+        public ConsoleMonitor()
+        {
+            
+        }
+
+
+        public void Start(NetMQContext context)
+        {
+            Console.WriteLine("::>Ready ");
+            Monitor = Task.Run(() =>
             {
                 using (var rep = context.CreateResponseSocket())
                 {
@@ -30,28 +32,24 @@ namespace MonitorNetMq
                         {
                             Console.WriteLine("::> " + signal);
                             rep.Send(string.Empty, Encoding.Unicode);
-                                
+
                         }
                     }
-                }
-            }
+                } 
+            });
         }
 
-        public static string MonitorAddressClient = "tcp://localhost:5560";  ////"inproc://pubsubcontrol";//
+        public void Stop()
+        {
+            interrupted = true;
+        }
+
+        public static string MonitorAddressClient = "tcp://localhost:5560";
 
         public static string MonitorAddressServer = "tcp://*:5560";
-
 
         public static Encoding ControlChannelEncoding = Encoding.Unicode;
 
         static bool interrupted = false;
-
-        static void ConsoleCancelHandler(object sender, ConsoleCancelEventArgs e)
-        {
-            e.Cancel = true;
-            interrupted = true;
-        }
     }
-
-
 }
