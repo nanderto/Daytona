@@ -100,6 +100,7 @@
                 }
             };
 
+
         private readonly Dictionary<string, Entity> Entities = new Dictionary<string, Entity>();
 
         private readonly NetMQContext context;
@@ -174,6 +175,17 @@
         {
             var messageSerializerFactory = new MessageSerializerFactory(() => new BinarySerializer());
             var context = NetMQContext.Create();
+            var exchange = new Exchange(context);
+            exchange.Start();
+
+            var silo = new Silo(context, messageSerializerFactory) { Exchange = exchange };
+            return silo;
+        }
+
+        public static Silo Create(NetMQContext netMQContext)
+        {
+            var messageSerializerFactory = new MessageSerializerFactory(() => new BinarySerializer());
+            var context = netMQContext;
             var exchange = new Exchange(context);
             exchange.Start();
 

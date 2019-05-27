@@ -176,9 +176,9 @@ namespace DaytonaTests
         {
             string passedMessage = string.Empty;
 
-            using (var context = Context.Create())
+            using (var DaytonaContext = Context.Create(new ConsoleMonitor()))
             {
-                var actorReference = context.Spawn("Johnny", (message, sender, actor) =>
+                var actorReference = DaytonaContext.Spawn("Johnny", (message, sender, actor) =>
                 {
                     passedMessage = (string)message;
                     Console.WriteLine($"here this is the message:{message}");
@@ -363,159 +363,148 @@ namespace DaytonaTests
             }
         }
 
-        [TestMethod, TestCategory("IntegrationZMQ")]
-        [TestCategory("DoNotRunOnServer")]
-        public void SendOneMessageOfType()
-        {
-            string input = string.Empty;
-            string expectedAddress = "XXXXxxxx";
-            string message = string.Empty;
-
-            using (var context = NetMQContext.Create())
-            {
-                var pipe = new Exchange(context);
-                pipe.Start();
-                using (var pub = Helper.GetConnectedPublishSocket(context))
-                {
-                    using (var sub = Helper.GetConnectedSubscribeSocket(context))
-                    {
-                        ISerializer serializer = new Serializer(Encoding.Unicode);
-                        Customer cust = new Customer(1);
-                        cust.Firstname = "John";
-                        cust.Lastname = "Wilson";
-
-                        Helper.SendOneMessageOfType<Customer>(expectedAddress, cust, serializer, pub);
-
-                        Customer customer = Helper.ReceiveMessageofType<Customer>(sub);
-
-                        Assert.AreEqual(cust.Firstname, customer.Firstname);
-                        Assert.AreEqual(cust.Lastname, customer.Lastname);
-                    }
-                }
-
-                pipe.Dispose();
-            }
-        }
-
-        [TestMethod, TestCategory("IntegrationZMQ")]
-        [TestCategory("DoNotRunOnServer")]
-        public void SendOneMessageOfTypeConfigureActorToProcess()
-        {
-            using (var pipeContext = NetMQContext.Create())
-            {
-                var pipe = new Exchange(pipeContext);
-                var task2 = Task.Run(() =>
-                    {
-                        pipe.Start();
-                    });
-
-                var task = Task.Run(() =>
-                    {
-                        string input = string.Empty;
-                        string expectedAddress = "XXXXxxxx";
-                        string message = string.Empty;
-
-                        using (var context = NetMQContext.Create())
-                        {
-
-                            using (var pub = Helper.GetConnectedPublishSocket(context))
-                            {
-                                //using (var sub = GetConnectedSubscribeSocket(context))
-                                //{
-                                ISerializer serializer = new Serializer(Encoding.Unicode);
-                                Customer cust = new Customer(1);
-                                cust.Firstname = "Johnx";
-                                cust.Lastname = "Wilson";
-
-                                //using (var actor = new Actor(context))
-                                //{
-                                //    actor.RegisterActor<Customer>("Basic", expectedAddress, "OutRoute", serializer, (Message, InRoute, OutRoute, Socket, Actor) =>
-                                //        {
-                                //            var customer = (Customer)Message;
-                                //            Assert.AreEqual(cust.Firstname, customer.Firstname);
-                                //            Helper.Writeline(customer.Firstname, @"c:\dev\xx.log");
-                                //        });
-                                //    actor.StartAllActors();
-
-                                //    Thread.Sleep(0);
-                                //}
-
-                                for (int i = 0; i < 10; i++)
-                                {
-                                    cust.Firstname = i.ToString();
-                                    Helper.SendOneMessageOfType<Customer>(expectedAddress, cust, serializer, pub);
-                                    Thread.Sleep(0);
-                                }
-                                Helper.SendOneSimpleMessage(expectedAddress, "stop", pub);
-                                Thread.Sleep(0);
-                            }
-                            //pipe.Exit();
-                            //Thread.Sleep(0);
-                        }
-                    });
-                Task.WaitAll(task, task2);
-                pipe.Dispose();
-            }
-        }
-
+        ///the helper class is obsolee now these tests are not working and pointless as it is no longer done the way the 
+        ///helper is set up
         //[TestMethod, TestCategory("IntegrationZMQ")]
-        ////obviously broken test
-        public void SendFiveMessageOfTypeConfigureActorToProcess()
-        {
-             string input = string.Empty;
-            string expectedAddress = "XXXXxxxx";
-            string message = string.Empty;
+        //[TestCategory("DoNotRunOnServer")]
+        //public void SendOneMessageOfType()
+        //{
+        //    string input = string.Empty;
+        //    string expectedAddress = "XXXXxxxx";
+        //    string message = string.Empty;
 
-            using (var context = NetMQContext.Create())
-            {
-                var pipe = new Exchange(context);
-                pipe.Start();
-                using (var pub = Helper.GetConnectedPublishSocket(context))
-                {
-                    using (var sub = Helper.GetConnectedSubscribeSocket(context))
-                    {
-                        //using (var actor = new Actor(context))
-                        //{
-                        //    ISerializer serializer = new Serializer(Encoding.Unicode);
-                        //    actor.RegisterActor<Customer>("Basic", expectedAddress, "OutRoute", serializer, (Message, InRoute, OutRoute, Socket, Actor) =>
-                        //    {
-                        //        var customer = (Customer)Message;
-                        //        if (!Actor.PropertyBag.ContainsKey("Count"))
-                        //        {
-                        //            Actor.PropertyBag.Add("Count", "0");
-                        //        }
-                        //        var count = int.Parse(Actor.PropertyBag["Count"]);
-                        //        count++;
-                        //        Actor.PropertyBag["Count"] = count.ToString();
+        //    using (var context = NetMQContext.Create())
+        //    {
+        //        var pipe = new Exchange(context);
+        //        pipe.Start();
+        //        using (var pub = Helper.GetConnectedPublishSocket(context))
+        //        {
+        //            using (var sub = Helper.GetConnectedSubscribeSocket(context))
+        //            {
+        //                ISerializer serializer = new Serializer(Encoding.Unicode);
+        //                Customer cust = new Customer(1);
+        //                cust.Firstname = "John";
+        //                cust.Lastname = "Wilson";
 
-                        //        //Assert.AreEqual(cust.Firstname, customer.Firstname);
-                        //        Helper.SendOneSimpleMessage("log", customer.Firstname + " " + customer.Lastname + " " + " Count " + Actor.PropertyBag["Count"], Socket);
-                        //    }).RegisterActor("Logger", "log", (Message, InRoute) =>
-                        //        {
-                        //            Helper.Writeline(Message);
-                        //        });
-                        //    actor.StartAllActors();
+        //                Helper.SendOneMessageOfType<Customer>(expectedAddress, cust, serializer, pub);
 
-                        //    Task.Delay(5000);
+        //                Customer customer = Helper.ReceiveMessageofType<Customer>(sub);
 
-                        //    for (int i = 0; i < 5; i++)
-                        //    {
-                        //        ISerializer serializer2 = new Serializer(Encoding.Unicode);
-                        //        Customer cust = new Customer();
-                        //        cust.Firstname = "John" + i.ToString();
-                        //        cust.Lastname = "Wilson" + i.ToString();
+        //                Assert.AreEqual(cust.Firstname, customer.Firstname);
+        //                Assert.AreEqual(cust.Lastname, customer.Lastname);
+        //            }
+        //        }
 
-                        //        Helper.SendOneMessageOfType<Customer>(expectedAddress, cust, serializer2, pub);
-                        //    }
+        //        pipe.Dispose();
+        //    }
+        //}
 
-                        //    Helper.SendOneSimpleMessage(expectedAddress, "Stop", pub);
-                        //    Task.Delay(5000);
-                        //}
-                    }
-                }
-                pipe.Dispose();
-            }
-        }
+        // not reall clear what these test were testing or attempting to test
+        //TO DO create new tests
+        //[TestMethod, TestCategory("IntegrationZMQ")]
+        //[TestCategory("DoNotRunOnServer")]
+        //public void SendOneMessageOfTypeConfigureActorToProcess()
+        //{
+        //    string input = string.Empty;
+        //    string expectedAddress = "XXXXxxxx";
+        //    string message = string.Empty;
+
+        //    using (var context = NetMQContext.Create())
+        //    {
+
+        //        using (var pub = Helper.GetConnectedPublishSocket(context))
+        //        {
+        //            //using (var sub = GetConnectedSubscribeSocket(context))
+        //            //{
+        //            ISerializer serializer = new Serializer(Encoding.Unicode);
+        //            Customer cust = new Customer(1);
+        //            cust.Firstname = "Johnx";
+        //            cust.Lastname = "Wilson";
+
+        //            //using (var actor = new Actor(context))
+        //            //{
+        //            //    actor.RegisterActor<Customer>("Basic", expectedAddress, "OutRoute", serializer, (Message, InRoute, OutRoute, Socket, Actor) =>
+        //            //        {
+        //            //            var customer = (Customer)Message;
+        //            //            Assert.AreEqual(cust.Firstname, customer.Firstname);
+        //            //            Helper.Writeline(customer.Firstname, @"c:\dev\xx.log");
+        //            //        });
+        //            //    actor.StartAllActors();
+
+        //            //    Thread.Sleep(0);
+        //            //}
+
+        //            for (int i = 0; i < 10; i++)
+        //            {
+        //                cust.Firstname = i.ToString();
+        //                Helper.SendOneMessageOfType<Customer>(expectedAddress, cust, serializer, pub);
+        //                Thread.Sleep(0);
+        //            }
+        //            Helper.SendOneSimpleMessage(expectedAddress, "stop", pub);
+        //            Thread.Sleep(0);
+        //        }
+
+        //    }
+        //}
+
+        ////[TestMethod, TestCategory("IntegrationZMQ")]
+        //////obviously broken test
+        //public void SendFiveMessageOfTypeConfigureActorToProcess()
+        //{
+        //     string input = string.Empty;
+        //    string expectedAddress = "XXXXxxxx";
+        //    string message = string.Empty;
+
+        //    using (var context = NetMQContext.Create())
+        //    {
+        //        var pipe = new Exchange(context);
+        //        pipe.Start();
+        //        using (var pub = Helper.GetConnectedPublishSocket(context))
+        //        {
+        //            using (var sub = Helper.GetConnectedSubscribeSocket(context))
+        //            {
+        //                //using (var actor = new Actor(context))
+        //                //{
+        //                //    ISerializer serializer = new Serializer(Encoding.Unicode);
+        //                //    actor.RegisterActor<Customer>("Basic", expectedAddress, "OutRoute", serializer, (Message, InRoute, OutRoute, Socket, Actor) =>
+        //                //    {
+        //                //        var customer = (Customer)Message;
+        //                //        if (!Actor.PropertyBag.ContainsKey("Count"))
+        //                //        {
+        //                //            Actor.PropertyBag.Add("Count", "0");
+        //                //        }
+        //                //        var count = int.Parse(Actor.PropertyBag["Count"]);
+        //                //        count++;
+        //                //        Actor.PropertyBag["Count"] = count.ToString();
+
+        //                //        //Assert.AreEqual(cust.Firstname, customer.Firstname);
+        //                //        Helper.SendOneSimpleMessage("log", customer.Firstname + " " + customer.Lastname + " " + " Count " + Actor.PropertyBag["Count"], Socket);
+        //                //    }).RegisterActor("Logger", "log", (Message, InRoute) =>
+        //                //        {
+        //                //            Helper.Writeline(Message);
+        //                //        });
+        //                //    actor.StartAllActors();
+
+        //                //    Task.Delay(5000);
+
+        //                //    for (int i = 0; i < 5; i++)
+        //                //    {
+        //                //        ISerializer serializer2 = new Serializer(Encoding.Unicode);
+        //                //        Customer cust = new Customer();
+        //                //        cust.Firstname = "John" + i.ToString();
+        //                //        cust.Lastname = "Wilson" + i.ToString();
+
+        //                //        Helper.SendOneMessageOfType<Customer>(expectedAddress, cust, serializer2, pub);
+        //                //    }
+
+        //                //    Helper.SendOneSimpleMessage(expectedAddress, "Stop", pub);
+        //                //    Task.Delay(5000);
+        //                //}
+        //            }
+        //        }
+        //        pipe.Dispose();
+        //    }
+        //}
 
 
 

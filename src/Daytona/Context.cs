@@ -114,6 +114,11 @@ namespace Daytona
                     this.ActorFactory.Dispose();
                     this.Exchange.Stop(true);
                     this.Exchange.Dispose();
+                    if (this.consoleMonitor != null)
+                    {
+                        this.consoleMonitor.Stop();
+                    }
+
                     this.NetMqContext.Dispose();
                 }
 
