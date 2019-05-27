@@ -97,8 +97,9 @@
             //MessageSerializerFactory msf = () => 
             //MessageSerializerFactory msf = new MessageSerializerFactory(() => new BinarySerializer());
             MessageSerializerFactory msf = new MessageSerializerFactory(() => new DefaultSerializer(Pipe.ControlChannelEncoding));
-            using (var context = NetMQContext.Create())
-            using (var customer = new Customer(new Actor(context, msf)))
+            //using (var context = NetMQContext.Create())
+            using (var silo = Silo.Create())
+            using (var customer = new Customer(new Actor(silo.Context, msf)))
             {
                 var store = new Store(new DefaultSerializer(Pipe.ControlChannelEncoding));
 

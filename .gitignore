@@ -168,3 +168,4 @@ pip-log.txt
 #*.StyleCop
 *.ncrunchproject
 /src/.vs/Daytona/v16/Server/sqlite3
+/src/.vs/Daytona/v15/Server/sqlite3

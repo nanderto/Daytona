@@ -115,6 +115,7 @@
         private BinarySerializer binarySerializer;
 
         private bool disposed;
+        private SerializerFactory persistanceSerializerFactory;
 
         public Silo(NetMQContext context, BinarySerializer binarySerializer)
         {
@@ -142,6 +143,17 @@
             //// need to add additional actors here. they will get configured and started in this constructor.
             //this.exceptionhandler();
         }
+
+        public Silo(NetMQContext context, MessageSerializerFactory messageSerializerFactory, SerializerFactory persistanceSerializerFactory) : this(context, messageSerializerFactory)
+        {
+            this.persistanceSerializerFactory = persistanceSerializerFactory;
+            this.context = context;
+            this.MessageSerializerFactory = messageSerializerFactory;
+            this.ActorFactory = new Actor(context, new BinarySerializer());
+            this.ConfigActorLauncher();
+            this.ConfigExceptionHandler();
+        }
+
         /// <summary>
         /// Actor factory is an actor that is set up so it will not listen to any messages. 
         /// this is created to register and start sub-actors which perform the roles necessary for the Silo to function.
@@ -166,6 +178,26 @@
             exchange.Start();
 
             var silo = new Silo(context, messageSerializerFactory) { Exchange = exchange };
+            return silo;
+        }
+
+        public static Silo Create(MessageSerializerFactory messageSerializerFactory)
+        {
+            var context = NetMQContext.Create();
+            var exchange = new Exchange(context);
+            exchange.Start();
+
+            var silo = new Silo(context, messageSerializerFactory) { Exchange = exchange };
+            return silo;
+        }
+
+        public static Silo Create(MessageSerializerFactory messageSerializerFactory, SerializerFactory PersistanceSerializerFactory)
+        {
+            var context = NetMQContext.Create();
+            var exchange = new Exchange(context);
+            exchange.Start();
+
+            var silo = new Silo(context, messageSerializerFactory, PersistanceSerializerFactory) { Exchange = exchange };
             return silo;
         }
 
