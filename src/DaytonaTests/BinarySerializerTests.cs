@@ -69,11 +69,9 @@
         [TestCategory("DoNotRunOnServer")]
         public void SerializeActorFactory()
         {
-            using (var context = NetMQContext.Create())
-            using (var exchange = new Exchange(context))
+            using (var DaytonaContext = Context.Create(new ConsoleMonitor()))
             {
-                exchange.Start();
-                using (var testActor = new Actor(context))
+                using (var testActor = new Actor(DaytonaContext.NetMqContext))
                 {
 
                     var serializer = new DefaultSerializer(Exchange.ControlChannelEncoding);
@@ -98,19 +96,28 @@
 
         [TestMethod]
         [TestCategory("DoNotRunOnServer")]
+        [Ignore]
         public void SerializeActorFactory3()
         {
             //MessageSerializerFactory msf = () => 
             //MessageSerializerFactory msf = new MessageSerializerFactory(() => new BinarySerializer());
             MessageSerializerFactory msf = new MessageSerializerFactory(() => new DefaultSerializer(Exchange.ControlChannelEncoding));
-            using (var context = NetMQContext.Create())
-            using (var customer = new Customer(new Actor(context, msf)))
-            {
-                var store = new Store(new DefaultSerializer(Exchange.ControlChannelEncoding));
+            var netMQContext = NetMQContext.Create();
+            var consoleMonitor = new ConsoleMonitor();
+            consoleMonitor.Start(netMQContext);
 
-                customer.Firstname = "george";
-                store.Persist(typeof(Customer), customer, "testCustomer33");
-                //Assert.AreEqual(customer.Firstname, result.Firstname);
+            using (var silo = Silo.Create(netMQContext))
+            {
+                using (var customer = new Customer(new Actor(silo.Context, msf)))
+                {
+                    var store = new Store(new DefaultSerializer(Exchange.ControlChannelEncoding));
+
+                    customer.Firstname = "george";
+                    store.Persist(typeof(Customer), customer, "testCustomer33");
+                    //Assert.AreEqual(customer.Firstname, result.Firstname);
+                }
+
+                consoleMonitor.Stop();
             }
         }
     }

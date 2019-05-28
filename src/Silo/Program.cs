@@ -39,7 +39,7 @@ namespace SiloConsole
                     //Console.WriteLine("Run tests");
                     //Console.ReadLine();
 
-                    var customer = silo.ActorFactory.CreateInstance<ICustomer>(typeof(Customer), 99);
+                    var customer = silo.ActorFactory.CreateInstance<ICustomer>(typeof(Customer),99);
                         
                     //customer.CreateOrder();
 

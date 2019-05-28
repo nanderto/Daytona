@@ -24,60 +24,55 @@ namespace Daytona.Tests
     {
         public static AutoResetEvent waitHandle = new AutoResetEvent(false);
 
-       [TestMethod]   
-       public void CallMethod_Using_NProxyWrapper_ReadMessageWithRawActor()
+       [TestMethod]
+        [TestCategory("DoNotRunOnServer")]
+        public void CallMethod_Using_NProxyWrapper_ReadMessageWithRawActor()
        {
             waitHandle.Reset();
-            using (var context = NetMQContext.Create())
-            {
-                using (var exchange = new Exchange(context))
+            using (var DaytonaContext = Context.Create(new ConsoleMonitor()))
+            {                   
+                var queueDevice = new QueueDevice(
+                DaytonaContext.NetMqContext,
+                Exchange.PubSubControlBackAddressServer,
+                Exchange.PubSubControlFrontAddressServer,
+                DeviceMode.Threaded);
+                queueDevice.Start();
+
+                Thread.Sleep(200);
+
+                var task = Task.Run(() =>
                 {
-                    exchange.Start();
-                    
-                    var queueDevice = new QueueDevice(
-                    context,
-                    Exchange.PubSubControlBackAddressServer,
-                    Exchange.PubSubControlFrontAddressServer,
-                    DeviceMode.Threaded);
-                    queueDevice.Start();
+                    return RunSubscriber(DaytonaContext.NetMqContext);
+                });
 
-                    Thread.Sleep(200);
-
-                    var task = Task.Run(() =>
+                using (var actor = new Actor(DaytonaContext.NetMqContext, new BinarySerializer()))
+                {
+                    using (var syncService = DaytonaContext.NetMqContext.CreateResponseSocket())
                     {
-                        return RunSubscriber(context);
-                    });
-
-                    using (var actor = new Actor(context, new BinarySerializer()))
-                    {
-                        using (var syncService = context.CreateResponseSocket())
+                        syncService.Connect(Exchange.PubSubControlFrontAddressClient);
+                        for (int i = 0; i < 1; i++)
                         {
-                            syncService.Connect(Exchange.PubSubControlFrontAddressClient);
-                            for (int i = 0; i < 1; i++)
-                            {
-                                syncService.Receive();
-                                syncService.Send(string.Empty);
-                            }
-
-                            var order = actor.CreateInstance<IOrder>(typeof(Order));
-                            Assert.IsInstanceOfType(order, typeof(IOrder));
-                            order.UpdateDescription("XXX"); //called without exception    
-                            waitHandle.WaitOne();
-
-                            var netMqMessage = new NetMQMessage();
-                            netMqMessage.Append(new NetMQFrame(string.Empty));
-                            netMqMessage.Append(new NetMQFrame("shutdownallactors"));
-                            actor.OutputChannel.SendMessage(netMqMessage);
-
-                            //actor.SendKillSignal(actor.Serializer, actor.OutputChannel, string.Empty);
+                            syncService.Receive();
+                            syncService.Send(string.Empty);
                         }
+
+                        var order = actor.CreateInstance<IOrder>(typeof(Order));
+                        Assert.IsInstanceOfType(order, typeof(IOrder));
+                        order.UpdateDescription("XXX"); //called without exception    
+                        waitHandle.WaitOne();
+
+                        var netMqMessage = new NetMQMessage();
+                        netMqMessage.Append(new NetMQFrame(string.Empty));
+                        netMqMessage.Append(new NetMQFrame("shutdownallactors"));
+                        actor.OutputChannel.SendMessage(netMqMessage);
+
+                        //actor.SendKillSignal(actor.Serializer, actor.OutputChannel, string.Empty);
                     }
-
-                    Thread.Sleep(200);
-
-                    queueDevice.Stop(true);
-                    exchange.Stop(true);
                 }
+
+                Thread.Sleep(200);
+
+                queueDevice.Stop(true);
             }
         }
 
@@ -166,14 +161,15 @@ namespace Daytona.Tests
         }
 
         [TestMethod]
+        [TestCategory("DoNotRunOnServer")]
         public void CallMethod_Multiple_ObjectsBinarySerializer()
         {
-            using (var context = NetMQContext.Create())
+            using (var DaytonaContext = Context.Create(new ConsoleMonitor()))
             {
-                var exchange = new XForwarder(context, Exchange.SubscribeAddress, Exchange.PublishAddress, DeviceMode.Threaded);
-                exchange.Start();
+                //var exchange = new XForwarder(DaytonaContext.NetMqContext, Exchange.SubscribeAddress, Exchange.PublishAddress, DeviceMode.Threaded);
+                //exchange.Start();
 
-                using (var actor = new Actor<Customer>(context, new BinarySerializer()))
+                using (var actor = new Actor<Customer>(DaytonaContext.NetMqContext, new BinarySerializer()))
                 {
                     var customer = actor.CreateInstance<ICustomer>(typeof(Customer), 33);
                     Assert.IsInstanceOfType(customer, typeof(ICustomer));
@@ -188,7 +184,7 @@ namespace Daytona.Tests
                     order2.UpdateDescription("ZZZ"); //called without exception
                 }
 
-                exchange.Stop();
+               // exchange.Stop();
             }
         }
 
@@ -390,10 +386,14 @@ namespace Daytona.Tests
         }
 
         [TestMethod()]
+        [TestCategory("DoNotRunOnServer")]
         public void PersistSelfTest()
         {
+
             using (var context = NetMQContext.Create())
             {
+                var consoleMonitor = new ConsoleMonitor();
+                consoleMonitor.Start(context);
                 using (var exchange = new Exchange(context))
                 {
                     exchange.Start();
@@ -409,6 +409,8 @@ namespace Daytona.Tests
                     
                     exchange.Stop(true);
                 }
+
+                consoleMonitor.Stop();
             }
         }
 
@@ -421,7 +423,7 @@ namespace Daytona.Tests
                 var customer = new Customer(2);
                 customer.Firstname = "John";
                 customer.Lastname = "off yer Rocker mate";
-                //actor.PersistSelf(typeof(Customer), customer, new DefaultSerializer(Pipe.ControlChannelEncoding));
+                actor.PersistSelf(typeof(Customer), customer, new DefaultSerializer(Exchange.ControlChannelEncoding));
                 actor.PersistanceSerializer = new DefaultSerializer(Exchange.ControlChannelEncoding);
                 var returnedCustomer = actor.ReadfromPersistence(@"TestHelpers.Customer");
                 Assert.AreEqual(customer.Firstname, returnedCustomer.Firstname);
@@ -445,6 +447,7 @@ namespace Daytona.Tests
         }
 
         [TestMethod]
+        [TestCategory("DoNotRunOnServer")]
         public void CreatingAnActor()
         {
 
@@ -458,27 +461,24 @@ namespace Daytona.Tests
 
             // Create a Type object representing the constructed generic 
             // type.
-            using (var context = NetMQContext.Create())
+            
+            using (var DaytonaContext = Context.Create(new ConsoleMonitor()))
             {
-                using (var xchange = new Exchange(context))
-                {
-                    xchange.Start();
-                    var serializer = new DefaultSerializer(Exchange.ControlChannelEncoding);
+                var serializer = new DefaultSerializer(Exchange.ControlChannelEncoding);
 
-                    var target = (Actor)Activator.CreateInstance(constructed, context, new BinarySerializer(), serializer);
+                var target = (Actor)Activator.CreateInstance(constructed, DaytonaContext.NetMqContext, new BinarySerializer(), serializer);
                     
-                    obj = target.ReadfromPersistence(@"TestHelpers.Order", typeof(Order));
+                obj = target.ReadfromPersistence(@"TestHelpers.Order", typeof(Order));
 
-                    ////not clear why I need to start the actor in a "create" test its not working anyway cant start an actor without setting up its channels
-                    ////which has not been done here
-                    //target.Start();
-                    target.Dispose(); //Actors have to be disposed of to release resources
+                ////not clear why I need to start the actor in a "create" test its not working anyway cant start an actor without setting up its channels
+                ////which has not been done here
+                //target.Start();
+                target.Dispose(); //Actors have to be disposed of to release resources
 
-                    xchange.Stop(false);
-                }
+            }
 
                 //context.Terminate();
-            }
+            
         }
 
         [TestMethod]

@@ -27,13 +27,19 @@ namespace Daytona
                     rep.Bind(MonitorAddressServer);
                     while (!interrupted)
                     {
-                        var signal = rep.ReceiveString(ControlChannelEncoding, TimeSpan.FromMilliseconds(30));
-                        if (!string.IsNullOrEmpty(signal))
+                        try
                         {
-                            Console.WriteLine("::> " + signal);
-                            rep.Send(string.Empty, Encoding.Unicode);
-
+                            var signal = rep.ReceiveString(ControlChannelEncoding, TimeSpan.FromMilliseconds(30));
+                            if (!string.IsNullOrEmpty(signal))
+                            {
+                                Console.WriteLine("::> " + signal);
+                                rep.Send(string.Empty, Encoding.Unicode);
+                            }
                         }
+                        catch (NetMQ.TerminatingException)
+                        { }
+                        finally
+                        { }
                     }
                 } 
             });
