@@ -363,6 +363,56 @@ namespace DaytonaTests
             }
         }
 
+        [TestMethod]
+        public void SendOneMessageOfType2()
+        {
+            string input = string.Empty;
+            string expectedAddress = "XXXXxxxx";
+            string message = string.Empty;
+
+            using (var context = NetMQContext.Create())
+            using (var exchange = new Exchange(context))
+            {
+                exchange.Start();
+                {
+                    using (var sub = Helper.GetConnectedSubscribeSocket(context, Exchange.SubscribeAddress))
+                    {
+                        using (var pub = Helper.GetConnectedPublishSocket(context, Exchange.PublishAddress)) // "tcp://localhost:5555"
+                        {
+
+                            ISerializer serializer = new Serializer(Encoding.Unicode);
+                            Customer cust = new Customer(1);
+                            Customer customer = null;
+                            cust.Firstname = "John";
+                            cust.Lastname = "Wilson";
+
+                            var task = Task.Run(() =>
+                            {
+                                if (sub != null)
+                                {
+                                    customer = Helper.ReceiveMessageofType<Customer>(sub);
+                                }
+
+                                return customer;
+                            });
+
+                            if (pub != null)
+                            {
+                                Thread.Sleep(30); // need to make sure that the other thread is ready to receive 
+                                                  // before this thread sends the message
+                                Helper.SendOneMessageOfType<Customer>(expectedAddress, cust, serializer, pub);
+                            }
+
+                            task.Wait();
+                            Assert.AreEqual(cust.Firstname, customer.Firstname);
+                            Assert.AreEqual(cust.Lastname, customer.Lastname);
+                        }
+                    }
+                }
+
+                exchange.Stop(true);
+            }
+        }
         [TestMethod, TestCategory("IntegrationZMQ")]
         [TestCategory("DoNotRunOnServer")]
         public void SendOneMessageOfType()
@@ -381,13 +431,21 @@ namespace DaytonaTests
                     {
                         ISerializer serializer = new Serializer(Encoding.Unicode);
                         Customer cust = new Customer(1);
+                        Customer customer = null;
                         cust.Firstname = "John";
                         cust.Lastname = "Wilson";
+                        var task = Task.Run(() =>
+                        {
+                            do
+                            {
+                                customer = Helper.ReceiveMessageofType<Customer>(sub); 
+                            } while (customer == null);
+                        });
 
+                        Thread.Sleep(30);
                         Helper.SendOneMessageOfType<Customer>(expectedAddress, cust, serializer, pub);
 
-                        Customer customer = Helper.ReceiveMessageofType<Customer>(sub);
-
+                        task.Wait();
                         Assert.AreEqual(cust.Firstname, customer.Firstname);
                         Assert.AreEqual(cust.Lastname, customer.Lastname);
                     }
