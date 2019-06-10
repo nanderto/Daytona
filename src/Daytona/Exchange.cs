@@ -13,6 +13,9 @@
 
         public static string MonitorAddressServer = "tcp://*:5560";
 
+        /// <summary>
+        /// Use this address for publising InProcess messages (running on smae server same process)
+        /// </summary>
         public static string PublishAddress = "inproc://PublishAddress";
 
         public static string PublishAddressClient = "tcp://localhost:5550";
@@ -31,6 +34,9 @@
 
         public static string PubSubControlFrontAddressClient = "tcp://localhost:5551";
 
+        /// <summary>
+        /// Use this address for Subscribing to InProcess messages (running on smae server same process)
+        /// </summary>
         public static string SubscribeAddress = "inproc://SubscribeAddress"; ////"inproc://back";
 
         public static string SubscribeAddressClient = "tcp://localhost:5553"; ////"inproc://back";
@@ -69,13 +75,18 @@
             {
                 if (disposing)
                 {
-                    if (this.XForwarder.IsRunning)
-                    {
+                    //if (this.XForwarder.IsRunning)
+                    //{
+                        // Xforwarder does not say it is running immediatly after it has been started. It must have some
+                        // start up time. Even if it has not been started it is ok to call stop and if it has been started but is not shown
+                        // as running then calling stop will allow the device and poller to be gracefully disposed of.
+                        // for now I am leaving tghe notes and commented code in here, until I learn this and make sure it
+                        // is true in all situations
                         this.XForwarder.Stop(true);
                         // THe XForwarder does not need to be disposed of.
                         // it does have a Poller which needs to be disposed of but this must happen in the Device base class
                         // TODO shoud check that this actuialy happens (that the base class disposes of the Poller)
-                    }
+                    //}
                 }
 
                 //// There are no unmanaged resources to release, but

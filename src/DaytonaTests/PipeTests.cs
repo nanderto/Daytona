@@ -427,11 +427,11 @@ namespace DaytonaTests
 
             using (var context = NetMQContext.Create())
             {
-                var pipe = new Exchange(context);
-                pipe.Start();
-                using (var pub = Helper.GetConnectedPublishSocket(context))
+                var exchange = new Exchange(context);
+                exchange.Start();
+                using (var pub = Helper.GetConnectedPublishSocket(context, Exchange.PublishAddress))
                 {
-                    using (var sub = Helper.GetConnectedSubscribeSocket(context))
+                    using (var sub = Helper.GetConnectedSubscribeSocket(context, Exchange.SubscribeAddress))
                     {
                         ISerializer serializer = new Serializer(Encoding.Unicode);
                         Customer cust = new Customer(1);
@@ -455,7 +455,7 @@ namespace DaytonaTests
                     }
                 }
 
-                pipe.Dispose();
+                exchange.Dispose();
             }
         }
 
@@ -463,9 +463,9 @@ namespace DaytonaTests
         [TestCategory("DoNotRunOnServer")]
         public void SendOneMessageOfTypeConfigureActorToProcess()
         {
-            using (var pipeContext = NetMQContext.Create())
+            using (var netMqContext = NetMQContext.Create())
             {
-                var pipe = new Exchange(pipeContext);
+                var pipe = new Exchange(netMqContext);
                 var task2 = Task.Run(() =>
                     {
                         pipe.Start();
@@ -520,7 +520,7 @@ namespace DaytonaTests
             }
         }
 
-        //[TestMethod, TestCategory("IntegrationZMQ")]
+        [TestMethod, TestCategory("IntegrationZMQ")]
         ////obviously broken test
         public void SendFiveMessageOfTypeConfigureActorToProcess()
         {

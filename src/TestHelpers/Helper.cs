@@ -66,15 +66,16 @@ namespace TestHelpers
             string message = "";
             address = string.Empty;
             int i = 0;
-            
-            var buffer = Subscriber.Receive(out hasMore);
+
+            byte[] buffer = null;
 
             while (hasMore)
             {
-                
+                buffer = Subscriber.Receive(out hasMore);
                 if (i == 0)
                 {
                     address = Encoding.Unicode.GetString(buffer);
+                    
                 }
                 if (i == 1)
                 {
@@ -82,8 +83,7 @@ namespace TestHelpers
                 }
 
                 i++;
-                zmqOut.Append(new NetMQFrame(Encoding.Unicode.GetBytes(message)));
-                buffer = Subscriber.Receive(out hasMore);
+                zmqOut.Append(buffer);
             }
 
             NetMQMessage = zmqOut;

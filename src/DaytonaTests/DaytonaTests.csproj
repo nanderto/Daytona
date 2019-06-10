@@ -98,6 +98,8 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
+    <Compile Include="ExchangeTests.cs" />
+    <Compile Include="PipeTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -74,5 +74,23 @@ namespace Daytona.Tests
             ReceiveReady = true;
         }
 
+
+        [TestMethod]
+        public void Create_Start_Stop_ShutDown_Exchange()
+        {
+            using (var netMqContext = NetMQContext.Create())
+            {
+                Exchange exc = null;
+
+                using (var exchange = new Exchange(netMqContext))
+                {
+                    exc = exchange;
+                    Assert.IsNotNull(exc);
+                    exchange.Start();
+                }
+
+                Assert.IsNotNull(netMqContext);
+            }
+        }
     }
 }
