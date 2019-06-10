@@ -15,13 +15,16 @@ namespace SiloConsole
 
     using NetMQ;
     using NetMQ.Devices;
+    using SiloTest;
 
     class Program
     {
         public static void Main(string[] args)
         {
             Console.CancelKeyPress += new ConsoleCancelEventHandler(ConsoleCancelHandler);
-                   
+
+            var t = new Tester();
+            t.DoSomething();
             using (var context = NetMQContext.Create())
             {
                 var exchange = new Exchange(context);
